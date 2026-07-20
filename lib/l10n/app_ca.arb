@@ -1,0 +1,20 @@
+{
+  "@@locale": "ca",
+  "appTitle": "Seguim",
+  "navWatchlist": "Watchlist",
+  "navSearch": "Cerca",
+  "navProfile": "Perfil",
+  "logIn": "Inicia sessió",
+  "logOut": "Tanca sessió",
+  "createAccount": "Crea un compte",
+  "email": "Correu electrònic",
+  "password": "Contrasenya",
+  "name": "Nom",
+  "noAccountRegister": "No tens compte? Registra't",
+  "haveAccountLogin": "Ja tens compte? Inicia sessió",
+  "registerSubmit": "Crea el compte",
+  "watchlistLoginPrompt": "Inicia sessió per veure la teva watchlist",
+  "watchlistEmpty": "Encara no hi ha res a la teva watchlist",
+  "profileLoginPrompt": "Inicia sessió per veure el teu perfil",
+  "searchPlaceholder": "Cerca sèries i pel·lícules"
+}

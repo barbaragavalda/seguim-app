@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
 import '../providers/auth_provider.dart';
 
@@ -10,21 +11,21 @@ class RegisterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Crea un compte')),
+      appBar: AppBar(title: Text(l10n.createAccount)),
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const TextField(decoration: InputDecoration(labelText: 'Nom')),
+            TextField(decoration: InputDecoration(labelText: l10n.name)),
             const SizedBox(height: AppSpacing.sm),
-            const TextField(
-              decoration: InputDecoration(labelText: 'Correu electrònic'),
-            ),
+            TextField(decoration: InputDecoration(labelText: l10n.email)),
             const SizedBox(height: AppSpacing.sm),
-            const TextField(
-              decoration: InputDecoration(labelText: 'Contrasenya'),
+            TextField(
+              decoration: InputDecoration(labelText: l10n.password),
               obscureText: true,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -37,12 +38,12 @@ class RegisterScreen extends ConsumerWidget {
                   context.go('/profile');
                 }
               },
-              child: const Text('Crea el compte'),
+              child: Text(l10n.registerSubmit),
             ),
             const SizedBox(height: AppSpacing.sm),
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Ja tens compte? Inicia sessió'),
+              child: Text(l10n.haveAccountLogin),
             ),
           ],
         ),

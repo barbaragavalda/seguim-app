@@ -1,0 +1,20 @@
+{
+  "@@locale": "es",
+  "appTitle": "Seguim",
+  "navWatchlist": "Watchlist",
+  "navSearch": "Buscar",
+  "navProfile": "Perfil",
+  "logIn": "Inicia sesión",
+  "logOut": "Cerrar sesión",
+  "createAccount": "Crear una cuenta",
+  "email": "Correo electrónico",
+  "password": "Contraseña",
+  "name": "Nombre",
+  "noAccountRegister": "¿No tienes cuenta? Regístrate",
+  "haveAccountLogin": "¿Ya tienes cuenta? Inicia sesión",
+  "registerSubmit": "Crear cuenta",
+  "watchlistLoginPrompt": "Inicia sesión para ver tu watchlist",
+  "watchlistEmpty": "Todavía no hay nada en tu watchlist",
+  "profileLoginPrompt": "Inicia sesión para ver tu perfil",
+  "searchPlaceholder": "Busca series y películas"
+}
