@@ -4,9 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:seguim/main.dart';
 
 void main() {
-  testWidgets('HomePage shows welcome text', (WidgetTester tester) async {
+  testWidgets('starts on the Watchlist tab with a logged-out prompt', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const ProviderScope(child: SeguimApp()));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Benvingut a Seguim'), findsOneWidget);
+    expect(find.text('Watchlist'), findsWidgets);
+    expect(find.text('Inicia sessió per veure la teva watchlist'), findsOneWidget);
   });
 }

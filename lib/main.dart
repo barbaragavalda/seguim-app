@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'navigation/app_router.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -12,29 +13,12 @@ class SeguimApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Seguim',
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: const HomePage(),
-    );
-  }
-}
-
-class HomePage extends ConsumerWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Seguim')),
-      body: Center(
-        child: Text(
-          'Benvingut a Seguim',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-      ),
+      routerConfig: appRouter,
     );
   }
 }

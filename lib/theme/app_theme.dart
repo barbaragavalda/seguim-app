@@ -113,6 +113,26 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scaffoldBackground,
+        indicatorColor: Colors.transparent,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : textSecondary,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: states.contains(WidgetState.selected)
+                ? colorScheme.primary
+                : textSecondary,
+          ),
+        ),
+      ),
     );
   }
 }
