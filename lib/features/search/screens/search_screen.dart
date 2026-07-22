@@ -47,11 +47,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.navSearch)),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          children: [
-            TextField(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
+            ),
+            child: TextField(
               controller: _queryController,
               onChanged: (value) =>
                   ref.read(searchProvider.notifier).onQueryChanged(value),
@@ -60,10 +65,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 hintText: l10n.searchPlaceholder,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            Expanded(child: _buildBody(context, l10n, searchState)),
-          ],
-        ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: _buildBody(context, l10n, searchState),
+            ),
+          ),
+        ],
       ),
     );
   }

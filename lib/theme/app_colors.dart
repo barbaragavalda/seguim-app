@@ -20,4 +20,6 @@ class AppColors {
   static const lightSurface = Color(0xFFFFFFFF);
   static const lightTextPrimary = Color(0xFF14232E);
   static const lightTextSecondary = Color(0xFF5B7482);
+
+  static const placeholderBackground = Color(0xFFE4E4E4);
 }

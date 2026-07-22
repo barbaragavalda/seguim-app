@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 
 class SeriesPoster extends StatelessWidget {
@@ -32,12 +34,16 @@ class _PlaceholderMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'S!',
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontSize: 28,
-          fontWeight: FontWeight.w600,
+    return Container(
+      color: AppColors.placeholderBackground,
+      child: Center(
+        child: Text(
+          'S!',
+          style: GoogleFonts.fraunces(
+            fontWeight: FontWeight.w900,
+            fontSize: 32,
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ),
       ),
     );
