@@ -1,10 +1,17 @@
 class Series {
-  const Series({required this.tvdbId, required this.name, this.year, this.imageUrl});
+  const Series({
+    required this.tvdbId,
+    required this.name,
+    this.year,
+    this.imageUrl,
+    this.status,
+  });
 
   final String tvdbId;
   final String name;
   final String? year;
   final String? imageUrl;
+  final String? status;
 
   factory Series.fromJson(Map<String, dynamic> json) {
     return Series(
@@ -12,6 +19,7 @@ class Series {
       name: json['name'] as String? ?? '',
       year: json['year'] as String?,
       imageUrl: (json['thumbnail'] as String?) ?? (json['image_url'] as String?),
+      status: json['status'] as String?,
     );
   }
 }

@@ -23,5 +23,7 @@
       "query": { "type": "String" }
     }
   },
-  "genericError": "Alguna cosa ha anat malament. Torna-ho a provar."
+  "genericError": "Alguna cosa ha anat malament. Torna-ho a provar.",
+  "clearImageCache": "Neteja la cache d'imatges",
+  "imageCacheCleared": "Cache d'imatges netejada"
 }

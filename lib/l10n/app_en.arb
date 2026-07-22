@@ -23,5 +23,7 @@
       "query": { "type": "String" }
     }
   },
-  "genericError": "Something went wrong. Please try again."
+  "genericError": "Something went wrong. Please try again.",
+  "clearImageCache": "Clear image cache",
+  "imageCacheCleared": "Image cache cleared"
 }

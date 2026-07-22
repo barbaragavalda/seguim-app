@@ -10,16 +10,23 @@ class SeriesSearchException implements Exception {
   final String message;
 }
 
+class SeriesSearchResult {
+  const SeriesSearchResult({required this.items, required this.hasMore});
+
+  final List<Series> items;
+  final bool hasMore;
+}
+
 class SeriesApi {
   SeriesApi({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
-  Future<List<Series>> search(String query) async {
+  Future<SeriesSearchResult> search(String query, {int page = 0}) async {
     final response = await _client.get(
-      Uri.parse(
-        '${ApiConfig.baseUrl}/api/series/search',
-      ).replace(queryParameters: {'query': query}),
+      Uri.parse('${ApiConfig.baseUrl}/api/series/search').replace(
+        queryParameters: {'query': query, 'page': '$page'},
+      ),
       headers: {'Authorization': ApiConfig.defaultToken},
     );
     late final Map<String, dynamic> data;
@@ -33,8 +40,11 @@ class SeriesApi {
       throw SeriesSearchException(error is String ? error : 'unknown_error');
     }
     final results = data['results'] as List<dynamic>? ?? [];
-    return results
-        .map((item) => Series.fromJson(item as Map<String, dynamic>))
-        .toList();
+    return SeriesSearchResult(
+      items: results
+          .map((item) => Series.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      hasMore: data['hasMore'] as bool? ?? false,
+    );
   }
 }

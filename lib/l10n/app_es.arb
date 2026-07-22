@@ -23,5 +23,7 @@
       "query": { "type": "String" }
     }
   },
-  "genericError": "Algo ha ido mal. Vuelve a intentarlo."
+  "genericError": "Algo ha ido mal. Vuelve a intentarlo.",
+  "clearImageCache": "Vaciar caché de imágenes",
+  "imageCacheCleared": "Caché de imágenes vaciada"
 }

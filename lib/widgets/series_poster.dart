@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_radius.dart';
@@ -24,15 +25,11 @@ class SeriesPoster extends StatelessWidget {
           color: Theme.of(context).cardColor,
           child: imageUrl == null
               ? const _PlaceholderLogo()
-              : Image.network(
-                  imageUrl!,
+              : CachedNetworkImage(
+                  imageUrl: imageUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const _PlaceholderLogo(),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const _PlaceholderLogo();
-                  },
+                  placeholder: (context, url) => const _PlaceholderLogo(),
+                  errorWidget: (context, url, error) => const _PlaceholderLogo(),
                 ),
         ),
       ),
