@@ -74,6 +74,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 onChanged: (value) =>
                     ref.read(searchProvider.notifier).onQueryChanged(value),
                 decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _queryController.text.isEmpty
                       ? null
