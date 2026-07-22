@@ -108,6 +108,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
         SliverGrid(
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 160,
