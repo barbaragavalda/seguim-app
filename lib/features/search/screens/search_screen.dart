@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/series_poster.dart';
 import '../providers/search_provider.dart';
@@ -22,12 +23,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _queryController.addListener(_onQueryTextChanged);
+  }
+
+  void _onQueryTextChanged() {
+    setState(() {});
+  }
+
+  void _clearQuery() {
+    _queryController.clear();
+    ref.read(searchProvider.notifier).onQueryChanged('');
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _queryController.removeListener(_onQueryTextChanged);
     _queryController.dispose();
     super.dispose();
   }
@@ -61,8 +73,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onChanged: (value) =>
                   ref.read(searchProvider.notifier).onQueryChanged(value),
               decoration: InputDecoration(
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surface,
                 prefixIcon: const Icon(Icons.search),
+                suffixIcon: _queryController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: _clearQuery,
+                      ),
                 hintText: l10n.searchPlaceholder,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
