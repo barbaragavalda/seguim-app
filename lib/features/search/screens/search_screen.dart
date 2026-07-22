@@ -16,6 +16,8 @@ class SearchScreen extends ConsumerStatefulWidget {
 }
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
+  static const _searchBarClearance = 76.0;
+
   final _queryController = TextEditingController();
   final _scrollController = ScrollController();
 
@@ -59,15 +61,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: _buildBody(context, l10n, searchState),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: TextField(
                 controller: _queryController,
                 onChanged: (value) =>
@@ -85,12 +86,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: _buildBody(context, l10n, searchState),
               ),
             ),
           ],
@@ -130,7 +125,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
-        const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+        const SliverToBoxAdapter(child: SizedBox(height: _searchBarClearance)),
         SliverGrid(
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 160,
