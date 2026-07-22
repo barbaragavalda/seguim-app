@@ -17,5 +17,11 @@
   "watchlistEmpty": "There's nothing in your watchlist yet",
   "profileLoginPrompt": "Log in to see your profile",
   "searchPlaceholder": "Search series and movies",
+  "searchNoResults": "No results for \"{query}\"",
+  "@searchNoResults": {
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
   "genericError": "Something went wrong. Please try again."
 }

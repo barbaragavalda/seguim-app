@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
+import '../../../core/network/api_response_parser.dart';
 
 class AuthException implements Exception {
   const AuthException(this.message);
@@ -44,22 +43,16 @@ class AuthApi {
       headers: {'Authorization': ApiConfig.defaultToken},
       body: body,
     );
-    final data = _decode(response.body);
+    late final Map<String, dynamic> data;
+    try {
+      data = decodeApiResponse(response.body);
+    } on FormatException {
+      throw const AuthException('unknown_error');
+    }
     final error = data['error'];
     if (error != false) {
       throw AuthException(error is String ? error : 'unknown_error');
     }
     return data['token'] as String;
-  }
-
-  Map<String, dynamic> _decode(String body) {
-    // The dev backend prepends PHP debug/warning noise before the JSON
-    // payload (a known missing appacman_app_config table) — the response
-    // is otherwise never valid JSON from position 0, so take the last `{`.
-    final jsonStart = body.lastIndexOf('{');
-    if (jsonStart == -1) {
-      throw const AuthException('unknown_error');
-    }
-    return jsonDecode(body.substring(jsonStart)) as Map<String, dynamic>;
   }
 }

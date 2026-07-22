@@ -17,5 +17,11 @@
   "watchlistEmpty": "Encara no hi ha res a la teva watchlist",
   "profileLoginPrompt": "Inicia sessió per veure el teu perfil",
   "searchPlaceholder": "Cerca sèries i pel·lícules",
+  "searchNoResults": "Cap resultat per a \"{query}\"",
+  "@searchNoResults": {
+    "placeholders": {
+      "query": { "type": "String" }
+    }
+  },
   "genericError": "Alguna cosa ha anat malament. Torna-ho a provar."
 }
