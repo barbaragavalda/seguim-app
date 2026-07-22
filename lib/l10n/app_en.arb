@@ -9,7 +9,7 @@
   "createAccount": "Create an account",
   "email": "Email",
   "password": "Password",
-  "name": "Name",
+  "username": "Username",
   "noAccountRegister": "Don't have an account? Sign up",
   "haveAccountLogin": "Already have an account? Log in",
   "registerSubmit": "Create account",

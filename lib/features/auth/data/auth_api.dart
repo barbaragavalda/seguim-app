@@ -16,12 +16,12 @@ class AuthApi {
   final http.Client _client;
 
   Future<String> register({
-    required String name,
+    required String username,
     required String email,
     required String password,
   }) {
     return _authRequest('/api/register', {
-      'name': name,
+      'username': username,
       'email': email,
       'password': password,
     });

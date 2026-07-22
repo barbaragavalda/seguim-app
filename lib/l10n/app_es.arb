@@ -9,7 +9,7 @@
   "createAccount": "Crear una cuenta",
   "email": "Correo electrónico",
   "password": "Contraseña",
-  "name": "Nombre",
+  "username": "Nombre de usuario",
   "noAccountRegister": "¿No tienes cuenta? Regístrate",
   "haveAccountLogin": "¿Ya tienes cuenta? Inicia sesión",
   "registerSubmit": "Crear cuenta",

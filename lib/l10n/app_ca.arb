@@ -9,7 +9,7 @@
   "createAccount": "Crea un compte",
   "email": "Correu electrònic",
   "password": "Contrasenya",
-  "name": "Nom",
+  "username": "Nom d'usuari",
   "noAccountRegister": "No tens compte? Registra't",
   "haveAccountLogin": "Ja tens compte? Inicia sessió",
   "registerSubmit": "Crea el compte",

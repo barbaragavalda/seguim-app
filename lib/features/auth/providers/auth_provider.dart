@@ -52,12 +52,13 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<bool> register({
-    required String name,
+    required String username,
     required String email,
     required String password,
   }) {
     return _submit(
-      () => _api.register(name: name, email: email, password: password),
+      () =>
+          _api.register(username: username, email: email, password: password),
     );
   }
 
