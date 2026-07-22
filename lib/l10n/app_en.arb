@@ -25,5 +25,8 @@
   },
   "genericError": "Something went wrong. Please try again.",
   "clearImageCache": "Clear image cache",
-  "imageCacheCleared": "Image cache cleared"
+  "imageCacheCleared": "Image cache cleared",
+  "seriesStatusContinuing": "Continuing",
+  "seriesStatusEnded": "Ended",
+  "seriesStatusUpcoming": "Upcoming"
 }

@@ -25,5 +25,8 @@
   },
   "genericError": "Alguna cosa ha anat malament. Torna-ho a provar.",
   "clearImageCache": "Neteja la cache d'imatges",
-  "imageCacheCleared": "Cache d'imatges netejada"
+  "imageCacheCleared": "Cache d'imatges netejada",
+  "seriesStatusContinuing": "En emissió",
+  "seriesStatusEnded": "Finalitzada",
+  "seriesStatusUpcoming": "Pròximament"
 }

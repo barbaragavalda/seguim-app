@@ -58,45 +58,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final searchState = ref.watch(searchProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navSearch)),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.md,
-              AppSpacing.md,
-              0,
-            ),
-            child: TextField(
-              controller: _queryController,
-              onChanged: (value) =>
-                  ref.read(searchProvider.notifier).onQueryChanged(value),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _queryController.text.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: _clearQuery,
-                      ),
-                hintText: l10n.searchPlaceholder,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                  borderSide: BorderSide.none,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                0,
+              ),
+              child: TextField(
+                controller: _queryController,
+                onChanged: (value) =>
+                    ref.read(searchProvider.notifier).onQueryChanged(value),
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _queryController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: _clearQuery,
+                        ),
+                  hintText: l10n.searchPlaceholder,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: _buildBody(context, l10n, searchState),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: _buildBody(context, l10n, searchState),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -144,7 +142,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             final series = state.results[index];
             final subtitle = [
               if (series.year != null) series.year!,
-              if (series.status != null) series.status!,
+              if (series.status != null) _localizedStatus(l10n, series.status!),
             ].join(' · ');
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,5 +179,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
       ],
     );
+  }
+
+  String _localizedStatus(AppLocalizations l10n, String status) {
+    switch (status) {
+      case 'Continuing':
+        return l10n.seriesStatusContinuing;
+      case 'Ended':
+        return l10n.seriesStatusEnded;
+      case 'Upcoming':
+        return l10n.seriesStatusUpcoming;
+      default:
+        return status;
+    }
   }
 }

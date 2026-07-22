@@ -25,5 +25,8 @@
   },
   "genericError": "Algo ha ido mal. Vuelve a intentarlo.",
   "clearImageCache": "Vaciar caché de imágenes",
-  "imageCacheCleared": "Caché de imágenes vaciada"
+  "imageCacheCleared": "Caché de imágenes vaciada",
+  "seriesStatusContinuing": "En emisión",
+  "seriesStatusEnded": "Finalizada",
+  "seriesStatusUpcoming": "Próximamente"
 }

@@ -15,24 +15,28 @@ class WatchlistScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.navWatchlist)),
-      body: Center(
-        child: isLoggedIn
-            ? Text(l10n.watchlistEmpty)
-            : Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(l10n.watchlistLoginPrompt, textAlign: TextAlign.center),
-                    const SizedBox(height: AppSpacing.md),
-                    FilledButton(
-                      onPressed: () => context.push('/login'),
-                      child: Text(l10n.logIn),
-                    ),
-                  ],
+      body: SafeArea(
+        child: Center(
+          child: isLoggedIn
+              ? Text(l10n.watchlistEmpty)
+              : Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.watchlistLoginPrompt,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      FilledButton(
+                        onPressed: () => context.push('/login'),
+                        child: Text(l10n.logIn),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }
