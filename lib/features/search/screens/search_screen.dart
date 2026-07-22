@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/series_poster.dart';
@@ -137,10 +138,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
           delegate: SliverChildBuilderDelegate((context, index) {
             final series = state.results[index];
-            final subtitle = [
-              if (series.year != null) series.year!,
-              if (series.status != null) _localizedStatus(l10n, series.status!),
-            ].join(' · ');
+            final year = series.year;
+            final status = series.status == null
+                ? null
+                : _localizedStatus(l10n, series.status!);
+            final subtitleStyle = Theme.of(context).textTheme.bodySmall;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -156,12 +158,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     color: textPrimary,
                   ),
                 ),
-                if (subtitle.isNotEmpty)
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall,
+                if (year != null || status != null)
+                  Row(
+                    children: [
+                      if (year != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Text(year, style: subtitleStyle),
+                        ),
+                      if (status != null)
+                        Flexible(
+                          child: _StatusTag(
+                            label: status,
+                            color: _statusColor(series.status!),
+                          ),
+                        ),
+                    ],
                   ),
               ],
             );
@@ -178,6 +190,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Continuing':
+        return AppColors.sage;
+      case 'Ended':
+        return AppColors.coral;
+      case 'Upcoming':
+        return AppColors.darkBg;
+      default:
+        return AppColors.lightTextSecondary;
+    }
+  }
+
   String _localizedStatus(AppLocalizations l10n, String status) {
     switch (status) {
       case 'Continuing':
@@ -189,5 +214,33 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       default:
         return status;
     }
+  }
+}
+
+class _StatusTag extends StatelessWidget {
+  const _StatusTag({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
