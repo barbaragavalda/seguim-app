@@ -16,5 +16,6 @@
   "watchlistLoginPrompt": "Inicia sessió per veure la teva watchlist",
   "watchlistEmpty": "Encara no hi ha res a la teva watchlist",
   "profileLoginPrompt": "Inicia sessió per veure el teu perfil",
-  "searchPlaceholder": "Cerca sèries i pel·lícules"
+  "searchPlaceholder": "Cerca sèries i pel·lícules",
+  "genericError": "Alguna cosa ha anat malament. Torna-ho a provar."
 }

@@ -16,5 +16,6 @@
   "watchlistLoginPrompt": "Log in to see your watchlist",
   "watchlistEmpty": "There's nothing in your watchlist yet",
   "profileLoginPrompt": "Log in to see your profile",
-  "searchPlaceholder": "Search series and movies"
+  "searchPlaceholder": "Search series and movies",
+  "genericError": "Something went wrong. Please try again."
 }
