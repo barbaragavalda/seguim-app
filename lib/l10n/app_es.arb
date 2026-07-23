@@ -28,5 +28,27 @@
   "imageCacheCleared": "Caché de imágenes vaciada",
   "seriesStatusContinuing": "En emisión",
   "seriesStatusEnded": "Finalizada",
-  "seriesStatusUpcoming": "Próximamente"
+  "seriesStatusUpcoming": "Próximamente",
+  "seriesDetailLoginPrompt": "Inicia sesión para ver los detalles de la serie",
+  "addToWatchlist": "Watchlist",
+  "inWatchlist": "En la watchlist",
+  "readMore": "Leer más",
+  "readLess": "Leer menos",
+  "episodesSectionTitle": "Episodios",
+  "seasonsStatLabel": "temporadas",
+  "yearsStatLabel": "emisión",
+  "runtimeStatLabel": "duración media",
+  "presentYear": "actualidad",
+  "runtimeMinutes": "{minutes} min",
+  "@runtimeMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "seasonLabel": "Temporada {season}",
+  "@seasonLabel": {
+    "placeholders": {
+      "season": { "type": "int" }
+    }
+  }
 }

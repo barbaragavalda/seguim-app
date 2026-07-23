@@ -76,7 +76,6 @@ class AppTheme {
         fontWeight: FontWeight.w600,
       ),
       bodySmall: textTheme.bodySmall?.copyWith(color: textSecondary),
-      bodyMedium: textTheme.bodyMedium?.copyWith(color: textSecondary),
     );
 
     return base.copyWith(

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/series_poster.dart';
+import '../../../widgets/status_tag.dart';
 import '../providers/search_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -141,41 +142,44 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             final year = series.year;
             final status = series.status == null
                 ? null
-                : _localizedStatus(l10n, series.status!);
+                : localizedSeriesStatus(l10n, series.status!);
             final subtitleStyle = Theme.of(context).textTheme.bodySmall;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SeriesPoster(imageUrl: series.imageUrl),
-                const SizedBox(height: 6),
-                Text(
-                  series.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.fraunces(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
+            return GestureDetector(
+              onTap: () => context.push('/series/${series.tvdbId}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SeriesPoster(imageUrl: series.imageUrl),
+                  const SizedBox(height: 6),
+                  Text(
+                    series.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.fraunces(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
                   ),
-                ),
-                if (year != null || status != null)
-                  Row(
-                    children: [
-                      if (year != null)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Text(year, style: subtitleStyle),
-                        ),
-                      if (status != null)
-                        Flexible(
-                          child: _StatusTag(
-                            label: status,
-                            color: _statusColor(series.status!),
+                  if (year != null || status != null)
+                    Row(
+                      children: [
+                        if (year != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Text(year, style: subtitleStyle),
                           ),
-                        ),
-                    ],
-                  ),
-              ],
+                        if (status != null)
+                          Flexible(
+                            child: StatusTag(
+                              label: status,
+                              color: seriesStatusColor(series.status!),
+                            ),
+                          ),
+                      ],
+                    ),
+                ],
+              ),
             );
           }, childCount: state.results.length),
         ),
@@ -187,60 +191,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ),
       ],
-    );
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'Continuing':
-        return AppColors.sage;
-      case 'Ended':
-        return AppColors.coral;
-      case 'Upcoming':
-        return AppColors.darkBg;
-      default:
-        return AppColors.lightTextSecondary;
-    }
-  }
-
-  String _localizedStatus(AppLocalizations l10n, String status) {
-    switch (status) {
-      case 'Continuing':
-        return l10n.seriesStatusContinuing;
-      case 'Ended':
-        return l10n.seriesStatusEnded;
-      case 'Upcoming':
-        return l10n.seriesStatusUpcoming;
-      default:
-        return status;
-    }
-  }
-}
-
-class _StatusTag extends StatelessWidget {
-  const _StatusTag({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }

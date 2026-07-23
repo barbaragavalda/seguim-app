@@ -28,5 +28,27 @@
   "imageCacheCleared": "Cache d'imatges netejada",
   "seriesStatusContinuing": "En emissió",
   "seriesStatusEnded": "Finalitzada",
-  "seriesStatusUpcoming": "Pròximament"
+  "seriesStatusUpcoming": "Pròximament",
+  "seriesDetailLoginPrompt": "Inicia sessió per veure els detalls de la sèrie",
+  "addToWatchlist": "Watchlist",
+  "inWatchlist": "A la watchlist",
+  "readMore": "Llegeix més",
+  "readLess": "Mostra'n menys",
+  "episodesSectionTitle": "Episodis",
+  "seasonsStatLabel": "temporades",
+  "yearsStatLabel": "emissió",
+  "runtimeStatLabel": "durada mitjana",
+  "presentYear": "actualitat",
+  "runtimeMinutes": "{minutes} min",
+  "@runtimeMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "seasonLabel": "Temporada {season}",
+  "@seasonLabel": {
+    "placeholders": {
+      "season": { "type": "int" }
+    }
+  }
 }

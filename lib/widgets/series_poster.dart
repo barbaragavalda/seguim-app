@@ -1,9 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
+import 'placeholder_mark.dart';
 
 class SeriesPoster extends StatelessWidget {
   const SeriesPoster({super.key, this.imageUrl});
@@ -17,34 +16,13 @@ class SeriesPoster extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: 2 / 3,
         child: imageUrl == null
-            ? const _PlaceholderMark()
+            ? const PlaceholderMark()
             : CachedNetworkImage(
                 imageUrl: imageUrl!,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => const _PlaceholderMark(),
-                errorWidget: (context, url, error) => const _PlaceholderMark(),
+                placeholder: (context, url) => const PlaceholderMark(),
+                errorWidget: (context, url, error) => const PlaceholderMark(),
               ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderMark extends StatelessWidget {
-  const _PlaceholderMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.placeholderBackground,
-      child: Center(
-        child: Text(
-          'S!',
-          style: GoogleFonts.fraunces(
-            fontWeight: FontWeight.w900,
-            fontSize: 32,
-            color: Theme.of(context).textTheme.bodySmall?.color,
-          ),
-        ),
       ),
     );
   }

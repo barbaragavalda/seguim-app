@@ -28,5 +28,27 @@
   "imageCacheCleared": "Image cache cleared",
   "seriesStatusContinuing": "Continuing",
   "seriesStatusEnded": "Ended",
-  "seriesStatusUpcoming": "Upcoming"
+  "seriesStatusUpcoming": "Upcoming",
+  "seriesDetailLoginPrompt": "Log in to see the series details",
+  "addToWatchlist": "Watchlist",
+  "inWatchlist": "In watchlist",
+  "readMore": "Read more",
+  "readLess": "Read less",
+  "episodesSectionTitle": "Episodes",
+  "seasonsStatLabel": "seasons",
+  "yearsStatLabel": "aired",
+  "runtimeStatLabel": "average runtime",
+  "presentYear": "present",
+  "runtimeMinutes": "{minutes} min",
+  "@runtimeMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "seasonLabel": "Season {season}",
+  "@seasonLabel": {
+    "placeholders": {
+      "season": { "type": "int" }
+    }
+  }
 }
