@@ -74,5 +74,55 @@
       "count": { "type": "int" }
     }
   },
-  "loadMore": "Cargar más"
+  "loadMore": "Cargar más",
+  "welcomeGreeting": "Hola, {username}",
+  "@welcomeGreeting": {
+    "placeholders": { "username": { "type": "String" } }
+  },
+  "accountSectionTitle": "Tu cuenta",
+  "changePasswordValue": "Cámbiala",
+  "seriesSectionTitle": "Series",
+  "comingSoonTag": "Próximamente",
+  "seriesListsRow": "Listas de series",
+  "archivedSeriesRow": "Series archivadas",
+  "droppedSeriesRow": "Series dejadas de ver",
+  "importFromTvTime": "Importar desde TV Time",
+  "deleteAccountRow": "Eliminar cuenta",
+  "deleteAccountConfirmTitle": "¿Eliminar la cuenta?",
+  "deleteAccountConfirmBody": "Esta acción no se puede deshacer. Se eliminarán todos tus datos de Seguim!.",
+  "deleteAccountConfirmButton": "Eliminarla",
+  "versionLabel": "Seguim! · versión {version}",
+  "@versionLabel": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "editUsernameTitle": "Cambiar nombre de usuario",
+  "editEmailTitle": "Cambiar correo electrónico",
+  "changePasswordTitle": "Cambiar contraseña",
+  "currentPasswordLabel": "Contraseña actual",
+  "newPasswordLabel": "Nueva contraseña",
+  "save": "Guardar",
+  "passwordChanged": "Contraseña actualizada",
+  "importTvTimeTitle": "Importar desde TV Time",
+  "importTvTimeIntro": "Sube el ZIP que te ha enviado TV Time.",
+  "dropzoneTitle": "Arrastra el ZIP aquí",
+  "dropzoneSub": "o elígelo manualmente desde tu ordenador",
+  "chooseFile": "Elegir un archivo",
+  "startImport": "Importar",
+  "uploadingFile": "Subiendo el archivo…",
+  "processingTitle": "Sincronizando con TheTVDB…",
+  "processingSub": "Esto puede tardar un rato",
+  "importBackgroundNote": "Puedes cerrar la app — la importación sigue en segundo plano y la encontrarás aquí cuando vuelvas.",
+  "showsStatLabel": "series",
+  "episodesWatchedStatLabel": "episodios vistos",
+  "importDoneTitle": "Importación completa",
+  "importDoneSub": "Se ha añadido todo a tu watchlist",
+  "showsImportedStatLabel": "series importadas",
+  "showsFailedWarning": "{count, plural, one{1 serie no se ha podido sincronizar (puede que ya no exista en TheTVDB).} other{{count} series no se han podido sincronizar (puede que ya no existan en TheTVDB).}}",
+  "@showsFailedWarning": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "done": "Hecho",
+  "importFailedTitle": "No se ha podido importar",
+  "importFailedSub": "Vuelve a intentarlo o revisa el archivo",
+  "retry": "Volver a intentarlo"
 }

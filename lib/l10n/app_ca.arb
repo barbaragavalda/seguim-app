@@ -74,5 +74,55 @@
       "count": { "type": "int" }
     }
   },
-  "loadMore": "Carrega'n més"
+  "loadMore": "Carrega'n més",
+  "welcomeGreeting": "Hola, {username}",
+  "@welcomeGreeting": {
+    "placeholders": { "username": { "type": "String" } }
+  },
+  "accountSectionTitle": "El teu compte",
+  "changePasswordValue": "Canvia-la",
+  "seriesSectionTitle": "Sèries",
+  "comingSoonTag": "Properament",
+  "seriesListsRow": "Llistes de sèries",
+  "archivedSeriesRow": "Sèries arxivades",
+  "droppedSeriesRow": "Sèries deixades de veure",
+  "importFromTvTime": "Importa des de TV Time",
+  "deleteAccountRow": "Elimina el compte",
+  "deleteAccountConfirmTitle": "Elimina el compte?",
+  "deleteAccountConfirmBody": "Aquesta acció no es pot desfer. S'eliminaran totes les teves dades de Seguim!.",
+  "deleteAccountConfirmButton": "Elimina'l",
+  "versionLabel": "Seguim! · versió {version}",
+  "@versionLabel": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "editUsernameTitle": "Canvia el nom d'usuari",
+  "editEmailTitle": "Canvia el correu electrònic",
+  "changePasswordTitle": "Canvia la contrasenya",
+  "currentPasswordLabel": "Contrasenya actual",
+  "newPasswordLabel": "Nova contrasenya",
+  "save": "Desa",
+  "passwordChanged": "Contrasenya actualitzada",
+  "importTvTimeTitle": "Importa des de TV Time",
+  "importTvTimeIntro": "Puja el ZIP que t'ha enviat TV Time.",
+  "dropzoneTitle": "Arrossega el ZIP aquí",
+  "dropzoneSub": "o tria'l manualment des del teu ordinador",
+  "chooseFile": "Tria un fitxer",
+  "startImport": "Importa",
+  "uploadingFile": "Pujant el fitxer…",
+  "processingTitle": "Sincronitzant amb TheTVDB…",
+  "processingSub": "Això pot trigar una estona",
+  "importBackgroundNote": "Pots tancar l'app — la importació continua en segon pla i la trobaràs aquí quan tornis.",
+  "showsStatLabel": "sèries",
+  "episodesWatchedStatLabel": "episodis vistos",
+  "importDoneTitle": "Importació completa",
+  "importDoneSub": "S'ha afegit tot a la teva watchlist",
+  "showsImportedStatLabel": "sèries importades",
+  "showsFailedWarning": "{count, plural, one{1 sèrie no s'ha pogut sincronitzar (potser ja no existeix a TheTVDB).} other{{count} sèries no s'han pogut sincronitzar (potser ja no existeixen a TheTVDB).}}",
+  "@showsFailedWarning": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "done": "Fet",
+  "importFailedTitle": "No s'ha pogut importar",
+  "importFailedSub": "Torna-ho a provar o revisa el fitxer",
+  "retry": "Torna-ho a provar"
 }

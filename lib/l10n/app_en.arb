@@ -74,5 +74,55 @@
       "count": { "type": "int" }
     }
   },
-  "loadMore": "Load more"
+  "loadMore": "Load more",
+  "welcomeGreeting": "Hi, {username}",
+  "@welcomeGreeting": {
+    "placeholders": { "username": { "type": "String" } }
+  },
+  "accountSectionTitle": "Your account",
+  "changePasswordValue": "Change it",
+  "seriesSectionTitle": "Series",
+  "comingSoonTag": "Coming soon",
+  "seriesListsRow": "Series lists",
+  "archivedSeriesRow": "Archived series",
+  "droppedSeriesRow": "Dropped series",
+  "importFromTvTime": "Import from TV Time",
+  "deleteAccountRow": "Delete account",
+  "deleteAccountConfirmTitle": "Delete account?",
+  "deleteAccountConfirmBody": "This can't be undone. All your Seguim! data will be deleted.",
+  "deleteAccountConfirmButton": "Delete it",
+  "versionLabel": "Seguim! · version {version}",
+  "@versionLabel": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "editUsernameTitle": "Change username",
+  "editEmailTitle": "Change email",
+  "changePasswordTitle": "Change password",
+  "currentPasswordLabel": "Current password",
+  "newPasswordLabel": "New password",
+  "save": "Save",
+  "passwordChanged": "Password updated",
+  "importTvTimeTitle": "Import from TV Time",
+  "importTvTimeIntro": "Upload the ZIP file TV Time sent you.",
+  "dropzoneTitle": "Drop the ZIP here",
+  "dropzoneSub": "or choose it manually from your computer",
+  "chooseFile": "Choose a file",
+  "startImport": "Import",
+  "uploadingFile": "Uploading file…",
+  "processingTitle": "Syncing with TheTVDB…",
+  "processingSub": "This can take a while",
+  "importBackgroundNote": "You can close the app — the import keeps going in the background and you'll find it here when you come back.",
+  "showsStatLabel": "shows",
+  "episodesWatchedStatLabel": "episodes watched",
+  "importDoneTitle": "Import complete",
+  "importDoneSub": "Everything's been added to your watchlist",
+  "showsImportedStatLabel": "shows imported",
+  "showsFailedWarning": "{count, plural, one{1 show couldn't be synced (it may no longer exist on TheTVDB).} other{{count} shows couldn't be synced (they may no longer exist on TheTVDB).}}",
+  "@showsFailedWarning": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "done": "Done",
+  "importFailedTitle": "Import failed",
+  "importFailedSub": "Try again or check the file",
+  "retry": "Try again"
 }
