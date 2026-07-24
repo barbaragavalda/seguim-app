@@ -50,5 +50,14 @@
     "placeholders": {
       "season": { "type": "int" }
     }
-  }
+  },
+  "forgotPassword": "Has oblidat la contrasenya?",
+  "forgotPasswordTitle": "Recupera la contrasenya",
+  "forgotPasswordPrompt": "Introdueix el teu correu i t'enviarem un codi per restablir la contrasenya.",
+  "sendResetCode": "Envia el codi",
+  "resetCodeSentPrompt": "Si el correu existeix, t'hem enviat un codi. Introdueix-lo aquí amb la nova contrasenya.",
+  "resetCode": "Codi",
+  "newPassword": "Nova contrasenya",
+  "resetPasswordSubmit": "Restableix la contrasenya",
+  "passwordResetSuccess": "Contrasenya restablerta. Ja pots iniciar sessió."
 }

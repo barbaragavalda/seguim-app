@@ -86,6 +86,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             onPressed: () => context.push('/register'),
             child: Text(l10n.noAccountRegister),
           ),
+          TextButton(
+            onPressed: () => context.push('/forgot-password'),
+            child: Text(l10n.forgotPassword),
+          ),
         ],
       ),
     );

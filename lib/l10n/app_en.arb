@@ -50,5 +50,14 @@
     "placeholders": {
       "season": { "type": "int" }
     }
-  }
+  },
+  "forgotPassword": "Forgot your password?",
+  "forgotPasswordTitle": "Reset your password",
+  "forgotPasswordPrompt": "Enter your email and we'll send you a code to reset your password.",
+  "sendResetCode": "Send code",
+  "resetCodeSentPrompt": "If that email exists, we've sent a code. Enter it below with your new password.",
+  "resetCode": "Code",
+  "newPassword": "New password",
+  "resetPasswordSubmit": "Reset password",
+  "passwordResetSuccess": "Password reset. You can now log in."
 }

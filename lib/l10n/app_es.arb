@@ -50,5 +50,14 @@
     "placeholders": {
       "season": { "type": "int" }
     }
-  }
+  },
+  "forgotPassword": "¿Has olvidado la contraseña?",
+  "forgotPasswordTitle": "Recupera la contraseña",
+  "forgotPasswordPrompt": "Introduce tu correo y te enviaremos un código para restablecer la contraseña.",
+  "sendResetCode": "Enviar código",
+  "resetCodeSentPrompt": "Si el correo existe, te hemos enviado un código. Introdúcelo aquí con la nueva contraseña.",
+  "resetCode": "Código",
+  "newPassword": "Nueva contraseña",
+  "resetPasswordSubmit": "Restablecer contraseña",
+  "passwordResetSuccess": "Contraseña restablecida. Ya puedes iniciar sesión."
 }
