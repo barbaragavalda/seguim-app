@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
+import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 import 'watchlist_item.dart';
 
@@ -53,7 +54,7 @@ class WatchlistApi {
   }) async {
     final response = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: {'Authorization': token},
+      headers: apiHeaders(token),
     );
     late final Map<String, dynamic> data;
     try {

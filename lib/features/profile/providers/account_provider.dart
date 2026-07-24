@@ -8,6 +8,7 @@ class AccountState {
     this.isLoading = true,
     this.username,
     this.email,
+    this.language,
     this.isSaving = false,
     this.errorKey,
   });
@@ -15,6 +16,7 @@ class AccountState {
   final bool isLoading;
   final String? username;
   final String? email;
+  final String? language;
   final bool isSaving;
   final String? errorKey;
 
@@ -22,6 +24,7 @@ class AccountState {
     bool? isLoading,
     String? username,
     String? email,
+    String? language,
     bool? isSaving,
     String? errorKey,
     bool clearError = false,
@@ -30,6 +33,7 @@ class AccountState {
       isLoading: isLoading ?? this.isLoading,
       username: username ?? this.username,
       email: email ?? this.email,
+      language: language ?? this.language,
       isSaving: isSaving ?? this.isSaving,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
     );
@@ -55,6 +59,7 @@ class AccountController extends Notifier<AccountState> {
         isLoading: false,
         username: info.username,
         email: info.email,
+        language: info.language,
       );
     } on AccountException catch (e) {
       state = state.copyWith(isLoading: false, errorKey: e.message);
@@ -77,6 +82,14 @@ class AccountController extends Notifier<AccountState> {
       final token = ref.read(authProvider).token!;
       final saved = await _api.updateEmail(email, token: token);
       state = state.copyWith(email: saved);
+    });
+  }
+
+  Future<String?> updateLanguage(String language) {
+    return _save(() async {
+      final token = ref.read(authProvider).token!;
+      final saved = await _api.updateLanguage(language, token: token);
+      state = state.copyWith(language: saved);
     });
   }
 

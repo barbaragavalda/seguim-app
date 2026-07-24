@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../core/locale/locale_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
@@ -180,9 +181,51 @@ class _AccountSection extends ConsumerWidget {
             value: l10n.changePasswordValue,
             onTap: () => _changePassword(context, ref),
           ),
+          _AccountRow(
+            icon: Icons.language,
+            label: l10n.languageRow,
+            value:
+                languageNativeNames[Localizations.localeOf(context)
+                    .languageCode] ??
+                '',
+            onTap: () => _changeLanguage(context, ref),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _changeLanguage(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
+    final current = Localizations.localeOf(context).languageCode;
+
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: Text(l10n.changeLanguageTitle),
+        children: [
+          for (final culture in supportedLanguageCultures)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(culture),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(languageNativeNames[culture] ?? culture),
+                  ),
+                  if (culture == current)
+                    const Icon(Icons.check, size: 18, color: AppColors.coral),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (selected == null || selected == current) return;
+
+    await ref.read(localeProvider.notifier).setLocale(selected);
+    if (ref.read(authProvider).isLoggedIn) {
+      await ref.read(accountProvider.notifier).updateLanguage(selected);
+    }
   }
 
   Future<void> _editUsername(BuildContext context, WidgetRef ref) async {

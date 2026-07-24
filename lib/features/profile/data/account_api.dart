@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
+import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 
 class AccountException implements Exception {
@@ -10,10 +11,15 @@ class AccountException implements Exception {
 }
 
 class AccountInfo {
-  const AccountInfo({required this.username, required this.email});
+  const AccountInfo({
+    required this.username,
+    required this.email,
+    required this.language,
+  });
 
   final String username;
   final String email;
+  final String? language;
 }
 
 class AccountApi {
@@ -30,6 +36,7 @@ class AccountApi {
     return AccountInfo(
       username: data['username'] as String? ?? '',
       email: data['email'] as String? ?? '',
+      language: data['language'] as String?,
     );
   }
 
@@ -51,6 +58,16 @@ class AccountApi {
       body: {'email': email},
     );
     return data['email'] as String;
+  }
+
+  Future<String> updateLanguage(String language, {required String token}) async {
+    final data = await _request(
+      'POST',
+      '/api/account/language',
+      token: token,
+      body: {'language': language},
+    );
+    return data['language'] as String;
   }
 
   Future<void> changePassword({
@@ -77,7 +94,7 @@ class AccountApi {
     Map<String, String>? body,
   }) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}$path');
-    final headers = {'Authorization': token};
+    final headers = apiHeaders(token);
     final response = method == 'GET'
         ? await _client.get(uri, headers: headers)
         : method == 'DELETE'

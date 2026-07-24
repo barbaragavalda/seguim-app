@@ -84,6 +84,8 @@
   },
   "accountSectionTitle": "El teu compte",
   "changePasswordValue": "Canvia-la",
+  "languageRow": "Idioma",
+  "changeLanguageTitle": "Canvia l'idioma",
   "seriesSectionTitle": "Sèries",
   "comingSoonTag": "Properament",
   "seriesListsRow": "Llistes de sèries",

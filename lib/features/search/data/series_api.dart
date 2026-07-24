@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
+import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 import 'series.dart';
 
@@ -27,7 +28,7 @@ class SeriesApi {
       Uri.parse('${ApiConfig.baseUrl}/api/series/search').replace(
         queryParameters: {'query': query, 'page': '$page'},
       ),
-      headers: {'Authorization': ApiConfig.defaultToken},
+      headers: apiHeaders(ApiConfig.defaultToken),
     );
     late final Map<String, dynamic> data;
     try {

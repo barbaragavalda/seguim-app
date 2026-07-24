@@ -84,6 +84,8 @@
   },
   "accountSectionTitle": "Tu cuenta",
   "changePasswordValue": "Cámbiala",
+  "languageRow": "Idioma",
+  "changeLanguageTitle": "Cambia el idioma",
   "seriesSectionTitle": "Series",
   "comingSoonTag": "Próximamente",
   "seriesListsRow": "Listas de series",

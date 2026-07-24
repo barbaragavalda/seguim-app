@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
+import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 
 class AuthException implements Exception {
@@ -33,7 +34,7 @@ class AuthApi {
   Future<void> logout(String token) async {
     await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/logout'),
-      headers: {'Authorization': token},
+      headers: apiHeaders(token),
     );
   }
 
@@ -58,7 +59,7 @@ class AuthApi {
   Future<void> _actionRequest(String path, Map<String, String> body) async {
     final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: {'Authorization': ApiConfig.defaultToken},
+      headers: apiHeaders(ApiConfig.defaultToken),
       body: body,
     );
     late final Map<String, dynamic> data;
@@ -76,7 +77,7 @@ class AuthApi {
   Future<String> _authRequest(String path, Map<String, String> body) async {
     final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}$path'),
-      headers: {'Authorization': ApiConfig.defaultToken},
+      headers: apiHeaders(ApiConfig.defaultToken),
       body: body,
     );
     late final Map<String, dynamic> data;

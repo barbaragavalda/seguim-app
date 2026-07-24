@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
+import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 import 'series_detail.dart';
 
@@ -30,14 +31,10 @@ class SeriesDetailApi {
   Future<SeriesDetailResult> getDetail(
     String tvdbId, {
     required String token,
-    String? languageCode,
   }) async {
     final response = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}/api/series/$tvdbId'),
-      headers: {
-        'Authorization': token,
-        if (languageCode != null) 'Accept-Language': languageCode,
-      },
+      headers: apiHeaders(token),
     );
     final data = _decode(response.body);
     final seriesJson = data['series'] as Map<String, dynamic>? ?? {};
@@ -54,14 +51,14 @@ class SeriesDetailApi {
   Future<void> addToWatchlist(String tvdbId, {required String token}) {
     return _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId'),
-      headers: {'Authorization': token},
+      headers: apiHeaders(token),
     );
   }
 
   Future<void> removeFromWatchlist(String tvdbId, {required String token}) {
     return _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId'),
-      headers: {'Authorization': token},
+      headers: apiHeaders(token),
     );
   }
 
@@ -71,7 +68,7 @@ class SeriesDetailApi {
   }) {
     return _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/watched'),
-      headers: {'Authorization': token},
+      headers: apiHeaders(token),
     );
   }
 
@@ -81,7 +78,7 @@ class SeriesDetailApi {
   }) {
     return _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/watched'),
-      headers: {'Authorization': token},
+      headers: apiHeaders(token),
     );
   }
 

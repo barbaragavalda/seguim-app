@@ -84,6 +84,8 @@
   },
   "accountSectionTitle": "Your account",
   "changePasswordValue": "Change it",
+  "languageRow": "Language",
+  "changeLanguageTitle": "Change language",
   "seriesSectionTitle": "Series",
   "comingSoonTag": "Coming soon",
   "seriesListsRow": "Series lists",

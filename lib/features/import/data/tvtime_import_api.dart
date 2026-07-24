@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
+import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 
 class TvTimeImportException implements Exception {
@@ -67,7 +68,7 @@ class TvTimeImportApi {
       'POST',
       Uri.parse('${ApiConfig.baseUrl}/api/import/tvtime'),
     );
-    request.headers['Authorization'] = token;
+    request.headers.addAll(apiHeaders(token));
     request.files.add(
       http.MultipartFile.fromBytes('file', bytes, filename: filename),
     );
@@ -81,7 +82,7 @@ class TvTimeImportApi {
   Future<TvTimeImportStatus> getStatus(int id, {required String token}) async {
     final response = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}/api/import/tvtime/$id'),
-      headers: {'Authorization': token},
+      headers: apiHeaders(token),
     );
     return TvTimeImportStatus.fromJson(_decode(response.body));
   }
