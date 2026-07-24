@@ -66,7 +66,11 @@
   "markAllPrevious": "Marca'ls tots",
   "watchlistSectionWatching": "Veient",
   "watchlistSectionNotStarted": "No començat encara",
-  "watchlistCaughtUp": "Estàs al dia!",
+  "premiereUpcoming": "Pròximament",
+  "premiereInDays": "{days, plural, one{d'aquí 1 dia} other{d'aquí {days} dies}}",
+  "@premiereInDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
   "nextEpisodeLabel": "Següent:",
   "episodesRemaining": "{count, plural, one{1 episodi per veure} other{{count} episodis per veure}}",
   "@episodesRemaining": {
@@ -74,7 +78,6 @@
       "count": { "type": "int" }
     }
   },
-  "loadMore": "Carrega'n més",
   "welcomeGreeting": "Hola, {username}",
   "@welcomeGreeting": {
     "placeholders": { "username": { "type": "String" } }

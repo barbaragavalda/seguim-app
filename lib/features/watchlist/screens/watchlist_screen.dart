@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/placeholder_mark.dart';
+import '../../../widgets/status_tag.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/watchlist_item.dart';
 import '../providers/watchlist_provider.dart';
@@ -23,6 +25,10 @@ class WatchlistScreen extends ConsumerStatefulWidget {
 }
 
 class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
+  final _scrollController = ScrollController();
+
+  static const _loadMoreThreshold = 200;
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +36,21 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
     // widget lifecycle method - defer to the next microtask (see the
     // equivalent comment on SeriesDetailScreen.initState).
     Future.microtask(() => ref.read(watchlistProvider.notifier).load());
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      ref.read(watchlistProvider.notifier).loadMoreNotStarted();
+    }
   }
 
   @override
@@ -86,44 +107,39 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
         child: RefreshIndicator(
           onRefresh: () => ref.read(watchlistProvider.notifier).load(),
           child: CustomScrollView(
+            controller: _scrollController,
             slivers: [
-              if (state.watching.isNotEmpty) ...[
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _SectionHeaderDelegate(
-                    title: l10n.watchlistSectionWatching,
-                    count: state.watching.length,
-                  ),
-                ),
-                SliverList.builder(
-                  itemCount: state.watching.length,
-                  itemBuilder: (context, index) =>
-                      _WatchlistItemRow(item: state.watching[index], l10n: l10n),
-                ),
-              ],
-              if (state.notStarted.isNotEmpty) ...[
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _SectionHeaderDelegate(
-                    title: l10n.watchlistSectionNotStarted,
-                    count: state.notStarted.length,
-                  ),
-                ),
-                SliverList.builder(
-                  itemCount:
-                      state.notStarted.length +
-                      (state.notStartedHasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == state.notStarted.length) {
-                      return _LoadMoreButton(l10n: l10n);
-                    }
-                    return _WatchlistItemRow(
-                      item: state.notStarted[index],
+              if (state.watching.isNotEmpty)
+                SliverStickyHeader(
+                  header: _SectionHeader(title: l10n.watchlistSectionWatching),
+                  sliver: SliverList.builder(
+                    itemCount: state.watching.length,
+                    itemBuilder: (context, index) => _WatchlistItemRow(
+                      item: state.watching[index],
                       l10n: l10n,
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ],
+              if (state.notStarted.isNotEmpty)
+                SliverStickyHeader(
+                  header: _SectionHeader(
+                    title: l10n.watchlistSectionNotStarted,
+                  ),
+                  sliver: SliverList.builder(
+                    itemCount:
+                        state.notStarted.length +
+                        (state.notStartedHasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == state.notStarted.length) {
+                        return const _LoadingMoreIndicator();
+                      }
+                      return _WatchlistItemRow(
+                        item: state.notStarted[index],
+                        l10n: l10n,
+                      );
+                    },
+                  ),
+                ),
               const SliverToBoxAdapter(
                 child: SizedBox(height: AppSpacing.md),
               ),
@@ -135,26 +151,15 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
   }
 }
 
-class _SectionHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _SectionHeaderDelegate({required this.title, required this.count});
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
 
   final String title;
-  final int count;
 
   static const double _height = 44;
 
   @override
-  double get minExtent => _height;
-
-  @override
-  double get maxExtent => _height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // frosted, floating section header (like iOS grouped lists): content
     // scrolls under a blurred, translucent bar rather than a solid one
@@ -169,30 +174,17 @@ class _SectionHeaderDelegate extends SliverPersistentHeaderDelegate {
             color: theme.scaffoldBackgroundColor.withValues(alpha: 0.78),
             border: Border(bottom: BorderSide(color: theme.dividerColor)),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.fraunces(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: theme.textTheme.bodyLarge?.color,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text('$count', style: theme.textTheme.bodySmall),
-            ],
+          child: Text(
+            title,
+            style: GoogleFonts.fraunces(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
           ),
         ),
       ),
     );
-  }
-
-  @override
-  bool shouldRebuild(covariant _SectionHeaderDelegate oldDelegate) {
-    return oldDelegate.title != title || oldDelegate.count != count;
   }
 }
 
@@ -231,6 +223,7 @@ class _WatchlistItemRow extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -243,6 +236,7 @@ class _WatchlistItemRow extends ConsumerWidget {
                       : CachedNetworkImage(
                           imageUrl: item.imageUrl!,
                           fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
                           placeholder: (context, url) =>
                               const PlaceholderMark(fontSize: 15),
                           errorWidget: (context, url, error) =>
@@ -287,16 +281,37 @@ class _WatchlistItemRow extends ConsumerWidget {
                       ),
                     )
                   else
-                    Text(l10n.watchlistCaughtUp, style: bodySmall),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.episodesRemaining(item.remainingEpisodes),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                      color: AppColors.coral,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        StatusTag(
+                          label: l10n.premiereUpcoming,
+                          color: seriesStatusColor('Upcoming'),
+                        ),
+                        if (item.premiereInDays != null) ...[
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              l10n.premiereInDays(item.premiereInDays!),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: bodySmall,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ),
+                  if (item.remainingEpisodes > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.episodesRemaining(item.remainingEpisodes),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        color: AppColors.coral,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -307,30 +322,23 @@ class _WatchlistItemRow extends ConsumerWidget {
   }
 }
 
-class _LoadMoreButton extends ConsumerWidget {
-  const _LoadMoreButton({required this.l10n});
-
-  final AppLocalizations l10n;
+class _LoadingMoreIndicator extends ConsumerWidget {
+  const _LoadingMoreIndicator();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoadingMore = ref.watch(
       watchlistProvider.select((s) => s.isLoadingMore),
     );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+    if (!isLoadingMore) return const SizedBox.shrink();
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
       child: Center(
-        child: isLoadingMore
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : TextButton(
-                onPressed: () =>
-                    ref.read(watchlistProvider.notifier).loadMoreNotStarted(),
-                child: Text(l10n.loadMore),
-              ),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
       ),
     );
   }

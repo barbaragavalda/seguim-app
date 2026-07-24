@@ -6,6 +6,7 @@ class WatchlistItem {
     this.nextEpisodeCode,
     this.nextEpisodeName,
     required this.remainingEpisodes,
+    this.premiereInDays,
   });
 
   final String tvdbId;
@@ -15,6 +16,9 @@ class WatchlistItem {
   final String? nextEpisodeCode;
   final String? nextEpisodeName;
   final int remainingEpisodes;
+  // only ever set when nextEpisodeCode is null (a not-started series with
+  // nothing aired yet) - see Api\Model\Watchlist::finalizeRows()'s docblock
+  final int? premiereInDays;
 
   /// [nextEpisodeCode] reformatted to match the "1x03" style used elsewhere
   /// in the app (series detail's episode rows), or null if caught up.
@@ -35,6 +39,7 @@ class WatchlistItem {
       nextEpisodeCode: json['next_episode'] as String?,
       nextEpisodeName: json['next_episode_name'] as String?,
       remainingEpisodes: (json['remaining_episodes'] as num?)?.toInt() ?? 0,
+      premiereInDays: (json['premiere_in_days'] as num?)?.toInt(),
     );
   }
 }

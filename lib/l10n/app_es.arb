@@ -66,7 +66,11 @@
   "markAllPrevious": "Marcarlos todos",
   "watchlistSectionWatching": "Viendo",
   "watchlistSectionNotStarted": "Sin empezar",
-  "watchlistCaughtUp": "¡Estás al día!",
+  "premiereUpcoming": "Próximamente",
+  "premiereInDays": "{days, plural, one{dentro de 1 día} other{dentro de {days} días}}",
+  "@premiereInDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
   "nextEpisodeLabel": "Siguiente:",
   "episodesRemaining": "{count, plural, one{1 episodio por ver} other{{count} episodios por ver}}",
   "@episodesRemaining": {
@@ -74,7 +78,6 @@
       "count": { "type": "int" }
     }
   },
-  "loadMore": "Cargar más",
   "welcomeGreeting": "Hola, {username}",
   "@welcomeGreeting": {
     "placeholders": { "username": { "type": "String" } }
