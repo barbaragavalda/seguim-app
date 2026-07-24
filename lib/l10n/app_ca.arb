@@ -59,5 +59,9 @@
   "resetCode": "Codi",
   "newPassword": "Nova contrasenya",
   "resetPasswordSubmit": "Restableix la contrasenya",
-  "passwordResetSuccess": "Contrasenya restablerta. Ja pots iniciar sessió."
+  "passwordResetSuccess": "Contrasenya restablerta. Ja pots iniciar sessió.",
+  "markPreviousEpisodesTitle": "Episodis anteriors sense marcar",
+  "markPreviousEpisodesPrompt": "Hi ha episodis anteriors d'aquesta temporada que encara no has marcat com a vistos. Vols marcar-los també?",
+  "markOnlyThisOne": "Només aquest",
+  "markAllPrevious": "Marca'ls tots"
 }

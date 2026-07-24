@@ -59,5 +59,9 @@
   "resetCode": "Código",
   "newPassword": "Nueva contraseña",
   "resetPasswordSubmit": "Restablecer contraseña",
-  "passwordResetSuccess": "Contraseña restablecida. Ya puedes iniciar sesión."
+  "passwordResetSuccess": "Contraseña restablecida. Ya puedes iniciar sesión.",
+  "markPreviousEpisodesTitle": "Episodios anteriores sin marcar",
+  "markPreviousEpisodesPrompt": "Hay episodios anteriores de esta temporada que todavía no has marcado como vistos. ¿Quieres marcarlos también?",
+  "markOnlyThisOne": "Solo este",
+  "markAllPrevious": "Marcarlos todos"
 }

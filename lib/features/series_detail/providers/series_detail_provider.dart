@@ -163,6 +163,45 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
       );
     }
   }
+
+  /// Episodes earlier in [episode]'s season, still unwatched - used to ask
+  /// the user whether to mark those too before marking [episode] itself.
+  List<Episode> unwatchedBefore(Episode episode) {
+    return state.episodesForSelectedSeason
+        .where((e) => e.episodeNumber < episode.episodeNumber && !e.watched)
+        .toList();
+  }
+
+  Future<void> markWatchedThrough(Episode episode) async {
+    final token = ref.read(authProvider).token;
+    if (token == null) return;
+    final toMark = state.episodesForSelectedSeason
+        .where((e) => e.episodeNumber <= episode.episodeNumber && !e.watched)
+        .toList();
+    if (toMark.isEmpty) return;
+    final idsToMark = toMark.map((e) => e.tvdbId).toSet();
+    state = state.copyWith(
+      episodes: [
+        for (final e in state.episodes)
+          if (idsToMark.contains(e.tvdbId)) e.copyWith(watched: true) else e,
+      ],
+    );
+    try {
+      await Future.wait(
+        toMark.map((e) => _api.markEpisodeWatched(e.tvdbId, token: token)),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        episodes: [
+          for (final e in state.episodes)
+            if (idsToMark.contains(e.tvdbId))
+              e.copyWith(watched: false)
+            else
+              e,
+        ],
+      );
+    }
+  }
 }
 
 final seriesDetailProvider =

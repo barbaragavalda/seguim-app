@@ -59,5 +59,9 @@
   "resetCode": "Code",
   "newPassword": "New password",
   "resetPasswordSubmit": "Reset password",
-  "passwordResetSuccess": "Password reset. You can now log in."
+  "passwordResetSuccess": "Password reset. You can now log in.",
+  "markPreviousEpisodesTitle": "Earlier episodes not marked",
+  "markPreviousEpisodesPrompt": "There are earlier episodes in this season you haven't marked as watched yet. Do you want to mark those too?",
+  "markOnlyThisOne": "Only this one",
+  "markAllPrevious": "Mark them all"
 }

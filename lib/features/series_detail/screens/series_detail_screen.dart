@@ -191,6 +191,54 @@ void _requireLogin(BuildContext context, WidgetRef ref, VoidCallback action) {
   }
 }
 
+/// Tapping to mark an episode watched, when earlier episodes in the same
+/// season are still unwatched, asks whether to mark those too rather than
+/// silently leaving a gap.
+Future<void> _handleEpisodeTap(
+  BuildContext context,
+  WidgetRef ref,
+  Episode episode,
+) async {
+  final notifier = ref.read(seriesDetailProvider.notifier);
+  if (episode.watched) {
+    return notifier.toggleEpisodeWatched(episode);
+  }
+
+  final earlierUnwatched = notifier.unwatchedBefore(episode);
+  if (earlierUnwatched.isEmpty) {
+    return notifier.toggleEpisodeWatched(episode);
+  }
+
+  final l10n = AppLocalizations.of(context)!;
+  final markAll = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l10n.markPreviousEpisodesTitle),
+      content: Text(l10n.markPreviousEpisodesPrompt),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(MaterialLocalizations.of(dialogContext).cancelButtonLabel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(l10n.markOnlyThisOne),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(l10n.markAllPrevious),
+        ),
+      ],
+    ),
+  );
+  if (markAll == null) return;
+  if (markAll) {
+    await notifier.markWatchedThrough(episode);
+  } else {
+    await notifier.toggleEpisodeWatched(episode);
+  }
+}
+
 class _Header extends StatelessWidget {
   const _Header({required this.series, required this.l10n});
 
@@ -581,9 +629,7 @@ class _EpisodeRow extends ConsumerWidget {
             onTap: () => _requireLogin(
               context,
               ref,
-              () => ref
-                  .read(seriesDetailProvider.notifier)
-                  .toggleEpisodeWatched(episode),
+              () => _handleEpisodeTap(context, ref, episode),
             ),
             child: Container(
               width: 26,
