@@ -63,5 +63,16 @@
   "markPreviousEpisodesTitle": "Episodis anteriors sense marcar",
   "markPreviousEpisodesPrompt": "Hi ha episodis anteriors d'aquesta temporada que encara no has marcat com a vistos. Vols marcar-los també?",
   "markOnlyThisOne": "Només aquest",
-  "markAllPrevious": "Marca'ls tots"
+  "markAllPrevious": "Marca'ls tots",
+  "watchlistSectionWatching": "Veient",
+  "watchlistSectionNotStarted": "No començat encara",
+  "watchlistCaughtUp": "Estàs al dia!",
+  "nextEpisodeLabel": "Següent:",
+  "episodesRemaining": "{count, plural, one{1 episodi per veure} other{{count} episodis per veure}}",
+  "@episodesRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "loadMore": "Carrega'n més"
 }

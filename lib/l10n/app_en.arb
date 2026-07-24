@@ -63,5 +63,16 @@
   "markPreviousEpisodesTitle": "Earlier episodes not marked",
   "markPreviousEpisodesPrompt": "There are earlier episodes in this season you haven't marked as watched yet. Do you want to mark those too?",
   "markOnlyThisOne": "Only this one",
-  "markAllPrevious": "Mark them all"
+  "markAllPrevious": "Mark them all",
+  "watchlistSectionWatching": "Watching",
+  "watchlistSectionNotStarted": "Not started yet",
+  "watchlistCaughtUp": "You're all caught up!",
+  "nextEpisodeLabel": "Next:",
+  "episodesRemaining": "{count, plural, one{1 episode to watch} other{{count} episodes to watch}}",
+  "@episodesRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "loadMore": "Load more"
 }

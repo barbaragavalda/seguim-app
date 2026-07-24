@@ -15,11 +15,13 @@ class AppColors {
   static const darkSurface = Color(0xFF21394D);
   static const darkTextPrimary = Color(0xFFF3F7F6);
   static const darkTextSecondary = Color(0xFF9FB7C2);
+  static const darkDivider = Color(0xFF2C4B62);
 
   static const lightBg = Color(0xFFF6F9F9);
   static const lightSurface = Color(0xFFFFFFFF);
   static const lightTextPrimary = Color(0xFF14232E);
   static const lightTextSecondary = Color(0xFF5B7482);
+  static const lightDivider = Color(0xFFE6EAEA);
 
   static const placeholderBackground = Color(0xFFE4E4E4);
 }

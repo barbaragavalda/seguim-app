@@ -63,5 +63,16 @@
   "markPreviousEpisodesTitle": "Episodios anteriores sin marcar",
   "markPreviousEpisodesPrompt": "Hay episodios anteriores de esta temporada que todavía no has marcado como vistos. ¿Quieres marcarlos también?",
   "markOnlyThisOne": "Solo este",
-  "markAllPrevious": "Marcarlos todos"
+  "markAllPrevious": "Marcarlos todos",
+  "watchlistSectionWatching": "Viendo",
+  "watchlistSectionNotStarted": "Sin empezar",
+  "watchlistCaughtUp": "¡Estás al día!",
+  "nextEpisodeLabel": "Siguiente:",
+  "episodesRemaining": "{count, plural, one{1 episodio por ver} other{{count} episodios por ver}}",
+  "@episodesRemaining": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "loadMore": "Cargar más"
 }

@@ -24,6 +24,7 @@ class AppTheme {
         cardColor: AppColors.lightSurface,
         textPrimary: AppColors.lightTextPrimary,
         textSecondary: AppColors.lightTextSecondary,
+        divider: AppColors.lightDivider,
       );
 
   static ThemeData get dark => _build(
@@ -43,6 +44,7 @@ class AppTheme {
         cardColor: AppColors.darkSurface,
         textPrimary: AppColors.darkTextPrimary,
         textSecondary: AppColors.darkTextSecondary,
+        divider: AppColors.darkDivider,
       );
 
   static ThemeData _build({
@@ -52,6 +54,7 @@ class AppTheme {
     required Color cardColor,
     required Color textPrimary,
     required Color textSecondary,
+    required Color divider,
   }) {
     final base = ThemeData(brightness: brightness, useMaterial3: true);
     var textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
@@ -82,6 +85,8 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: scaffoldBackground,
       cardColor: cardColor,
+      dividerColor: divider,
+      dividerTheme: DividerThemeData(color: divider),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: scaffoldBackground,
