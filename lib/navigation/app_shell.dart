@@ -19,6 +19,7 @@ class AppShell extends ConsumerWidget {
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: NavigationBar(
+        height: 70,
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) {
           // the watchlist tab's screen stays alive in the IndexedStack once
