@@ -99,11 +99,12 @@ class AccountController extends Notifier<AccountState> {
   }) {
     return _save(() async {
       final token = ref.read(authProvider).token!;
-      await _api.changePassword(
+      final newToken = await _api.changePassword(
         currentPassword: currentPassword,
         newPassword: newPassword,
         token: token,
       );
+      await ref.read(authProvider.notifier).updateToken(newToken);
     });
   }
 

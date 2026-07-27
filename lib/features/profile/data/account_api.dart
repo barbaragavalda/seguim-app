@@ -70,17 +70,22 @@ class AccountApi {
     return data['language'] as String;
   }
 
-  Future<void> changePassword({
+  /// Returns the freshly-issued token for this session - the backend
+  /// revokes every device's token on a password change (see
+  /// Webservice\Controller\ChangePassword), so the caller must swap its
+  /// stored token for this one or the current session goes stale.
+  Future<String> changePassword({
     required String currentPassword,
     required String newPassword,
     required String token,
-  }) {
-    return _request(
+  }) async {
+    final data = await _request(
       'POST',
       '/api/account/password',
       token: token,
       body: {'current_password': currentPassword, 'new_password': newPassword},
     );
+    return data['token'] as String;
   }
 
   Future<void> deleteAccount({required String token}) {

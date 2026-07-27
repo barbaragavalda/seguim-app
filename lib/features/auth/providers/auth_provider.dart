@@ -78,6 +78,16 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  /// Swaps in a freshly-issued token for the current session without a
+  /// full login round-trip - used after a password change, which revokes
+  /// every device's token (including this one) and hands back a new one so
+  /// the device making the change isn't logged out for a change it just
+  /// asked for itself (see Webservice\Controller\ChangePassword).
+  Future<void> updateToken(String token) async {
+    await _storage.write(key: _tokenStorageKey, value: token);
+    state = state.copyWith(token: token);
+  }
+
   Future<void> logOut() async {
     final token = state.token;
     state = state.copyWith(clearToken: true);
