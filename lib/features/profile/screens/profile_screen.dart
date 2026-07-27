@@ -390,18 +390,14 @@ class _SeriesSection extends StatelessWidget {
 
     return _Section(
       title: l10n.seriesSectionTitle,
-      tag: l10n.comingSoonTag,
       child: _Card(
         children: [
+          _ActiveRow(
+            icon: Icons.video_library_outlined,
+            label: l10n.mySeriesRow,
+            onTap: () => context.push('/my-series'),
+          ),
           _ComingSoonRow(icon: Icons.list_alt, label: l10n.seriesListsRow),
-          _ComingSoonRow(
-            icon: Icons.archive_outlined,
-            label: l10n.archivedSeriesRow,
-          ),
-          _ComingSoonRow(
-            icon: Icons.pause_circle_outlined,
-            label: l10n.droppedSeriesRow,
-          ),
         ],
       ),
     );
@@ -513,10 +509,9 @@ class _FooterSection extends ConsumerWidget {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child, this.tag});
+  const _Section({required this.title, required this.child});
 
   final String title;
-  final String? tag;
   final Widget child;
 
   @override
@@ -531,40 +526,13 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.fraunces(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-              if (tag != null) ...[
-                const SizedBox(width: AppSpacing.sm),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.sage,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                  ),
-                  child: Text(
-                    tag!,
-                    style: const TextStyle(
-                      color: AppColors.onSageLight,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+          Text(
+            title,
+            style: GoogleFonts.fraunces(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           child,
@@ -641,6 +609,53 @@ class _AccountRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
                 style: TextStyle(fontSize: 13, color: textSecondary),
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveRow extends StatelessWidget {
+  const _ActiveRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerColor = Theme.of(context).dividerColor;
+    final textSecondary = Theme.of(context).textTheme.bodySmall?.color;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 13,
+        ),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: dividerColor)),
+        ),
+        child: Row(
+          children: [
+            _RowIcon(icon: icon),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Icon(Icons.chevron_right, size: 18, color: textSecondary),

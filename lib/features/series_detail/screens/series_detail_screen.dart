@@ -78,40 +78,59 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
               children: [
                 _StatsRow(series: series, l10n: l10n),
                 const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  width: double.infinity,
-                  child: state.inWatchlist
-                      ? OutlinedButton.icon(
+                if (state.inWatchlist)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ToggleButton(
+                          active: state.archived,
+                          activeIcon: Icons.unarchive_outlined,
+                          inactiveIcon: Icons.archive_outlined,
+                          activeLabel: l10n.unarchiveAction,
+                          inactiveLabel: l10n.archiveAction,
                           onPressed: () => _requireLogin(
                             context,
                             ref,
                             () => ref
                                 .read(seriesDetailProvider.notifier)
-                                .toggleWatchlist(),
+                                .setArchived(!state.archived),
                           ),
-                          icon: const Icon(Icons.check),
-                          label: Text(l10n.inWatchlist),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            side: BorderSide(
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        )
-                      : FilledButton.icon(
-                          onPressed: () => _requireLogin(
-                            context,
-                            ref,
-                            () => ref
-                                .read(seriesDetailProvider.notifier)
-                                .toggleWatchlist(),
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: Text(l10n.addToWatchlist),
                         ),
-                ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _ToggleButton(
+                          active: state.removed,
+                          activeIcon: Icons.visibility_outlined,
+                          inactiveIcon: Icons.visibility_off_outlined,
+                          activeLabel: l10n.restoreAction,
+                          inactiveLabel: l10n.markRemovedAction,
+                          onPressed: () => _requireLogin(
+                            context,
+                            ref,
+                            () => ref
+                                .read(seriesDetailProvider.notifier)
+                                .setRemoved(!state.removed),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => _requireLogin(
+                        context,
+                        ref,
+                        () => ref
+                            .read(seriesDetailProvider.notifier)
+                            .addToWatchlist(),
+                      ),
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.addToWatchlist),
+                    ),
+                  ),
                 if (series.overview != null && series.overview!.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.md),
                   _buildOverview(context, l10n, series.overview!),
@@ -176,6 +195,52 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// The archive/mark-removed toggles on a series already in the watchlist -
+/// both are reversible flags (unlike the plain hard-delete "remove
+/// entirely" action, which stays out of this screen - see
+/// SeriesDetailController.addToWatchlist()'s docblock).
+class _ToggleButton extends StatelessWidget {
+  const _ToggleButton({
+    required this.active,
+    required this.activeIcon,
+    required this.inactiveIcon,
+    required this.activeLabel,
+    required this.inactiveLabel,
+    required this.onPressed,
+  });
+
+  final bool active;
+  final IconData activeIcon;
+  final IconData inactiveIcon;
+  final String activeLabel;
+  final String inactiveLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    // same two-state look as the old "+ Watchlist"/"A la watchlist" toggle:
+    // filled (solid background) for the inactive/default action, outlined
+    // (border only) once it's active
+    if (active) {
+      final primary = Theme.of(context).colorScheme.primary;
+      return OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(activeIcon),
+        label: Text(activeLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          side: BorderSide(color: primary),
+        ),
+      );
+    }
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: Icon(inactiveIcon),
+      label: Text(inactiveLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }

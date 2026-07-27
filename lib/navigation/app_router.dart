@@ -4,6 +4,7 @@ import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/import/screens/tvtime_import_screen.dart';
+import '../features/my_series/screens/my_series_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/series_detail/screens/series_detail_screen.dart';
@@ -30,6 +31,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/import/tvtime',
       builder: (context, state) => const TvTimeImportScreen(),
+    ),
+    GoRoute(
+      path: '/my-series',
+      builder: (context, state) => const MySeriesScreen(),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>

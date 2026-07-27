@@ -16,11 +16,15 @@ class SeriesDetailResult {
     required this.series,
     required this.episodes,
     required this.inWatchlist,
+    required this.archived,
+    required this.removed,
   });
 
   final SeriesDetail series;
   final List<Episode> episodes;
   final bool inWatchlist;
+  final bool archived;
+  final bool removed;
 }
 
 class SeriesDetailApi {
@@ -45,6 +49,8 @@ class SeriesDetailApi {
           .map((item) => Episode.fromJson(item as Map<String, dynamic>))
           .toList(),
       inWatchlist: data['in_watchlist'] as bool? ?? false,
+      archived: data['archived'] as bool? ?? false,
+      removed: data['removed'] as bool? ?? false,
     );
   }
 
@@ -55,11 +61,26 @@ class SeriesDetailApi {
     );
   }
 
-  Future<void> removeFromWatchlist(String tvdbId, {required String token}) {
-    return _client.delete(
-      Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId'),
-      headers: apiHeaders(token),
-    );
+  Future<void> setArchived(
+    String tvdbId,
+    bool archived, {
+    required String token,
+  }) {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId/archived');
+    return archived
+        ? _client.post(uri, headers: apiHeaders(token))
+        : _client.delete(uri, headers: apiHeaders(token));
+  }
+
+  Future<void> setRemoved(
+    String tvdbId,
+    bool removed, {
+    required String token,
+  }) {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId/removed');
+    return removed
+        ? _client.post(uri, headers: apiHeaders(token))
+        : _client.delete(uri, headers: apiHeaders(token));
   }
 
   Future<void> markEpisodeWatched(

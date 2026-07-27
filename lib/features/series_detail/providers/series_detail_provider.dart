@@ -11,8 +11,12 @@ class SeriesDetailState {
     this.series,
     this.episodes = const [],
     this.inWatchlist = false,
+    this.archived = false,
+    this.removed = false,
     this.selectedSeason,
     this.watchlistPending = false,
+    this.archivePending = false,
+    this.removedPending = false,
     this.errorKey,
   });
 
@@ -20,8 +24,12 @@ class SeriesDetailState {
   final SeriesDetail? series;
   final List<Episode> episodes;
   final bool inWatchlist;
+  final bool archived;
+  final bool removed;
   final int? selectedSeason;
   final bool watchlistPending;
+  final bool archivePending;
+  final bool removedPending;
   final String? errorKey;
 
   List<int> get seasonNumbers {
@@ -44,8 +52,12 @@ class SeriesDetailState {
     SeriesDetail? series,
     List<Episode>? episodes,
     bool? inWatchlist,
+    bool? archived,
+    bool? removed,
     int? selectedSeason,
     bool? watchlistPending,
+    bool? archivePending,
+    bool? removedPending,
     String? errorKey,
     bool clearError = false,
   }) {
@@ -54,8 +66,12 @@ class SeriesDetailState {
       series: series ?? this.series,
       episodes: episodes ?? this.episodes,
       inWatchlist: inWatchlist ?? this.inWatchlist,
+      archived: archived ?? this.archived,
+      removed: removed ?? this.removed,
       selectedSeason: selectedSeason ?? this.selectedSeason,
       watchlistPending: watchlistPending ?? this.watchlistPending,
+      archivePending: archivePending ?? this.archivePending,
+      removedPending: removedPending ?? this.removedPending,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
     );
   }
@@ -90,6 +106,8 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
         series: result.series,
         episodes: result.episodes,
         inWatchlist: result.inWatchlist,
+        archived: result.archived,
+        removed: result.removed,
         selectedSeason: seasons.isEmpty ? null : seasons.first,
       );
     } on SeriesDetailException catch (e) {
@@ -108,27 +126,49 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     state = state.copyWith(selectedSeason: season);
   }
 
-  Future<void> toggleWatchlist() async {
+  /// Adds the series to the watchlist - once there, it stays there;
+  /// see setArchived()/setRemoved() for the two reversible ways to hide it
+  /// again without losing watched-episode history (the plain "remove
+  /// entirely" action deliberately isn't exposed here, only from
+  /// MySeriesScreen - see the profile "Sèries" section's own reasoning).
+  Future<void> addToWatchlist() async {
     final tvdbId = _tvdbId;
     final token = ref.read(authProvider).token;
     if (tvdbId == null || token == null || state.watchlistPending) return;
-    final wasInWatchlist = state.inWatchlist;
-    state = state.copyWith(
-      inWatchlist: !wasInWatchlist,
-      watchlistPending: true,
-    );
+    state = state.copyWith(inWatchlist: true, watchlistPending: true);
     try {
-      if (wasInWatchlist) {
-        await _api.removeFromWatchlist(tvdbId, token: token);
-      } else {
-        await _api.addToWatchlist(tvdbId, token: token);
-      }
+      await _api.addToWatchlist(tvdbId, token: token);
       state = state.copyWith(watchlistPending: false);
     } catch (_) {
-      state = state.copyWith(
-        inWatchlist: wasInWatchlist,
-        watchlistPending: false,
-      );
+      state = state.copyWith(inWatchlist: false, watchlistPending: false);
+    }
+  }
+
+  Future<void> setArchived(bool archived) async {
+    final tvdbId = _tvdbId;
+    final token = ref.read(authProvider).token;
+    if (tvdbId == null || token == null || state.archivePending) return;
+    final previous = state.archived;
+    state = state.copyWith(archived: archived, archivePending: true);
+    try {
+      await _api.setArchived(tvdbId, archived, token: token);
+      state = state.copyWith(archivePending: false);
+    } catch (_) {
+      state = state.copyWith(archived: previous, archivePending: false);
+    }
+  }
+
+  Future<void> setRemoved(bool removed) async {
+    final tvdbId = _tvdbId;
+    final token = ref.read(authProvider).token;
+    if (tvdbId == null || token == null || state.removedPending) return;
+    final previous = state.removed;
+    state = state.copyWith(removed: removed, removedPending: true);
+    try {
+      await _api.setRemoved(tvdbId, removed, token: token);
+      state = state.copyWith(removedPending: false);
+    } catch (_) {
+      state = state.copyWith(removed: previous, removedPending: false);
     }
   }
 
@@ -136,6 +176,9 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     final token = ref.read(authProvider).token;
     if (token == null) return;
     final wasWatched = episode.watched;
+    // marking an episode watched implies following the series - see
+    // Api\Controller\Episode\Watch's matching backend-side add()
+    final wasInWatchlist = state.inWatchlist;
     state = state.copyWith(
       episodes: [
         for (final e in state.episodes)
@@ -144,6 +187,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
           else
             e,
       ],
+      inWatchlist: wasWatched ? wasInWatchlist : true,
     );
     try {
       if (wasWatched) {
@@ -160,6 +204,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
             else
               e,
         ],
+        inWatchlist: wasInWatchlist,
       );
     }
   }
@@ -180,11 +225,13 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
         .toList();
     if (toMark.isEmpty) return;
     final idsToMark = toMark.map((e) => e.tvdbId).toSet();
+    final wasInWatchlist = state.inWatchlist;
     state = state.copyWith(
       episodes: [
         for (final e in state.episodes)
           if (idsToMark.contains(e.tvdbId)) e.copyWith(watched: true) else e,
       ],
+      inWatchlist: true,
     );
     try {
       await Future.wait(
@@ -199,6 +246,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
             else
               e,
         ],
+        inWatchlist: wasInWatchlist,
       );
     }
   }
