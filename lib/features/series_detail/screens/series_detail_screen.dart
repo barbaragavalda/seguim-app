@@ -310,90 +310,100 @@ class _Header extends StatelessWidget {
   final SeriesDetail series;
   final AppLocalizations l10n;
 
+  // on a wide (desktop web) screen, a plain AspectRatio(16/9) grows its
+  // height with the full screen width with no upper bound - capping it
+  // here keeps AspectRatio's normal behavior on mobile (width/16*9 stays
+  // well under this) while turning the header into a shorter, wider crop
+  // (still BoxFit.cover, so no distortion) past this point
+  static const double _maxHeight = 420;
+
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _buildBackdrop(),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x1A000000),
-                  Color(0x26000000),
-                  Color(0x8C000000),
-                ],
-                stops: [0, 0.4, 1],
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: _maxHeight),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildBackdrop(),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x1A000000),
+                    Color(0x26000000),
+                    Color(0x8C000000),
+                  ],
+                  stops: [0, 0.4, 1],
+                ),
               ),
             ),
-          ),
-          Positioned(
-            top: AppSpacing.md,
-            left: AppSpacing.md,
-            child: _CircleButton(
-              icon: Icons.arrow_back,
-              onTap: () => context.pop(),
+            Positioned(
+              top: AppSpacing.md,
+              left: AppSpacing.md,
+              child: _CircleButton(
+                icon: Icons.arrow_back,
+                onTap: () => context.pop(),
+              ),
             ),
-          ),
-          Positioned(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            bottom: AppSpacing.md,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  series.displayTitle,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.fraunces(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 22,
-                    color: Colors.white,
-                    height: 1.22,
-                    shadows: const [
-                      Shadow(color: Color(0x59000000), blurRadius: 8),
-                    ],
+            Positioned(
+              left: AppSpacing.md,
+              right: AppSpacing.md,
+              bottom: AppSpacing.md,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    series.displayTitle,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.fraunces(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
+                      color: Colors.white,
+                      height: 1.22,
+                      shadows: const [
+                        Shadow(color: Color(0x59000000), blurRadius: 8),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (series.yearStart != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Text(
-                          series.yearStart!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            shadows: [
-                              Shadow(color: Color(0x59000000), blurRadius: 4),
-                            ],
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (series.yearStart != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            series.yearStart!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              shadows: [
+                                Shadow(color: Color(0x59000000), blurRadius: 4),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    if (series.status != null)
-                      StatusTag(
-                        label: localizedSeriesStatus(l10n, series.status!),
-                        color: seriesStatusColor(series.status!),
-                        backgroundOpacity: 1,
-                        textColor: seriesStatusOnColor(series.status!),
-                      ),
-                  ],
-                ),
-              ],
+                      if (series.status != null)
+                        StatusTag(
+                          label: localizedSeriesStatus(l10n, series.status!),
+                          color: seriesStatusColor(series.status!),
+                          backgroundOpacity: 1,
+                          textColor: seriesStatusOnColor(series.status!),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
