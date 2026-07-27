@@ -64,6 +64,7 @@ class Episode {
     this.imageUrl,
     this.runtime,
     this.watched = false,
+    this.watchCount = 0,
   });
 
   final String tvdbId;
@@ -75,8 +76,12 @@ class Episode {
   final String? imageUrl;
   final int? runtime;
   final bool watched;
+  // how many times this episode has been watched - 0 when unwatched, 1 for
+  // a plain watch, 2+ once rewatched (see SeriesDetailController.
+  // rewatchEpisode()); user_episode_watched is one row per watch event
+  final int watchCount;
 
-  Episode copyWith({bool? watched}) {
+  Episode copyWith({bool? watched, int? watchCount}) {
     return Episode(
       tvdbId: tvdbId,
       seasonNumber: seasonNumber,
@@ -87,6 +92,7 @@ class Episode {
       imageUrl: imageUrl,
       runtime: runtime,
       watched: watched ?? this.watched,
+      watchCount: watchCount ?? this.watchCount,
     );
   }
 
@@ -101,6 +107,7 @@ class Episode {
       imageUrl: json['image'] as String?,
       runtime: (json['runtime'] as num?)?.toInt(),
       watched: json['watched'] as bool? ?? false,
+      watchCount: (json['watch_count'] as num?)?.toInt() ?? 0,
     );
   }
 }

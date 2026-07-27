@@ -172,10 +172,17 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     }
   }
 
+  /// Toggles between fully unwatched (watchCount 0) and watched-once
+  /// (watchCount 1) - only reachable for a currently-unwatched episode, or
+  /// as the "delete" choice from the already-watched dialog (see
+  /// _handleWatchedEpisodeTap), which resets watchCount to 0 same as the
+  /// backend's full-reset DELETE. rewatchEpisode below is the only way to
+  /// reach watchCount > 1.
   Future<void> toggleEpisodeWatched(Episode episode) async {
     final token = ref.read(authProvider).token;
     if (token == null) return;
     final wasWatched = episode.watched;
+    final previousCount = episode.watchCount;
     // marking an episode watched implies following the series - see
     // Api\Controller\Episode\Watch's matching backend-side add()
     final wasInWatchlist = state.inWatchlist;
@@ -183,7 +190,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
       episodes: [
         for (final e in state.episodes)
           if (e.tvdbId == episode.tvdbId)
-            e.copyWith(watched: !wasWatched)
+            e.copyWith(watched: !wasWatched, watchCount: wasWatched ? 0 : 1)
           else
             e,
       ],
@@ -200,11 +207,70 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
         episodes: [
           for (final e in state.episodes)
             if (e.tvdbId == episode.tvdbId)
-              e.copyWith(watched: wasWatched)
+              e.copyWith(watched: wasWatched, watchCount: previousCount)
             else
               e,
         ],
         inWatchlist: wasInWatchlist,
+      );
+    }
+  }
+
+  /// Records another watch event - [episode.watched] is already true (this
+  /// is only reachable from the "already watched, what do you want to do"
+  /// dialog, see series_detail_screen.dart), so only watchCount changes.
+  Future<void> rewatchEpisode(Episode episode) async {
+    final token = ref.read(authProvider).token;
+    if (token == null) return;
+    final previousCount = episode.watchCount;
+    state = state.copyWith(
+      episodes: [
+        for (final e in state.episodes)
+          if (e.tvdbId == episode.tvdbId)
+            e.copyWith(watchCount: previousCount + 1)
+          else
+            e,
+      ],
+    );
+    try {
+      await _api.rewatchEpisode(episode.tvdbId, token: token);
+    } catch (_) {
+      state = state.copyWith(
+        episodes: [
+          for (final e in state.episodes)
+            if (e.tvdbId == episode.tvdbId)
+              e.copyWith(watchCount: previousCount)
+            else
+              e,
+        ],
+      );
+    }
+  }
+
+  /// The inverse of rewatchEpisode - collapses watchCount back down to 1
+  /// (still watched, just not "rewatched" anymore). Only reachable from
+  /// the already-watched dialog when watchCount > 1.
+  Future<void> undoRewatch(Episode episode) async {
+    final token = ref.read(authProvider).token;
+    if (token == null) return;
+    final previousCount = episode.watchCount;
+    state = state.copyWith(
+      episodes: [
+        for (final e in state.episodes)
+          if (e.tvdbId == episode.tvdbId) e.copyWith(watchCount: 1) else e,
+      ],
+    );
+    try {
+      await _api.undoRewatch(episode.tvdbId, token: token);
+    } catch (_) {
+      state = state.copyWith(
+        episodes: [
+          for (final e in state.episodes)
+            if (e.tvdbId == episode.tvdbId)
+              e.copyWith(watchCount: previousCount)
+            else
+              e,
+        ],
       );
     }
   }
@@ -229,7 +295,10 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     state = state.copyWith(
       episodes: [
         for (final e in state.episodes)
-          if (idsToMark.contains(e.tvdbId)) e.copyWith(watched: true) else e,
+          if (idsToMark.contains(e.tvdbId))
+            e.copyWith(watched: true, watchCount: 1)
+          else
+            e,
       ],
       inWatchlist: true,
     );
@@ -242,7 +311,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
         episodes: [
           for (final e in state.episodes)
             if (idsToMark.contains(e.tvdbId))
-              e.copyWith(watched: false)
+              e.copyWith(watched: false, watchCount: 0)
             else
               e,
         ],

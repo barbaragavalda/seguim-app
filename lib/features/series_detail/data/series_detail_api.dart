@@ -93,12 +93,32 @@ class SeriesDetailApi {
     );
   }
 
+  /// A full reset - every watch event for this episode is removed, not
+  /// just the most recent rewatch (see rewatchEpisode below).
   Future<void> markEpisodeUnwatched(
     String episodeTvdbId, {
     required String token,
   }) {
     return _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/watched'),
+      headers: apiHeaders(token),
+    );
+  }
+
+  /// Unlike markEpisodeWatched (a no-op if already watched), always
+  /// records a new watch event.
+  Future<void> rewatchEpisode(String episodeTvdbId, {required String token}) {
+    return _client.post(
+      Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/rewatch'),
+      headers: apiHeaders(token),
+    );
+  }
+
+  /// The inverse of rewatchEpisode - collapses back down to a single watch
+  /// rather than fully unwatching it (unlike markEpisodeUnwatched).
+  Future<void> undoRewatch(String episodeTvdbId, {required String token}) {
+    return _client.delete(
+      Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/rewatch'),
       headers: apiHeaders(token),
     );
   }

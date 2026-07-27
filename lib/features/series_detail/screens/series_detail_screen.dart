@@ -266,7 +266,7 @@ Future<void> _handleEpisodeTap(
 ) async {
   final notifier = ref.read(seriesDetailProvider.notifier);
   if (episode.watched) {
-    return notifier.toggleEpisodeWatched(episode);
+    return _handleWatchedEpisodeTap(context, ref, episode);
   }
 
   final earlierUnwatched = notifier.unwatchedBefore(episode);
@@ -301,6 +301,63 @@ Future<void> _handleEpisodeTap(
     await notifier.markWatchedThrough(episode);
   } else {
     await notifier.toggleEpisodeWatched(episode);
+  }
+}
+
+enum _WatchedEpisodeAction { delete, watchOnce, rewatch }
+
+/// Tapping an already-watched episode is ambiguous now that rewatching is
+/// its own action - asks which one was meant instead of always deleting
+/// the watch history outright (toggleEpisodeWatched's old, sole behavior).
+/// The "watch it only once" choice (undo any rewatches, keep watchCount at
+/// 1) only makes sense - and only shows up - once it's actually been
+/// rewatched.
+Future<void> _handleWatchedEpisodeTap(
+  BuildContext context,
+  WidgetRef ref,
+  Episode episode,
+) async {
+  final l10n = AppLocalizations.of(context)!;
+  final action = await showDialog<_WatchedEpisodeAction>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l10n.unwatchEpisodeTitle),
+      content: Text(l10n.unwatchEpisodePrompt),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(MaterialLocalizations.of(dialogContext).cancelButtonLabel),
+        ),
+        TextButton(
+          onPressed: () =>
+              Navigator.of(dialogContext).pop(_WatchedEpisodeAction.delete),
+          child: Text(l10n.deleteWatchAction),
+        ),
+        if (episode.watchCount > 1)
+          TextButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_WatchedEpisodeAction.watchOnce),
+            child: Text(l10n.watchOnceAction),
+          ),
+        FilledButton(
+          onPressed: () =>
+              Navigator.of(dialogContext).pop(_WatchedEpisodeAction.rewatch),
+          child: Text(l10n.rewatchAction),
+        ),
+      ],
+    ),
+  );
+
+  final notifier = ref.read(seriesDetailProvider.notifier);
+  switch (action) {
+    case _WatchedEpisodeAction.delete:
+      await notifier.toggleEpisodeWatched(episode);
+    case _WatchedEpisodeAction.watchOnce:
+      await notifier.undoRewatch(episode);
+    case _WatchedEpisodeAction.rewatch:
+      await notifier.rewatchEpisode(episode);
+    case null:
+      break;
   }
 }
 
@@ -709,6 +766,7 @@ class _EpisodeRow extends ConsumerWidget {
             child: Container(
               width: 26,
               height: 26,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: episode.watched ? AppColors.sage : Colors.transparent,
@@ -716,13 +774,22 @@ class _EpisodeRow extends ConsumerWidget {
                     ? null
                     : Border.all(color: dividerColor, width: 1.5),
               ),
-              child: episode.watched
-                  ? const Icon(
+              child: !episode.watched
+                  ? null
+                  : episode.watchCount > 1
+                  ? Text(
+                      'x${episode.watchCount}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSageLight,
+                      ),
+                    )
+                  : const Icon(
                       Icons.check,
                       size: 14,
                       color: AppColors.onSageLight,
-                    )
-                  : null,
+                    ),
             ),
           ),
         ],
