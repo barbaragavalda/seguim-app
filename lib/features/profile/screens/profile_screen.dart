@@ -240,15 +240,107 @@ class _AccountSection extends ConsumerWidget {
     );
   }
 
+  /// Two steps, unlike _showEditFieldDialog's single-field flow: request
+  /// the change, then confirm it with the code sent to the new address -
+  /// see AccountController.requestEmailChange()'s docblock for why.
   Future<void> _editEmail(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
-    await _showEditFieldDialog(
+    final emailController = TextEditingController(text: account.email ?? '');
+    final codeController = TextEditingController();
+    var codeSent = false;
+    String? errorText;
+
+    await showDialog<void>(
       context: context,
-      title: l10n.editEmailTitle,
-      label: l10n.email,
-      initialValue: account.email ?? '',
-      keyboardType: TextInputType.emailAddress,
-      onSave: (value) => ref.read(accountProvider.notifier).updateEmail(value),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setState) {
+          return AlertDialog(
+            title: Text(l10n.editEmailTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (codeSent) ...[
+                  Text(
+                    l10n.emailChangeCodeSentPrompt,
+                    style: Theme.of(dialogContext).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  enabled: !codeSent,
+                  decoration: InputDecoration(
+                    labelText: l10n.email,
+                    errorText: !codeSent ? errorText : null,
+                  ),
+                ),
+                if (codeSent) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: codeController,
+                    decoration: InputDecoration(
+                      labelText: l10n.resetCode,
+                      errorText: errorText,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  MaterialLocalizations.of(dialogContext).cancelButtonLabel,
+                ),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  if (!codeSent) {
+                    final error = await ref
+                        .read(accountProvider.notifier)
+                        .requestEmailChange(emailController.text.trim());
+                    if (error == null) {
+                      setState(() {
+                        codeSent = true;
+                        errorText = null;
+                      });
+                    } else {
+                      setState(() {
+                        errorText = error == 'unknown_error'
+                            ? l10n.genericError
+                            : error;
+                      });
+                    }
+                  } else {
+                    final error = await ref
+                        .read(accountProvider.notifier)
+                        .confirmEmailChange(codeController.text.trim());
+                    if (error == null) {
+                      if (dialogContext.mounted) {
+                        Navigator.of(dialogContext).pop();
+                      }
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.emailChanged)),
+                        );
+                      }
+                    } else {
+                      setState(() {
+                        errorText = error == 'unknown_error'
+                            ? l10n.genericError
+                            : error;
+                      });
+                    }
+                  }
+                },
+                child: Text(codeSent ? l10n.save : l10n.sendResetCode),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 

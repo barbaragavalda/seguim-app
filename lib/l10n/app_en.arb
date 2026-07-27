@@ -114,6 +114,8 @@
   "newPasswordLabel": "New password",
   "save": "Save",
   "passwordChanged": "Password updated",
+  "emailChangeCodeSentPrompt": "We've sent a code to the new email address. Enter it to confirm the change.",
+  "emailChanged": "Email updated",
   "importTvTimeTitle": "Import from TV Time",
   "importTvTimeIntro": "Upload the ZIP file TV Time sent you.",
   "dropzoneTitle": "Drop the ZIP here",

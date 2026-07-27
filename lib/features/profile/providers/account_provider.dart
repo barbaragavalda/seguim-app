@@ -77,10 +77,17 @@ class AccountController extends Notifier<AccountState> {
     });
   }
 
-  Future<String?> updateEmail(String email) {
+  Future<String?> requestEmailChange(String email) {
     return _save(() async {
       final token = ref.read(authProvider).token!;
-      final saved = await _api.updateEmail(email, token: token);
+      await _api.requestEmailChange(email, token: token);
+    });
+  }
+
+  Future<String?> confirmEmailChange(String code) {
+    return _save(() async {
+      final token = ref.read(authProvider).token!;
+      final saved = await _api.confirmEmailChange(code, token: token);
       state = state.copyWith(email: saved);
     });
   }

@@ -114,6 +114,8 @@
   "newPasswordLabel": "Nova contrasenya",
   "save": "Desa",
   "passwordChanged": "Contrasenya actualitzada",
+  "emailChangeCodeSentPrompt": "T'hem enviat un codi al nou correu electrònic. Introdueix-lo per confirmar el canvi.",
+  "emailChanged": "Correu actualitzat",
   "importTvTimeTitle": "Importa des de TV Time",
   "importTvTimeIntro": "Puja el ZIP que t'ha enviat TV Time.",
   "dropzoneTitle": "Arrossega el ZIP aquí",

@@ -50,12 +50,25 @@ class AccountApi {
     return data['username'] as String;
   }
 
-  Future<String> updateEmail(String email, {required String token}) async {
-    final data = await _request(
+  /// Only *requests* the change - it doesn't take effect until confirmed
+  /// with the code this sends to the new address (see confirmEmailChange
+  /// below), so a stolen/shared-device session token can't silently
+  /// hijack the account (see Api\Controller\Account\UpdateEmail).
+  Future<void> requestEmailChange(String email, {required String token}) {
+    return _request(
       'POST',
       '/api/account/email',
       token: token,
       body: {'email': email},
+    );
+  }
+
+  Future<String> confirmEmailChange(String code, {required String token}) async {
+    final data = await _request(
+      'POST',
+      '/api/account/email/confirm',
+      token: token,
+      body: {'code': code},
     );
     return data['email'] as String;
   }
