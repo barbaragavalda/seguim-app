@@ -12,7 +12,7 @@ class AppShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   static const _watchlistBranchIndex = 0;
-  static const _listsBranchIndex = 1;
+  static const _listsBranchIndex = 3;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,19 +42,24 @@ class AppShell extends ConsumerWidget {
         },
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.bookmark_outline),
-            selectedIcon: const Icon(Icons.bookmark),
+            icon: const Icon(Icons.tv_outlined),
+            selectedIcon: const Icon(Icons.tv),
             label: l10n.navWatchlist,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.list_alt_outlined),
-            selectedIcon: const Icon(Icons.list_alt),
-            label: l10n.navLists,
+            icon: const Icon(Icons.videocam_outlined),
+            selectedIcon: const Icon(Icons.videocam),
+            label: l10n.navMovies,
           ),
           NavigationDestination(
             icon: const Icon(Icons.search_outlined),
             selectedIcon: const Icon(Icons.search),
             label: l10n.navSearch,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.list_outlined),
+            selectedIcon: const Icon(Icons.list),
+            label: l10n.navLists,
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),

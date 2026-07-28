@@ -6,6 +6,7 @@ import '../features/auth/screens/register_screen.dart';
 import '../features/import/screens/tvtime_import_screen.dart';
 import '../features/lists/screens/list_detail_screen.dart';
 import '../features/lists/screens/lists_screen.dart';
+import '../features/movies/screens/movies_screen.dart';
 import '../features/my_series/screens/my_series_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
@@ -65,8 +66,8 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/lists',
-              builder: (context, state) => const ListsScreen(),
+              path: '/movies',
+              builder: (context, state) => const MoviesScreen(),
             ),
           ],
         ),
@@ -75,6 +76,14 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/search',
               builder: (context, state) => const SearchScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/lists',
+              builder: (context, state) => const ListsScreen(),
             ),
           ],
         ),
