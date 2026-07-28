@@ -31,4 +31,19 @@ class Series {
       status: json['status'] as String?,
     );
   }
+
+  /// Maps a raw `serie` table row instead - GET /lists/{id} (Api\Controller\
+  /// Lists\Show) returns `SELECT s.*` un-enriched (no per-language
+  /// translation, no next_episode/remaining_episodes like Watchlist's own
+  /// finalizeRows() adds), so the field names differ from fromJson() above:
+  /// default_name/image/year_start instead of name/thumbnail/year.
+  factory Series.fromListRow(Map<String, dynamic> json) {
+    return Series(
+      tvdbId: '${json['tvdb_id']}',
+      name: json['default_name'] as String? ?? '',
+      year: json['year_start'] as String?,
+      imageUrl: json['image'] as String?,
+      status: json['status'] as String?,
+    );
+  }
 }

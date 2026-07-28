@@ -14,6 +14,9 @@ down. Flutter client for [`tv-tracker`](https://seguim.cat/), a PHP/Freimguork b
   removing it entirely).
 - **Les meves sèries** (My series): browse/search the full watchlist filtered by status (all/
   watching/not started/finished/archived/dropped).
+- **Llistes** (Lists): custom user-curated series lists - create/rename/delete/reorder lists,
+  add/remove/reorder series within a list (poster grid, same picker-mode Search screen reused
+  for adding), paginated.
 - **Profile**: edit username, email (confirmed by code), password, and app language; import a
   TV Time GDPR data export (web only); delete account.
 - Fully localized: Catalan, Spanish, English.
@@ -23,7 +26,7 @@ down. Flutter client for [`tv-tracker`](https://seguim.cat/), a PHP/Freimguork b
 - Flutter, [Riverpod](https://riverpod.dev/) (`Notifier`/`NotifierProvider`, no
   `StateNotifier`) for state management
 - [go_router](https://pub.dev/packages/go_router), with a `StatefulShellRoute` for the
-  bottom-tab shell (Watchlist/Cerca/Perfil) so each tab keeps its own state
+  bottom-tab shell (Watchlist/Llistes/Cerca/Perfil) so each tab keeps its own state
 - `flutter_secure_storage` for the session token, `http` for the API client
 - `cached_network_image`, `google_fonts` (Fraunces + Manrope), `flutter_sticky_header`
 
@@ -33,7 +36,7 @@ down. Flutter client for [`tv-tracker`](https://seguim.cat/), a PHP/Freimguork b
 lib/
   core/           # api client config, network helpers, locale provider
   features/       # one folder per feature (auth, watchlist, search, series_detail,
-                   # my_series, profile, import), each split into data/providers/screens
+                   # my_series, lists, profile, import), each split into data/providers/screens
   navigation/      # go_router config + bottom-tab shell
   theme/           # colors, spacing, radius, text theme
   widgets/         # small widgets shared across features

@@ -4,14 +4,22 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/series_poster.dart';
 import '../../../widgets/status_tag.dart';
+import '../../lists/providers/list_detail_provider.dart';
 import '../providers/search_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.addToListId});
+
+  /// Non-null when pushed as an "add series to this list" picker (see
+  /// ListDetailScreen's "+" button) instead of the bottom-tab Search
+  /// screen - tapping a result toggles it in/out of listDetailProvider's
+  /// currently-loaded list instead of navigating to series detail.
+  final int? addToListId;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -62,6 +70,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final searchState = ref.watch(searchProvider);
 
     return Scaffold(
+      appBar: widget.addToListId != null
+          ? AppBar(title: Text(l10n.addSeriesTooltip))
+          : null,
       body: SafeArea(
         child: Stack(
           children: [
@@ -144,12 +155,40 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ? null
                 : localizedSeriesStatus(l10n, series.status!);
             final subtitleStyle = Theme.of(context).textTheme.bodySmall;
+            final addToListId = widget.addToListId;
+            final inList = addToListId != null &&
+                ref.watch(
+                  listDetailProvider.select(
+                    (s) => s.items.any((i) => i.tvdbId == series.tvdbId),
+                  ),
+                );
             return GestureDetector(
-              onTap: () => context.push('/series/${series.tvdbId}'),
+              onTap: () {
+                if (addToListId == null) {
+                  context.push('/series/${series.tvdbId}');
+                  return;
+                }
+                final notifier = ref.read(listDetailProvider.notifier);
+                if (inList) {
+                  notifier.removeSerie(series.tvdbId);
+                } else {
+                  notifier.addSerie(series);
+                }
+              },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SeriesPoster(imageUrl: series.imageUrl),
+                  Stack(
+                    children: [
+                      SeriesPoster(imageUrl: series.imageUrl),
+                      if (inList)
+                        const Positioned(
+                          top: 4,
+                          right: 4,
+                          child: _InListBadge(),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 6),
                   Text(
                     series.name,
@@ -191,6 +230,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _InListBadge extends StatelessWidget {
+  const _InListBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: const BoxDecoration(
+        color: AppColors.sage,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.check, size: 14, color: AppColors.onSageLight),
     );
   }
 }

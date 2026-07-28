@@ -4,6 +4,7 @@ import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/import/screens/tvtime_import_screen.dart';
+import '../features/lists/screens/list_detail_screen.dart';
 import '../features/lists/screens/lists_screen.dart';
 import '../features/my_series/screens/my_series_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -36,6 +37,18 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/my-series',
       builder: (context, state) => const MySeriesScreen(),
+    ),
+    GoRoute(
+      path: '/lists/:id',
+      builder: (context, state) => ListDetailScreen(
+        listId: int.parse(state.pathParameters['id']!),
+        name: (state.extra as String?) ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '/lists/:id/add',
+      builder: (context, state) =>
+          SearchScreen(addToListId: int.parse(state.pathParameters['id']!)),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
