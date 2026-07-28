@@ -41,6 +41,11 @@ class AppShell extends ConsumerWidget {
             label: l10n.navWatchlist,
           ),
           NavigationDestination(
+            icon: const Icon(Icons.list_alt_outlined),
+            selectedIcon: const Icon(Icons.list_alt),
+            label: l10n.navLists,
+          ),
+          NavigationDestination(
             icon: const Icon(Icons.search_outlined),
             selectedIcon: const Icon(Icons.search),
             label: l10n.navSearch,

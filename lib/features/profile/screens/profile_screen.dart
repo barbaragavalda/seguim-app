@@ -489,7 +489,6 @@ class _SeriesSection extends StatelessWidget {
             label: l10n.mySeriesRow,
             onTap: () => context.push('/my-series'),
           ),
-          _ComingSoonRow(icon: Icons.list_alt, label: l10n.seriesListsRow),
         ],
       ),
     );
@@ -758,46 +757,6 @@ class _ActiveRow extends StatelessWidget {
   }
 }
 
-class _ComingSoonRow extends StatelessWidget {
-  const _ComingSoonRow({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final dividerColor = Theme.of(context).dividerColor;
-    final textSecondary = Theme.of(context).textTheme.bodySmall?.color;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: 13,
-      ),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: dividerColor)),
-      ),
-      child: Row(
-        children: [
-          _RowIcon(icon: icon, dimmed: true),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: textSecondary,
-              ),
-            ),
-          ),
-          Icon(Icons.chevron_right, size: 18, color: textSecondary),
-        ],
-      ),
-    );
-  }
-}
-
 class _PlainActionRow extends StatelessWidget {
   const _PlainActionRow({
     required this.icon,
@@ -838,10 +797,9 @@ class _PlainActionRow extends StatelessWidget {
 }
 
 class _RowIcon extends StatelessWidget {
-  const _RowIcon({required this.icon, this.dimmed = false});
+  const _RowIcon({required this.icon});
 
   final IconData icon;
-  final bool dimmed;
 
   @override
   Widget build(BuildContext context) {
@@ -853,13 +811,10 @@ class _RowIcon extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,
-      child: Opacity(
-        opacity: dimmed ? 0.55 : 1,
-        child: Icon(
-          icon,
-          size: 16,
-          color: Theme.of(context).textTheme.bodySmall?.color,
-        ),
+      child: Icon(
+        icon,
+        size: 16,
+        color: Theme.of(context).textTheme.bodySmall?.color,
       ),
     );
   }

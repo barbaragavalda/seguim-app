@@ -4,6 +4,7 @@ import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/import/screens/tvtime_import_screen.dart';
+import '../features/lists/screens/lists_screen.dart';
 import '../features/my_series/screens/my_series_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
@@ -45,6 +46,14 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/watchlist',
               builder: (context, state) => const WatchlistScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/lists',
+              builder: (context, state) => const ListsScreen(),
             ),
           ],
         ),
