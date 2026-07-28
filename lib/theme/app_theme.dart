@@ -92,6 +92,7 @@ class AppTheme {
         backgroundColor: scaffoldBackground,
         foregroundColor: textPrimary,
         elevation: 0,
+        scrolledUnderElevation: 0,
         titleTextStyle: GoogleFonts.fraunces(
           fontSize: 20,
           fontWeight: FontWeight.w600,
