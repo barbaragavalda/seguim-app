@@ -4,6 +4,7 @@ import '../../../core/config/api_config.dart';
 import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 import '../../search/data/series.dart';
+import 'list_membership.dart';
 import 'user_list.dart';
 
 class ListsException implements Exception {
@@ -113,6 +114,17 @@ class ListsApi {
       {'after': afterTvdbId ?? ''},
       token: token,
     );
+  }
+
+  Future<List<ListMembership>> getMembership(
+    String tvdbId, {
+    required String token,
+  }) async {
+    final data = await _get('/api/lists/membership/$tvdbId', token: token);
+    final results = data['lists'] as List<dynamic>? ?? [];
+    return results
+        .map((item) => ListMembership.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 
   Future<Map<String, dynamic>> _get(String path, {required String token}) async {

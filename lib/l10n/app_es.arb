@@ -109,6 +109,7 @@
   "addSeriesTooltip": "Añade una serie",
   "listDetailEmpty": "Esta lista todavía no tiene ninguna serie",
   "removeFromListAction": "Quitar de la lista",
+  "addToListsTitle": "Añade a una lista",
   "mySeriesRow": "Mis series",
   "mySeriesSearchPlaceholder": "Busca por título",
   "mySeriesEmpty": "No hay ninguna serie aquí",

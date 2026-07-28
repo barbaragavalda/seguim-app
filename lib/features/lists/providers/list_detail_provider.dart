@@ -69,7 +69,7 @@ class ListDetailController extends Notifier<ListDetailState> {
       state = ListDetailState(
         isLoading: false,
         name: name,
-        items: result.items,
+        items: _dedupe(result.items),
         hasMore: result.hasMore,
       );
     } on ListsException catch (e) {
@@ -94,7 +94,11 @@ class ListDetailController extends Notifier<ListDetailState> {
       final result = await _api.getListSeries(listId, page: nextPage, token: token);
       if (_listId != listId) return;
       state = state.copyWith(
-        items: [...state.items, ...result.items],
+        // a series added optimistically (addSerie) since the last load
+        // lands at the end on both sides (local: appended; server: highest
+        // ordering) - if that push landed it inside this next page's
+        // range, the fetch would otherwise return it a second time
+        items: _dedupe([...state.items, ...result.items]),
         isLoadingMore: false,
         hasMore: result.hasMore,
         page: nextPage,
@@ -170,6 +174,16 @@ class ListDetailController extends Notifier<ListDetailState> {
     } catch (_) {
       state = state.copyWith(items: previous);
     }
+  }
+
+  /// Keeps the first occurrence of each tvdbId - see loadMore()'s own
+  /// comment for why a series can otherwise appear twice.
+  List<Series> _dedupe(List<Series> items) {
+    final seen = <String>{};
+    return [
+      for (final item in items)
+        if (seen.add(item.tvdbId)) item,
+    ];
   }
 
   List<Series> _moved(List<Series> items, String tvdbId, String? afterTvdbId) {

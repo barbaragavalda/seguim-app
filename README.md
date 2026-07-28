@@ -16,7 +16,8 @@ down. Flutter client for [`tv-tracker`](https://seguim.cat/), a PHP/Freimguork b
   watching/not started/finished/archived/dropped).
 - **Llistes** (Lists): custom user-curated series lists - create/rename/delete/reorder lists,
   add/remove/reorder series within a list (poster grid, same picker-mode Search screen reused
-  for adding), paginated.
+  for adding), paginated. Series detail also has its own multi-list "add to a list" picker, so
+  a series can be filed into any number of lists straight from there.
 - **Profile**: edit username, email (confirmed by code), password, and app language; import a
   TV Time GDPR data export (web only); delete account.
 - Fully localized: Catalan, Spanish, English.
