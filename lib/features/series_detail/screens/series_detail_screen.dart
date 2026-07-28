@@ -605,7 +605,7 @@ class _StatsRow extends StatelessWidget {
   }
 }
 
-class _SeasonChips extends ConsumerWidget {
+class _SeasonChips extends ConsumerStatefulWidget {
   const _SeasonChips({
     required this.seasons,
     required this.selectedSeason,
@@ -617,51 +617,115 @@ class _SeasonChips extends ConsumerWidget {
   final AppLocalizations l10n;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SeasonChips> createState() => _SeasonChipsState();
+}
+
+class _SeasonChipsState extends ConsumerState<_SeasonChips> {
+  // keyed by season number (not index) so a key stays attached to the
+  // same chip across rebuilds regardless of list content changes
+  final Map<int, GlobalKey> _chipKeys = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // the season list/selection isn't known until after first layout, and
+    // ensureVisible needs the chip's own context to already have a size -
+    // defer to the next frame, same reasoning as the various providers'
+    // "modify state outside build" comments elsewhere in this app
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
+  }
+
+  @override
+  void didUpdateWidget(covariant _SeasonChips oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedSeason != oldWidget.selectedSeason) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
+    }
+  }
+
+  void _scrollToSelected() {
+    final chipContext = _chipKeys[widget.selectedSeason]?.currentContext;
+    if (chipContext == null) return;
+    Scrollable.ensureVisible(
+      chipContext,
+      alignment: 0.5,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final scaffoldBg = Theme.of(context).scaffoldBackgroundColor;
     return SizedBox(
       height: 34,
       child: Stack(
         children: [
-          ListView.separated(
+          SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            itemCount: seasons.length,
-            separatorBuilder: (context, index) =>
-                const SizedBox(width: AppSpacing.sm),
-            itemBuilder: (context, index) {
-              final season = seasons[index];
-              final selected = season == selectedSeason;
-              return GestureDetector(
-                onTap: () => ref
-                    .read(seriesDetailProvider.notifier)
-                    .selectSeason(season),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.darkBg
-                        : Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(AppRadius.pill),
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.darkBg
-                          : Theme.of(context).dividerColor,
-                    ),
+            // built eagerly (not ListView.builder/.separated's lazy,
+            // viewport-only building) so ensureVisible always has a real
+            // context to scroll to, even for a season chip that starts out
+            // off-screen - season counts are small enough that this never
+            // costs anything in practice
+            //
+            // extra blank space on both ends (matching the fade gradients'
+            // width below) so ensureVisible's alignment:0.5 can actually
+            // center the first/last chip instead of clamping against
+            // min/maxScrollExtent - without this, the first or last chip
+            // (exactly the "default to the last watched season" case) ends
+            // up flush against the edge, under the fade, looking like the
+            // scroll didn't happen at all
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Row(
+              children: [
+                for (final season in widget.seasons) ...[
+                  Builder(
+                    builder: (context) {
+                      final selected = season == widget.selectedSeason;
+                      final chipKey = _chipKeys.putIfAbsent(
+                        season,
+                        () => GlobalKey(),
+                      );
+                      return GestureDetector(
+                        key: chipKey,
+                        onTap: () => ref
+                            .read(seriesDetailProvider.notifier)
+                            .selectSeason(season),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          height: 34,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? AppColors.darkBg
+                                : Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            border: Border.all(
+                              color: selected
+                                  ? AppColors.darkBg
+                                  : Theme.of(context).dividerColor,
+                            ),
+                          ),
+                          child: Text(
+                            widget.l10n.seasonLabel(season),
+                            style: TextStyle(
+                              color: selected
+                                  ? Colors.white
+                                  : Theme.of(context).textTheme.bodySmall?.color,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  child: Text(
-                    l10n.seasonLabel(season),
-                    style: TextStyle(
-                      color: selected
-                          ? Colors.white
-                          : Theme.of(context).textTheme.bodySmall?.color,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              );
-            },
+                  if (season != widget.seasons.last)
+                    const SizedBox(width: AppSpacing.sm),
+                ],
+              ],
+            ),
           ),
           Positioned(
             top: 0,
@@ -714,6 +778,11 @@ class _EpisodeRow extends ConsumerWidget {
         border: Border(bottom: BorderSide(color: dividerColor)),
       ),
       child: Row(
+        // matches _WatchlistItemRow's own fix: without this, the row's
+        // default center alignment vertically centers the thumb within
+        // whatever height the (now-unwrapped, since removing the title's
+        // ellipsis) title/subtitle column ends up needing
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -740,8 +809,6 @@ class _EpisodeRow extends ConsumerWidget {
                 Text(
                   '${episode.seasonNumber}x${episode.episodeNumber.toString().padLeft(2, '0')}'
                   '${episode.name != null ? ' · ${episode.name}' : ''}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,

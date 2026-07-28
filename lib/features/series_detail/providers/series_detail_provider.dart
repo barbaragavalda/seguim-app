@@ -101,6 +101,15 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
               .toSet()
               .toList()
             ..sort();
+      // default to the season the user is actually progressing through -
+      // the highest one with a watched episode - rather than always
+      // season 1, falling back to that only when nothing's been watched
+      final watchedSeasons = result.episodes
+          .where((e) => e.watched && e.seasonNumber > 0)
+          .map((e) => e.seasonNumber);
+      final defaultSeason = watchedSeasons.isEmpty
+          ? (seasons.isEmpty ? null : seasons.first)
+          : watchedSeasons.reduce((a, b) => a > b ? a : b);
       state = SeriesDetailState(
         isLoading: false,
         series: result.series,
@@ -108,7 +117,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
         inWatchlist: result.inWatchlist,
         archived: result.archived,
         removed: result.removed,
-        selectedSeason: seasons.isEmpty ? null : seasons.first,
+        selectedSeason: defaultSeason,
       );
     } on SeriesDetailException catch (e) {
       if (_tvdbId != tvdbId) return;
