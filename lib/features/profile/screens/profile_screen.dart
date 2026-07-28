@@ -558,7 +558,7 @@ class _FooterSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _PlainActionRow(
-            icon: Icons.delete_sweep_outlined,
+            icon: Icons.image_not_supported_outlined,
             label: l10n.clearImageCache,
             onTap: () => _clearImageCache(context, l10n),
           ),
