@@ -29,12 +29,16 @@ class ListMembershipState {
   }
 }
 
-/// Backs the "add to a list" picker on the series detail screen - same
-/// "no FamilyNotifier in Riverpod 3.3.2" shape as ListDetailController,
-/// with an explicit load(tvdbId) instead of a family provider.
+/// Backs the "add to a list" picker on both the series and movie detail
+/// screens - same "no FamilyNotifier in Riverpod 3.3.2" shape as
+/// ListDetailController, with an explicit load(tvdbId, isMovie) instead of
+/// a family provider. [isMovie] picks which of ListsApi's series/movie
+/// method pairs toggle()/createAndAdd() call - set once by load(), same as
+/// SearchState.seriesOnly's own "set once before any real work" shape.
 class ListMembershipController extends Notifier<ListMembershipState> {
   late final ListsApi _api;
   String? _tvdbId;
+  bool _isMovie = false;
 
   @override
   ListMembershipState build() {
@@ -42,13 +46,16 @@ class ListMembershipController extends Notifier<ListMembershipState> {
     return const ListMembershipState();
   }
 
-  Future<void> load(String tvdbId) async {
+  Future<void> load(String tvdbId, {bool isMovie = false}) async {
     _tvdbId = tvdbId;
+    _isMovie = isMovie;
     final token = ref.read(authProvider).token;
     if (token == null) return;
     state = const ListMembershipState(isLoading: true);
     try {
-      final items = await _api.getMembership(tvdbId, token: token);
+      final items = isMovie
+          ? await _api.getMembershipMovie(tvdbId, token: token)
+          : await _api.getMembership(tvdbId, token: token);
       if (_tvdbId != tvdbId) return;
       state = ListMembershipState(isLoading: false, items: items);
     } on ListsException catch (e) {
@@ -73,9 +80,17 @@ class ListMembershipController extends Notifier<ListMembershipState> {
     );
     try {
       if (addingIt) {
-        await _api.addSerie(item.id, tvdbId, token: token);
+        if (_isMovie) {
+          await _api.addMovie(item.id, tvdbId, token: token);
+        } else {
+          await _api.addSerie(item.id, tvdbId, token: token);
+        }
       } else {
-        await _api.removeSerie(item.id, tvdbId, token: token);
+        if (_isMovie) {
+          await _api.removeMovie(item.id, tvdbId, token: token);
+        } else {
+          await _api.removeSerie(item.id, tvdbId, token: token);
+        }
       }
     } catch (_) {
       state = state.copyWith(
@@ -87,16 +102,20 @@ class ListMembershipController extends Notifier<ListMembershipState> {
     }
   }
 
-  /// Creates a new list and immediately adds the current series to it -
-  /// returns null on success (state already reflects the new list, added),
-  /// or an error message to show inline.
+  /// Creates a new list and immediately adds the current series/movie to it
+  /// - returns null on success (state already reflects the new list,
+  /// added), or an error message to show inline.
   Future<String?> createAndAdd(String name) async {
     final tvdbId = _tvdbId;
     final token = ref.read(authProvider).token;
     if (tvdbId == null || token == null) return 'unknown_error';
     try {
       final id = await _api.createList(name, token: token);
-      await _api.addSerie(id, tvdbId, token: token);
+      if (_isMovie) {
+        await _api.addMovie(id, tvdbId, token: token);
+      } else {
+        await _api.addSerie(id, tvdbId, token: token);
+      }
       state = state.copyWith(
         items: [...state.items, ListMembership(id: id, name: name, inList: true)],
       );

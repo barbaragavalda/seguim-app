@@ -5,6 +5,7 @@ import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
 import '../../search/data/series.dart';
 import 'list_membership.dart';
+import 'list_movie.dart';
 import 'user_list.dart';
 
 class ListsException implements Exception {
@@ -20,11 +21,21 @@ class ListsPage {
   final bool hasMore;
 }
 
-class ListSeriesPage {
-  const ListSeriesPage({required this.items, required this.hasMore});
+/// A list's series and movies come back from the same GET /lists/{id} call
+/// (see Api\Controller\Lists\Show's own docblock) - each paginated
+/// independently, so this carries both pages' worth of state at once.
+class ListDetailPage {
+  const ListDetailPage({
+    required this.series,
+    required this.seriesHasMore,
+    required this.movies,
+    required this.moviesHasMore,
+  });
 
-  final List<Series> items;
-  final bool hasMore;
+  final List<Series> series;
+  final bool seriesHasMore;
+  final List<ListMovie> movies;
+  final bool moviesHasMore;
 }
 
 class ListsApi {
@@ -72,20 +83,27 @@ class ListsApi {
     );
   }
 
-  Future<ListSeriesPage> getListSeries(
+  Future<ListDetailPage> getListDetail(
     int listId, {
     int page = 0,
+    int moviePage = 0,
     required String token,
   }) async {
-    final data = await _get('/api/lists/$listId?page=$page', token: token);
-    final results = data['series'] as List<dynamic>? ?? [];
-    return ListSeriesPage(
-      items: results
-          .map(
-            (item) => Series.fromListRow(item as Map<String, dynamic>),
-          )
+    final data = await _get(
+      '/api/lists/$listId?page=$page&movie_page=$moviePage',
+      token: token,
+    );
+    final seriesResults = data['series'] as List<dynamic>? ?? [];
+    final movieResults = data['movies'] as List<dynamic>? ?? [];
+    return ListDetailPage(
+      series: seriesResults
+          .map((item) => Series.fromListRow(item as Map<String, dynamic>))
           .toList(),
-      hasMore: data['hasMore'] as bool? ?? false,
+      seriesHasMore: data['hasMore'] as bool? ?? false,
+      movies: movieResults
+          .map((item) => ListMovie.fromListRow(item as Map<String, dynamic>))
+          .toList(),
+      moviesHasMore: data['moviesHasMore'] as bool? ?? false,
     );
   }
 
@@ -116,11 +134,53 @@ class ListsApi {
     );
   }
 
+  Future<void> addMovie(int listId, String tvdbId, {required String token}) {
+    return _post('/api/lists/$listId/movies/$tvdbId', null, token: token);
+  }
+
+  Future<void> removeMovie(
+    int listId,
+    String tvdbId, {
+    required String token,
+  }) {
+    return _delete('/api/lists/$listId/movies/$tvdbId', token: token);
+  }
+
+  /// Same neighbor-based reordering as reorderSerie, within this list's own
+  /// movies (a separate ordering from its series - see UserListMovie's own
+  /// docblock).
+  Future<void> reorderMovie(
+    int listId,
+    String tvdbId, {
+    String? afterTvdbId,
+    required String token,
+  }) {
+    return _post(
+      '/api/lists/$listId/movies/$tvdbId/reorder',
+      {'after': afterTvdbId ?? ''},
+      token: token,
+    );
+  }
+
   Future<List<ListMembership>> getMembership(
     String tvdbId, {
     required String token,
   }) async {
     final data = await _get('/api/lists/membership/$tvdbId', token: token);
+    final results = data['lists'] as List<dynamic>? ?? [];
+    return results
+        .map((item) => ListMembership.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<ListMembership>> getMembershipMovie(
+    String tvdbId, {
+    required String token,
+  }) async {
+    final data = await _get(
+      '/api/lists/membership/movie/$tvdbId',
+      token: token,
+    );
     final results = data['lists'] as List<dynamic>? ?? [];
     return results
         .map((item) => ListMembership.fromJson(item as Map<String, dynamic>))

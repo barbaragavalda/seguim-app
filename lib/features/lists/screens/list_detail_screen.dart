@@ -8,6 +8,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/series_poster.dart';
 import '../../../widgets/status_tag.dart';
 import '../../search/data/series.dart';
+import '../data/list_movie.dart';
 import '../providers/list_detail_provider.dart';
 
 class ListDetailScreen extends ConsumerStatefulWidget {
@@ -48,6 +49,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final position = _scrollController.position;
     if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
       ref.read(listDetailProvider.notifier).loadMore();
+      ref.read(listDetailProvider.notifier).loadMoreMovies();
     }
   }
 
@@ -92,38 +94,74 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         ),
       );
     }
-    if (state.items.isEmpty) {
+    if (state.items.isEmpty && state.movieItems.isEmpty) {
       return Center(child: Text(l10n.listDetailEmpty));
     }
 
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 160,
-              mainAxisSpacing: AppSpacing.sm,
-              crossAxisSpacing: AppSpacing.sm,
-              childAspectRatio: 0.5,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _DraggableSeriesCard(
-                series: state.items[index],
-                l10n: l10n,
+        if (state.items.isNotEmpty) ...[
+          _SectionHeader(title: l10n.navWatchlist),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 160,
+                mainAxisSpacing: AppSpacing.sm,
+                crossAxisSpacing: AppSpacing.sm,
+                childAspectRatio: 0.5,
               ),
-              childCount: state.items.length,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _DraggableSeriesCard(
+                  series: state.items[index],
+                  l10n: l10n,
+                ),
+                childCount: state.items.length,
+              ),
             ),
           ),
-        ),
-        if (state.isLoadingMore)
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-              child: Center(child: CircularProgressIndicator()),
+          if (state.isLoadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
+        if (state.movieItems.isNotEmpty) ...[
+          _SectionHeader(title: l10n.navMovies),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 160,
+                mainAxisSpacing: AppSpacing.sm,
+                crossAxisSpacing: AppSpacing.sm,
+                childAspectRatio: 0.5,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _DraggableMovieCard(
+                  movie: state.movieItems[index],
+                  l10n: l10n,
+                ),
+                childCount: state.movieItems.length,
+              ),
             ),
           ),
+          if (state.isLoadingMoreMovies)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ],
     );
   }
@@ -318,6 +356,142 @@ class _RemoveButton extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.close, size: 14, color: Colors.white),
+      ),
+    );
+  }
+}
+
+/// A list's series and movies are two separate grids (own independent
+/// ordering/pagination - see ListDetailController's own docblock), each
+/// under its own small heading rather than mixed into one grid.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
+      sliver: SliverToBoxAdapter(
+        child: Text(
+          title,
+          style: GoogleFonts.fraunces(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+      ),
+    );
+  }
+}
+
+/// Mirrors _DraggableSeriesCard exactly, for this list's own movies -
+/// dropping onto me calls reorderMovie(dragged, afterTvdbId: my own
+/// tvdbId), same neighbor-based reordering as the series grid.
+class _DraggableMovieCard extends ConsumerWidget {
+  const _DraggableMovieCard({required this.movie, required this.l10n});
+
+  final ListMovie movie;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final card = _MovieCard(movie: movie, l10n: l10n);
+
+    return DragTarget<ListMovie>(
+      onWillAcceptWithDetails: (details) => details.data.tvdbId != movie.tvdbId,
+      onAcceptWithDetails: (details) {
+        ref
+            .read(listDetailProvider.notifier)
+            .reorderMovie(details.data.tvdbId, afterTvdbId: movie.tvdbId);
+      },
+      builder: (context, candidateData, rejectedData) {
+        return Opacity(
+          opacity: candidateData.isNotEmpty ? 0.4 : 1,
+          child: LongPressDraggable<ListMovie>(
+            data: movie,
+            feedback: Material(
+              color: Colors.transparent,
+              child: SizedBox(
+                width: 140,
+                child: SeriesPoster(imageUrl: movie.imageUrl),
+              ),
+            ),
+            childWhenDragging: Opacity(opacity: 0.3, child: card),
+            child: card,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MovieCard extends ConsumerWidget {
+  const _MovieCard({required this.movie, required this.l10n});
+
+  final ListMovie movie;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final year = movie.year;
+    final status = movie.status == null
+        ? null
+        : localizedMovieStatus(l10n, movie.status!);
+    final textPrimary = Theme.of(context).textTheme.bodyLarge?.color;
+    final subtitleStyle = Theme.of(context).textTheme.bodySmall;
+
+    return GestureDetector(
+      onTap: () => context.push('/movies/${movie.tvdbId}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            children: [
+              SeriesPoster(imageUrl: movie.imageUrl),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: _RemoveButton(
+                  onTap: () => ref
+                      .read(listDetailProvider.notifier)
+                      .removeMovie(movie.tvdbId),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            movie.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.fraunces(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          if (year != null || status != null)
+            Row(
+              children: [
+                if (year != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Text(year, style: subtitleStyle),
+                  ),
+                if (status != null)
+                  Flexible(
+                    child: StatusTag(
+                      label: status,
+                      color: movieStatusColor(movie.status!),
+                    ),
+                  ),
+              ],
+            ),
+        ],
       ),
     );
   }

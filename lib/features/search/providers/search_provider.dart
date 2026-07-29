@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/series.dart';
-import '../data/series_api.dart';
+import '../../lists/data/list_movie.dart';
+import '../data/search_result.dart';
+import '../data/series.dart' as series_model;
+import '../data/unified_search_api.dart';
 
 class SearchState {
   const SearchState({
@@ -19,7 +21,7 @@ class SearchState {
   final String query;
   final bool isLoading;
   final bool isLoadingMore;
-  final List<Series> results;
+  final List<SearchResult> results;
   final bool hasMore;
   final int page;
   final String? errorKey;
@@ -28,7 +30,7 @@ class SearchState {
     String? query,
     bool? isLoading,
     bool? isLoadingMore,
-    List<Series>? results,
+    List<SearchResult>? results,
     bool? hasMore,
     int? page,
     String? errorKey,
@@ -49,13 +51,13 @@ class SearchState {
 class SearchController extends Notifier<SearchState> {
   static const _debounceDuration = Duration(milliseconds: 400);
 
-  late final SeriesApi _api;
+  late final UnifiedSearchApi _unifiedApi;
   Timer? _debounce;
   int _requestId = 0;
 
   @override
   SearchState build() {
-    _api = SeriesApi();
+    _unifiedApi = UnifiedSearchApi();
     ref.onDispose(() => _debounce?.cancel());
     return const SearchState();
   }
@@ -84,7 +86,7 @@ class SearchController extends Notifier<SearchState> {
   Future<void> _search(String query) async {
     final requestId = ++_requestId;
     try {
-      final result = await _api.search(query, page: 0);
+      final result = await _unifiedApi.search(query, page: 0);
       if (requestId != _requestId) return;
       state = state.copyWith(
         results: result.items,
@@ -92,7 +94,7 @@ class SearchController extends Notifier<SearchState> {
         hasMore: result.hasMore,
         page: 0,
       );
-    } on SeriesSearchException catch (e) {
+    } on UnifiedSearchException catch (e) {
       if (requestId != _requestId) return;
       state = state.copyWith(isLoading: false, errorKey: e.message);
     } catch (_) {
@@ -110,7 +112,7 @@ class SearchController extends Notifier<SearchState> {
     final nextPage = state.page + 1;
     state = state.copyWith(isLoadingMore: true);
     try {
-      final result = await _api.search(query, page: nextPage);
+      final result = await _unifiedApi.search(query, page: nextPage);
       if (requestId != _requestId) return;
       state = state.copyWith(
         results: [...state.results, ...result.items],
@@ -128,3 +130,28 @@ class SearchController extends Notifier<SearchState> {
 final searchProvider = NotifierProvider<SearchController, SearchState>(
   SearchController.new,
 );
+
+/// Converts a unified [SearchResult] into the series-only model the lists
+/// feature expects (see search/data/series.dart) - only ever called for a
+/// [SearchResult] with type == series.
+series_model.Series seriesFromSearchResult(SearchResult result) {
+  return series_model.Series(
+    tvdbId: result.tvdbId,
+    name: result.name,
+    year: result.year,
+    imageUrl: result.imageUrl,
+    status: result.status,
+  );
+}
+
+/// Same as seriesFromSearchResult above, for a [SearchResult] with
+/// type == movie.
+ListMovie movieFromSearchResult(SearchResult result) {
+  return ListMovie(
+    tvdbId: result.tvdbId,
+    name: result.name,
+    year: result.year,
+    imageUrl: result.imageUrl,
+    status: result.status,
+  );
+}

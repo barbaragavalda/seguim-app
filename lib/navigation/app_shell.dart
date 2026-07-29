@@ -2,27 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/auth/providers/auth_provider.dart';
+import '../features/import/providers/pending_resolution_provider.dart';
 import '../features/lists/providers/lists_provider.dart';
+import '../features/movies/providers/movies_provider.dart';
 import '../features/watchlist/providers/watchlist_provider.dart';
 import '../l10n/generated/app_localizations.dart';
 
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
   static const _watchlistBranchIndex = 0;
+  static const _moviesBranchIndex = 1;
   static const _listsBranchIndex = 3;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    // loaded here (rather than only from ProfileScreen/PendingResolutionScreen)
+    // so the "Perfil" tab's badge already has a real count the moment the
+    // app opens, not just once the user actually visits one of those
+    // screens - same "modify provider outside build" reasoning as every
+    // other screen's initState in this app
+    Future.microtask(() => ref.read(pendingResolutionProvider.notifier).load());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final pendingMoviesCount = ref.watch(
+      pendingResolutionProvider.select((s) => s.items.length),
+    );
+
+    // AppShell is mounted once for the whole logged-in/out lifetime of the
+    // tab bar - re-load when the user logs in from elsewhere (e.g. the
+    // Perfil tab itself), same reasoning as WatchlistScreen/MoviesScreen's
+    // own auth listeners
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next.isLoggedIn && previous?.isLoggedIn != true) {
+        ref.read(pendingResolutionProvider.notifier).load();
+      }
+    });
 
     return Scaffold(
-      body: navigationShell,
+      body: widget.navigationShell,
       bottomNavigationBar: NavigationBar(
         height: 70,
-        selectedIndex: navigationShell.currentIndex,
+        selectedIndex: widget.navigationShell.currentIndex,
         onDestinationSelected: (index) {
           // each tab's screen stays alive in the IndexedStack once visited,
           // so its own initState never re-fires - refresh here instead
@@ -32,12 +65,15 @@ class AppShell extends ConsumerWidget {
           if (index == _watchlistBranchIndex) {
             ref.read(watchlistProvider.notifier).load();
           }
+          if (index == _moviesBranchIndex) {
+            ref.read(moviesProvider.notifier).load();
+          }
           if (index == _listsBranchIndex) {
             ref.read(listsProvider.notifier).load();
           }
-          navigationShell.goBranch(
+          widget.navigationShell.goBranch(
             index,
-            initialLocation: index == navigationShell.currentIndex,
+            initialLocation: index == widget.navigationShell.currentIndex,
           );
         },
         destinations: [
@@ -62,12 +98,39 @@ class AppShell extends ConsumerWidget {
             label: l10n.navLists,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person),
+            icon: _ProfileIcon(
+              icon: Icons.person_outline,
+              badgeCount: pendingMoviesCount,
+            ),
+            selectedIcon: _ProfileIcon(
+              icon: Icons.person,
+              badgeCount: pendingMoviesCount,
+            ),
             label: l10n.navProfile,
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The "Perfil" tab's icon, with a small badge when there's something
+/// waiting for the user there - currently pending series/movie titles to
+/// resolve (Api\Model\SeriesImportPending/MovieImportPending), but written
+/// generically enough to fold in other "needs attention" counts later if
+/// any show up.
+class _ProfileIcon extends StatelessWidget {
+  const _ProfileIcon({required this.icon, required this.badgeCount});
+
+  final IconData icon;
+  final int badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Badge(
+      label: Text('$badgeCount'),
+      isLabelVisible: badgeCount > 0,
+      child: Icon(icon),
     );
   }
 }

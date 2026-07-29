@@ -45,6 +45,54 @@ Color seriesStatusOnColor(String status) {
   }
 }
 
+String localizedMovieStatus(AppLocalizations l10n, String status) {
+  switch (status) {
+    case 'Released':
+      return l10n.movieStatusReleased;
+    case 'Planned':
+      return l10n.movieStatusPlanned;
+    case 'In Production':
+      return l10n.movieStatusInProduction;
+    case 'Rumored':
+      return l10n.movieStatusRumored;
+    case 'Canceled':
+      return l10n.movieStatusCanceled;
+    default:
+      return status;
+  }
+}
+
+Color movieStatusColor(String status) {
+  switch (status) {
+    case 'Released':
+      return AppColors.sage;
+    case 'In Production':
+    case 'Planned':
+      return AppColors.darkBg;
+    case 'Canceled':
+      return AppColors.coral;
+    default:
+      return AppColors.lightTextSecondary;
+  }
+}
+
+/// Readable text color for a solid (fully opaque) [movieStatusColor]
+/// background, as used over the movie detail header photo - same reasoning
+/// as seriesStatusOnColor.
+Color movieStatusOnColor(String status) {
+  switch (status) {
+    case 'Released':
+      return AppColors.onSageLight;
+    case 'In Production':
+    case 'Planned':
+      return Colors.white;
+    case 'Canceled':
+      return AppColors.onCoralLight;
+    default:
+      return AppColors.lightTextPrimary;
+  }
+}
+
 class StatusTag extends StatelessWidget {
   const StatusTag({
     super.key,
