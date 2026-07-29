@@ -13,6 +13,7 @@ import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../import/providers/pending_resolution_provider.dart';
 import '../providers/account_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -79,7 +80,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               email: account.email ?? '',
             ),
             _AccountSection(account: account),
-            const _SeriesSection(),
+            const _FollowingSection(),
+            const _ImportSection(),
             const _FooterSection(),
           ],
         ),
@@ -164,7 +166,7 @@ class _AccountSection extends ConsumerWidget {
       child: _Card(
         children: [
           _AccountRow(
-            icon: Icons.edit_outlined,
+            icon: Icons.badge_outlined,
             label: l10n.username,
             value: account.username ?? '',
             onTap: () => _editUsername(context, ref),
@@ -473,23 +475,103 @@ class _AccountSection extends ConsumerWidget {
   }
 }
 
-class _SeriesSection extends StatelessWidget {
-  const _SeriesSection();
+class _FollowingSection extends StatelessWidget {
+  const _FollowingSection();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return _Section(
-      title: l10n.seriesSectionTitle,
+      title: l10n.followingSectionTitle,
       child: _Card(
         children: [
           _ActiveRow(
-            icon: Icons.video_library_outlined,
+            icon: Icons.tv,
             label: l10n.mySeriesRow,
             onTap: () => context.push('/my-series'),
           ),
+          _ActiveRow(
+            icon: Icons.videocam,
+            label: l10n.myMoviesRow,
+            onTap: () => context.push('/my-movies'),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _ImportSection extends ConsumerWidget {
+  const _ImportSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    if (!kIsWeb) {
+      // both rows below are web-only (TV Time import is a file upload flow
+      // not wired up on mobile) - no section at all if neither can show
+      return const SizedBox.shrink();
+    }
+
+    return _Section(
+      title: l10n.importSectionTitle,
+      child: _Card(
+        children: [
+          _AccountRow(
+            icon: Icons.folder_zip_outlined,
+            label: l10n.importFromTvTime,
+            value: '',
+            onTap: () => context.push('/import/tvtime'),
+          ),
+          _PendingResolutionAccountRow(
+            badgeCount: ref.watch(
+              pendingResolutionProvider.select((s) => s.items.length),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingResolutionAccountRow extends StatelessWidget {
+  const _PendingResolutionAccountRow({required this.badgeCount});
+
+  final int badgeCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final textSecondary = Theme.of(context).textTheme.bodySmall?.color;
+
+    return InkWell(
+      onTap: () => context.push('/import/pending'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 13,
+        ),
+        child: Row(
+          children: [
+            _RowIcon(icon: Icons.question_mark),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                l10n.pendingMoviesRow,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (badgeCount > 0) ...[
+              _CountBadge(count: badgeCount),
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            Icon(Icons.chevron_right, size: 18, color: textSecondary),
+          ],
+        ),
       ),
     );
   }
@@ -562,12 +644,6 @@ class _FooterSection extends ConsumerWidget {
             label: l10n.clearImageCache,
             onTap: () => _clearImageCache(context, l10n),
           ),
-          if (kIsWeb)
-            _PlainActionRow(
-              icon: Icons.file_upload_outlined,
-              label: l10n.importFromTvTime,
-              onTap: () => context.push('/import/tvtime'),
-            ),
           _PlainActionRow(
             icon: Icons.logout,
             label: l10n.logOut,
@@ -796,6 +872,31 @@ class _PlainActionRow extends StatelessWidget {
   }
 }
 
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.coral,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
+        ),
+      ),
+    );
+  }
+}
+
 class _RowIcon extends StatelessWidget {
   const _RowIcon({required this.icon});
 
@@ -806,14 +907,10 @@ class _RowIcon extends StatelessWidget {
     return Container(
       width: 30,
       height: 30,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        shape: BoxShape.circle,
-      ),
       alignment: Alignment.center,
       child: Icon(
         icon,
-        size: 16,
+        size: 22,
         color: Theme.of(context).textTheme.bodySmall?.color,
       ),
     );

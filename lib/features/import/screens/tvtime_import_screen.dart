@@ -8,15 +8,36 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../data/tvtime_import_api.dart';
+import '../providers/pending_resolution_provider.dart';
 import '../providers/tvtime_import_provider.dart';
 
-class TvTimeImportScreen extends ConsumerWidget {
+class TvTimeImportScreen extends ConsumerStatefulWidget {
   const TvTimeImportScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TvTimeImportScreen> createState() => _TvTimeImportScreenState();
+}
+
+class _TvTimeImportScreenState extends ConsumerState<TvTimeImportScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // checked regardless of this screen's own import phase - a previous
+    // session's import may have left titles pending resolution, and the
+    // in-memory tvtime_import_provider (this screen's own state) doesn't
+    // survive a page refresh, so this is re-fetched fresh every time the
+    // screen opens rather than relying on that. Same "modify provider
+    // outside build" reasoning as every other screen's initState here.
+    Future.microtask(() => ref.read(pendingResolutionProvider.notifier).load());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(tvTimeImportProvider);
+    final pendingCount = ref.watch(
+      pendingResolutionProvider.select((s) => s.items.length),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.importTvTimeTitle)),
@@ -25,29 +46,81 @@ class TvTimeImportScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.md),
           child: SizedBox(
             width: double.infinity,
-            child: switch (state.phase) {
-              TvTimeImportPhase.idle => _IdleView(l10n: l10n),
-              TvTimeImportPhase.selected => _SelectedView(
-                l10n: l10n,
-                fileName: state.fileName ?? '',
-                fileSize: state.fileSize ?? 0,
-              ),
-              TvTimeImportPhase.uploading => _UploadingView(l10n: l10n),
-              TvTimeImportPhase.processing => _ProcessingView(
-                l10n: l10n,
-                summary: state.summary,
-              ),
-              TvTimeImportPhase.done => _DoneView(
-                l10n: l10n,
-                summary: state.summary,
-              ),
-              TvTimeImportPhase.failed => _FailedView(
-                l10n: l10n,
-                errorMessage: state.errorMessage,
-              ),
-            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (pendingCount > 0) ...[
+                  _PendingMoviesBanner(count: pendingCount, l10n: l10n),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                switch (state.phase) {
+                  TvTimeImportPhase.idle => _IdleView(l10n: l10n),
+                  TvTimeImportPhase.selected => _SelectedView(
+                    l10n: l10n,
+                    fileName: state.fileName ?? '',
+                    fileSize: state.fileSize ?? 0,
+                  ),
+                  TvTimeImportPhase.uploading => _UploadingView(l10n: l10n),
+                  TvTimeImportPhase.processing => _ProcessingView(
+                    l10n: l10n,
+                    summary: state.summary,
+                  ),
+                  TvTimeImportPhase.done => _DoneView(
+                    l10n: l10n,
+                    summary: state.summary,
+                  ),
+                  TvTimeImportPhase.failed => _FailedView(
+                    l10n: l10n,
+                    errorMessage: state.errorMessage,
+                  ),
+                },
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Shown above everything else on this screen (regardless of the current
+/// import's own phase) whenever there are series/movie titles still waiting
+/// to be resolved by hand - see Api\Model\SeriesImportPending/
+/// MovieImportPending. Surfaces this proactively rather than only right
+/// after a fresh import finishes, since the user may come back to this
+/// screen later (e.g. after a page refresh, which loses
+/// tvtime_import_provider's own in-memory phase) with no other way to
+/// remember there was unfinished business.
+class _PendingMoviesBanner extends StatelessWidget {
+  const _PendingMoviesBanner({required this.count, required this.l10n});
+
+  final int count;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.coral.withValues(alpha: 0.12),
+        border: Border.all(color: AppColors.coral),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.fact_check_outlined, color: AppColors.coral, size: 20),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              l10n.pendingMoviesRow,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.push('/import/pending'),
+            child: Text(l10n.moviesPendingCta(count)),
+          ),
+        ],
       ),
     );
   }
@@ -261,6 +334,24 @@ class _ProcessingView extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: _Stat(
+                  value: '${summary?.moviesSynced ?? 0}',
+                  label: l10n.moviesImportedStatLabel,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _Stat(
+                  value: '${summary?.listsCreated ?? 0}',
+                  label: l10n.listsCreatedStatLabel,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: AppSpacing.md),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,6 +385,7 @@ class _DoneView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final failed = summary?.showsFailed ?? 0;
+    final pendingCount = (summary?.moviesPending ?? 0) + (summary?.showsPending ?? 0);
     return Column(
       children: [
         Container(
@@ -331,6 +423,34 @@ class _DoneView extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _Stat(
+                value: '${summary?.moviesSynced ?? 0}',
+                label: l10n.moviesImportedStatLabel,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _Stat(
+                value: '${summary?.listsCreated ?? 0}',
+                label: l10n.listsCreatedStatLabel,
+              ),
+            ),
+          ],
+        ),
+        if (pendingCount > 0) ...[
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => context.push('/import/pending'),
+              child: Text(l10n.moviesPendingCta(pendingCount)),
+            ),
+          ),
+        ],
         if (failed > 0) ...[
           const SizedBox(height: AppSpacing.md),
           Container(

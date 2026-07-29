@@ -14,18 +14,37 @@ class TvTimeImportSummary {
   const TvTimeImportSummary({
     required this.showsSynced,
     required this.showsFailed,
+    required this.showsPending,
     required this.episodesWatched,
+    required this.listsCreated,
+    required this.moviesSynced,
+    required this.moviesPending,
   });
 
   final int showsSynced;
   final int showsFailed;
+  // shows whose tv_show_id no longer resolved on TheTVDB at all and whose
+  // name search (Api\Model\TvTimeImport\SeriesMatcher) couldn't confidently
+  // resolve one either - waiting in Api\Model\SeriesImportPending for the
+  // user to pick the right one by hand (see PendingResolutionScreen)
+  final int showsPending;
   final int episodesWatched;
+  final int listsCreated;
+  final int moviesSynced;
+  // titles Api\Model\TvTimeImport\MovieMatcher couldn't confidently resolve
+  // on its own - waiting in Api\Model\MovieImportPending for the user to
+  // pick the right one by hand (see PendingResolutionScreen)
+  final int moviesPending;
 
   factory TvTimeImportSummary.fromJson(Map<String, dynamic> json) {
     return TvTimeImportSummary(
       showsSynced: (json['shows_synced'] as num?)?.toInt() ?? 0,
       showsFailed: (json['shows_failed'] as List<dynamic>?)?.length ?? 0,
+      showsPending: (json['shows_pending'] as num?)?.toInt() ?? 0,
       episodesWatched: (json['episodes_watched'] as num?)?.toInt() ?? 0,
+      listsCreated: (json['lists_created'] as num?)?.toInt() ?? 0,
+      moviesSynced: (json['movies_synced'] as num?)?.toInt() ?? 0,
+      moviesPending: (json['movies_pending'] as num?)?.toInt() ?? 0,
     );
   }
 }
