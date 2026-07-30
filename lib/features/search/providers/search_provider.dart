@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/providers/auth_provider.dart';
 import '../../lists/data/list_movie.dart';
 import '../data/search_result.dart';
 import '../data/series.dart' as series_model;
@@ -86,7 +87,11 @@ class SearchController extends Notifier<SearchState> {
   Future<void> _search(String query) async {
     final requestId = ++_requestId;
     try {
-      final result = await _unifiedApi.search(query, page: 0);
+      final result = await _unifiedApi.search(
+        query,
+        page: 0,
+        token: ref.read(authProvider).token,
+      );
       if (requestId != _requestId) return;
       state = state.copyWith(
         results: result.items,
@@ -112,7 +117,11 @@ class SearchController extends Notifier<SearchState> {
     final nextPage = state.page + 1;
     state = state.copyWith(isLoadingMore: true);
     try {
-      final result = await _unifiedApi.search(query, page: nextPage);
+      final result = await _unifiedApi.search(
+        query,
+        page: nextPage,
+        token: ref.read(authProvider).token,
+      );
       if (requestId != _requestId) return;
       state = state.copyWith(
         results: [...state.results, ...result.items],
@@ -141,6 +150,8 @@ series_model.Series seriesFromSearchResult(SearchResult result) {
     year: result.year,
     imageUrl: result.imageUrl,
     status: result.status,
+    watchedEpisodes: result.watchedEpisodes,
+    totalEpisodes: result.totalEpisodes,
   );
 }
 

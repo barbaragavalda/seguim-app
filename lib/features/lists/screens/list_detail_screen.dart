@@ -294,7 +294,10 @@ class _SeriesCard extends ConsumerWidget {
         children: [
           Stack(
             children: [
-              SeriesPoster(imageUrl: series.imageUrl),
+              SeriesPoster(
+                imageUrl: series.imageUrl,
+                watchProgress: series.watchProgress,
+              ),
               Positioned(
                 top: 4,
                 right: 4,

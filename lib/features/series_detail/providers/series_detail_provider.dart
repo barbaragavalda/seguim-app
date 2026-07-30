@@ -47,6 +47,22 @@ class SeriesDetailState {
     return filtered;
   }
 
+  /// null when there's nothing to show a progress bar for (no aired
+  /// regular episodes at all) - same "season > 0, already aired" counting
+  /// as the backend's own watchProgressForSeries() (Api\Model\Episode),
+  /// computed here instead since the full episode list is already loaded.
+  double? get watchProgress {
+    final counted = episodes.where((e) {
+      if (e.seasonNumber <= 0) return false;
+      final aired = e.aired == null ? null : DateTime.tryParse(e.aired!);
+      return aired != null && !aired.isAfter(DateTime.now());
+    });
+    final total = counted.length;
+    if (total == 0) return null;
+    final watched = counted.where((e) => e.watched).length;
+    return (watched / total).clamp(0.0, 1.0);
+  }
+
   SeriesDetailState copyWith({
     bool? isLoading,
     SeriesDetail? series,

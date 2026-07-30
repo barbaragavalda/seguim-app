@@ -14,6 +14,8 @@ class SearchResult {
     this.year,
     this.imageUrl,
     this.status,
+    this.watchedEpisodes,
+    this.totalEpisodes,
   });
 
   final String tvdbId;
@@ -22,6 +24,21 @@ class SearchResult {
   final String? year;
   final String? imageUrl;
   final String? status;
+  // series only (movies have no per-episode progress) - both null unless
+  // the request carried a real user token AND the series is already
+  // synced locally, see Api\Controller\Search\Search::withWatchProgress()
+  final int? watchedEpisodes;
+  final int? totalEpisodes;
+
+  /// null when there's nothing to show a progress bar for - see the
+  /// fields' own docblock. Otherwise 0.0-1.0, same clamping as Series'
+  /// own watchProgress getter (lists/data/series.dart).
+  double? get watchProgress {
+    final total = totalEpisodes;
+    final watched = watchedEpisodes;
+    if (total == null || watched == null || total == 0) return null;
+    return (watched / total).clamp(0.0, 1.0);
+  }
 
   // TheTVDB returns its own generic placeholder here instead of omitting
   // an image when a result has no real artwork - same convention as
@@ -42,6 +59,8 @@ class SearchResult {
           ? null
           : rawImageUrl,
       status: json['status'] as String?,
+      watchedEpisodes: (json['watched_episodes'] as num?)?.toInt(),
+      totalEpisodes: (json['total_episodes'] as num?)?.toInt(),
     );
   }
 }

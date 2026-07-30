@@ -26,12 +26,21 @@ class UnifiedSearchApi {
 
   final http.Client _client;
 
-  Future<UnifiedSearchResult> search(String query, {int page = 0}) async {
+  /// [token] is the logged-in user's own token, when there is one - lets
+  /// the backend compute each series result's watch progress (Api\
+  /// Controller\Search\Search::withWatchProgress()); omitted/null falls
+  /// back to the app's shared token, same as before, and search still
+  /// works fully logged-out, just without progress bars.
+  Future<UnifiedSearchResult> search(
+    String query, {
+    int page = 0,
+    String? token,
+  }) async {
     final response = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}/api/search').replace(
         queryParameters: {'query': query, 'page': '$page'},
       ),
-      headers: apiHeaders(ApiConfig.defaultToken),
+      headers: apiHeaders(token ?? ApiConfig.defaultToken),
     );
     late final Map<String, dynamic> data;
     try {

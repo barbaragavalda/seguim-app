@@ -252,9 +252,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     children: [
                       isMovie
                           ? _MoviePoster(imageUrl: result.imageUrl)
-                          : SeriesPoster(imageUrl: result.imageUrl),
+                          : SeriesPoster(
+                              imageUrl: result.imageUrl,
+                              watchProgress: result.watchProgress,
+                            ),
                       Positioned(
-                        bottom: 4,
+                        // clears WatchProgressBar.height (a series result
+                        // may have one, a movie result never does - same
+                        // offset either way so the badge doesn't jump
+                        // around depending on which)
+                        bottom: 10,
                         left: 4,
                         child: _TypeBadge(isMovie: isMovie),
                       ),

@@ -13,6 +13,7 @@ import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/placeholder_mark.dart';
 import '../../../widgets/status_tag.dart';
+import '../../../widgets/watch_progress_bar.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../lists/widgets/add_to_lists_sheet.dart';
 import '../data/series_detail.dart';
@@ -71,7 +72,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Header(series: series, l10n: l10n),
+          _Header(series: series, l10n: l10n, watchProgress: state.watchProgress),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
@@ -369,10 +370,11 @@ Future<void> _handleWatchedEpisodeTap(
 }
 
 class _Header extends ConsumerWidget {
-  const _Header({required this.series, required this.l10n});
+  const _Header({required this.series, required this.l10n, this.watchProgress});
 
   final SeriesDetail series;
   final AppLocalizations l10n;
+  final double? watchProgress;
 
   // on a wide (desktop web) screen, a plain AspectRatio(16/9) grows its
   // height with the full screen width with no upper bound - capping it
@@ -405,6 +407,13 @@ class _Header extends ConsumerWidget {
                 ),
               ),
             ),
+            if (watchProgress != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: WatchProgressBar(progress: watchProgress!),
+              ),
             Positioned(
               top: AppSpacing.md,
               left: AppSpacing.md,
