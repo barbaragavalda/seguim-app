@@ -94,13 +94,14 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         ),
       );
     }
-    if (state.items.isEmpty && state.movieItems.isEmpty) {
+    if (state.items.isEmpty && state.movieItems.isEmpty && state.pendingCount == 0) {
       return Center(child: Text(l10n.listDetailEmpty));
     }
 
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
+        if (state.pendingCount > 0) _PendingBanner(count: state.pendingCount, l10n: l10n),
         if (state.items.isNotEmpty) ...[
           _SectionHeader(title: l10n.navWatchlist),
           SliverPadding(
@@ -356,6 +357,70 @@ class _RemoveButton extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.close, size: 14, color: Colors.white),
+      ),
+    );
+  }
+}
+
+/// Shown when TvTimeImport::Processor couldn't confidently resolve one or
+/// more of this list's own series/movies (a dead/renumbered tvdb_id with no
+/// name match, or several same-titled TheTVDB candidates) - see
+/// series_import_pending_list/movie_import_pending_list's own docblocks in
+/// db.sql. Tapping it opens the same pending-resolution screen every other
+/// unresolved import item already goes through - it isn't scoped to just
+/// this list's own items, but resolving any of them updates this count on
+/// the next visit either way.
+class _PendingBanner extends StatelessWidget {
+  const _PendingBanner({required this.count, required this.l10n});
+
+  final int count;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        0,
+      ),
+      sliver: SliverToBoxAdapter(
+        child: Material(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.push('/import/pending'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.question_mark,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      l10n.listPendingItemsBanner(count),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

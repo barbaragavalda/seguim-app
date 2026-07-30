@@ -30,12 +30,17 @@ class ListDetailPage {
     required this.seriesHasMore,
     required this.movies,
     required this.moviesHasMore,
+    required this.pendingCount,
   });
 
   final List<Series> series;
   final bool seriesHasMore;
   final List<ListMovie> movies;
   final bool moviesHasMore;
+  // how many of this list's own series/movies are still waiting on a
+  // series_import_pending/movie_import_pending row - see
+  // Api\Controller\Lists\Show's own docblock (backend)
+  final int pendingCount;
 }
 
 class ListsApi {
@@ -104,6 +109,7 @@ class ListsApi {
           .map((item) => ListMovie.fromListRow(item as Map<String, dynamic>))
           .toList(),
       moviesHasMore: data['moviesHasMore'] as bool? ?? false,
+      pendingCount: (data['pendingCount'] as num?)?.toInt() ?? 0,
     );
   }
 

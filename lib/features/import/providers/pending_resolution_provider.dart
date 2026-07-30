@@ -14,6 +14,9 @@ class PendingResolutionState {
     this.items = const [],
     this.resolvedCount = 0,
     this.busyKeys = const {},
+    this.selected = const {},
+    this.manualPicks = const {},
+    this.isConfirmingAll = false,
     this.errorKey,
     this.actionErrorKey,
   });
@@ -24,6 +27,25 @@ class PendingResolutionState {
   // progress bar, same shape as rewatch's own Resolve screen
   final int resolvedCount;
   final Set<String> busyKeys;
+  // entry.key -> the candidate tvdb_ids currently ticked for it on this
+  // screen - lives here (not as local State in the card widget) so it
+  // survives navigating to "Cerca manualment" and back (a provider outlives
+  // the card's own widget being pushed under a new route) and so
+  // confirmAll() below can see every card's selection at once, not just
+  // whichever one owns the tap that triggered it
+  final Map<String, Set<int>> selected;
+  // entry.key -> a result picked via "Cerca manualment" for it, held here
+  // rather than applied immediately - same reasoning as `selected` above
+  // (survives the round trip to SearchScreen and back, and is only actually
+  // applied once the user hits Confirma). Mutually exclusive with `selected`
+  // for the same entry.key - PendingResolutionController's own
+  // toggleCandidate()/setManualPick() each clear the other, so an entry is
+  // never "half auto-candidate, half manual pick" at once
+  final Map<String, SearchResult> manualPicks;
+  // true while confirmAll() is working through every selected entry - a
+  // coarser flag than busyKeys (which is per-entry) so the global button
+  // itself can show a spinner and disable re-tapping mid-run
+  final bool isConfirmingAll;
   final String? errorKey;
   // set when a single resolve()/skip() action fails (e.g. a candidate
   // TheTVDB has since merged away) rather than the whole list load - kept
@@ -36,11 +58,20 @@ class PendingResolutionState {
 
   int get total => items.length + resolvedCount;
 
+  // how many entries currently have at least one candidate ticked (or a
+  // manual pick, see `manualPicks` own docblock on why these never overlap)
+  // - the global "Confirma-ho tot" button's own visibility/count
+  int get selectedEntryCount =>
+      selected.values.where((s) => s.isNotEmpty).length + manualPicks.length;
+
   PendingResolutionState copyWith({
     bool? isLoading,
     List<PendingEntry>? items,
     int? resolvedCount,
     Set<String>? busyKeys,
+    Map<String, Set<int>>? selected,
+    Map<String, SearchResult>? manualPicks,
+    bool? isConfirmingAll,
     String? errorKey,
     bool clearError = false,
     String? actionErrorKey,
@@ -51,6 +82,9 @@ class PendingResolutionState {
       items: items ?? this.items,
       resolvedCount: resolvedCount ?? this.resolvedCount,
       busyKeys: busyKeys ?? this.busyKeys,
+      selected: selected ?? this.selected,
+      manualPicks: manualPicks ?? this.manualPicks,
+      isConfirmingAll: isConfirmingAll ?? this.isConfirmingAll,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
       actionErrorKey: clearActionError
           ? null
@@ -179,6 +213,77 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
     }
   }
 
+  /// Ticks/unticks one candidate for [entryKey] - the card's own selection
+  /// no longer lives in its widget State (see PendingResolutionState.
+  /// selected's own docblock on why). Clears any manual pick for the same
+  /// entry - see PendingResolutionState.manualPicks's own docblock on why
+  /// the two are mutually exclusive.
+  void toggleCandidate(String entryKey, int tvdbId) {
+    final current = {...(state.selected[entryKey] ?? const <int>{})};
+    if (!current.remove(tvdbId)) {
+      current.add(tvdbId);
+    }
+    state = state.copyWith(
+      selected: {...state.selected, entryKey: current},
+      manualPicks: {...state.manualPicks}..remove(entryKey),
+    );
+  }
+
+  /// Records a "Cerca manualment" pick for [entryKey] without applying it
+  /// yet - the search screen calls this instead of resolveWithResult()
+  /// directly, so the pick only takes effect once the user hits Confirma
+  /// (individually not possible anymore - only via confirmAll(), see
+  /// PendingResolutionScreen's own docblock on why the per-card button was
+  /// removed). Clears any ticked auto-candidates for the same entry, same
+  /// mutual-exclusion reasoning as toggleCandidate() above.
+  void setManualPick(String entryKey, SearchResult result) {
+    state = state.copyWith(
+      selected: {...state.selected}..remove(entryKey),
+      manualPicks: {...state.manualPicks, entryKey: result},
+    );
+  }
+
+  /// Undoes a manual pick without applying it - lets the user reconsider
+  /// and go back to the auto-suggested candidates (if any) instead.
+  void clearManualPick(String entryKey) {
+    if (!state.manualPicks.containsKey(entryKey)) return;
+    state = state.copyWith(
+      manualPicks: {...state.manualPicks}..remove(entryKey),
+    );
+  }
+
+  /// Resolves every entry that currently has at least one candidate ticked
+  /// or a manual pick, one at a time - the "Confirma-ho tot" global action,
+  /// so the user doesn't have to tap each card's own Confirma individually.
+  /// Sequential rather than concurrent: each resolve()/resolveWithResult()
+  /// already mutates state.items/resolvedCount as it finishes, and running
+  /// them one after another keeps that trail of updates (and any one
+  /// entry's own error) easy to follow instead of several racing at once.
+  Future<void> confirmAll() async {
+    if (state.isConfirmingAll) return;
+    final toConfirm = state.items
+        .where(
+          (entry) =>
+              (state.selected[entry.key]?.isNotEmpty ?? false) ||
+              state.manualPicks.containsKey(entry.key),
+        )
+        .toList();
+    if (toConfirm.isEmpty) return;
+
+    state = state.copyWith(isConfirmingAll: true);
+    for (final entry in toConfirm) {
+      final manualPick = state.manualPicks[entry.key];
+      if (manualPick != null) {
+        await resolveWithResult(entry, manualPick);
+        continue;
+      }
+      final tvdbIds = state.selected[entry.key];
+      if (tvdbIds == null || tvdbIds.isEmpty) continue;
+      await resolve(entry, tvdbIds.toList());
+    }
+    state = state.copyWith(isConfirmingAll: false);
+  }
+
   Future<void> skip(PendingEntry entry) async {
     final token = ref.read(authProvider).token;
     if (token == null || state.busyKeys.contains(entry.key)) return;
@@ -201,6 +306,16 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
     }
   }
 
+  /// Discards every currently-ticked candidate and manual pick across every
+  /// card - backs "Surt sense confirmar" in the leave-with-unconfirmed-ticks
+  /// dialog, so coming back to this screen later doesn't find the same
+  /// candidates still ticked from a selection the user explicitly chose to
+  /// abandon.
+  void clearAllSelections() {
+    if (state.selected.isEmpty && state.manualPicks.isEmpty) return;
+    state = state.copyWith(selected: const {}, manualPicks: const {});
+  }
+
   void clearActionError() {
     if (state.actionErrorKey == null) return;
     state = state.copyWith(clearActionError: true);
@@ -211,6 +326,8 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
       items: state.items.where((item) => item.key != key).toList(),
       resolvedCount: state.resolvedCount + 1,
       busyKeys: {...state.busyKeys}..remove(key),
+      selected: {...state.selected}..remove(key),
+      manualPicks: {...state.manualPicks}..remove(key),
     );
   }
 

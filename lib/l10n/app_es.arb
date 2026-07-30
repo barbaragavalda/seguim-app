@@ -192,7 +192,6 @@
   "skipAction": "Descartar",
   "searchManuallyAction": "Buscar manualmente",
   "resolveManuallyTitle": "Selecciona la serie o película correcta",
-  "confirmSelectionAction": "Confirmar",
   "showsFailedWarning": "{count, plural, one{1 serie no se ha podido sincronizar (puede que ya no exista en TheTVDB).} other{{count} series no se han podido sincronizar (puede que ya no existan en TheTVDB).}}",
   "@showsFailedWarning": {
     "placeholders": { "count": { "type": "int" } }
@@ -202,5 +201,20 @@
   "importFailedSub": "Vuelve a intentarlo o revisa el archivo",
   "retry": "Volver a intentarlo",
   "resolveCandidateUnavailable": "Ese candidato ya no está disponible en TheTVDB. Prueba con otro.",
-  "resolveActionNotFound": "Este elemento ya no está pendiente (puede que ya se haya resuelto en otro dispositivo)."
+  "resolveActionNotFound": "Este elemento ya no está pendiente (puede que ya se haya resuelto en otro dispositivo).",
+  "listPendingItemsBanner": "{count, plural, one{1 elemento de esta lista sigue pendiente de resolver} other{{count} elementos de esta lista siguen pendientes de resolver}}",
+  "@listPendingItemsBanner": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmAllAction": "{count, plural, one{Confirmar 1 seleccionado} other{Confirmar {count} seleccionados}}",
+  "@confirmAllAction": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmBeforeLeavingTitle": "Tienes selecciones sin confirmar",
+  "confirmBeforeLeavingBody": "{count, plural, one{Has seleccionado un candidato que aún no has confirmado. ¿Quieres confirmarlo antes de salir?} other{Has seleccionado {count} candidatos que aún no has confirmado. ¿Quieres confirmarlos antes de salir?}}",
+  "@confirmBeforeLeavingBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "leaveWithoutConfirmingAction": "Salir sin confirmar",
+  "confirmAllAndLeaveAction": "Confirmar y salir"
 }

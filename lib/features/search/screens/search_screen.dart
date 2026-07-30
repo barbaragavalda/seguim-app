@@ -35,9 +35,11 @@ class SearchScreen extends ConsumerStatefulWidget {
   /// Time's own "shows" vs "movies" split doesn't always match TheTVDB's
   /// (e.g. a TV movie tracked as a one-episode "show"), so the user needs
   /// to be able to find and pick whichever one actually exists. Tapping a
-  /// result resolves the entry immediately (see
-  /// PendingResolutionController.resolveWithResult()) instead of
-  /// navigating to its detail.
+  /// result doesn't resolve the entry right away - it's recorded as this
+  /// entry's pick (see PendingResolutionController.setManualPick()) and
+  /// only actually applied once the user hits the pending screen's own
+  /// "Confirma-ho tot", same as ticking one of its auto-suggested
+  /// candidates would be.
   final PendingEntry? resolveEntry;
 
   @override
@@ -210,9 +212,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             return GestureDetector(
               onTap: () {
                 if (resolveEntry != null) {
+                  // deliberately not applied right away - just recorded as
+                  // this entry's pick, same as ticking one of its own
+                  // auto-suggested candidates would be. Only takes effect
+                  // once the user hits the pending screen's own "Confirma-
+                  // ho tot" - see PendingResolutionController.setManualPick()
+                  // own docblock
                   ref
                       .read(pendingResolutionProvider.notifier)
-                      .resolveWithResult(resolveEntry, result);
+                      .setManualPick(resolveEntry.key, result);
                   context.pop();
                   return;
                 }

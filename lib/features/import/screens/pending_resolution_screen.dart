@@ -10,8 +10,15 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/placeholder_mark.dart';
+import '../../search/data/search_result.dart';
 import '../data/pending_entry.dart';
 import '../providers/pending_resolution_provider.dart';
+
+/// The three ways out of the "you have unconfirmed ticks" dialog - see
+/// _PendingResolutionScreenState._confirmExitIfNeeded()'s own docblock.
+/// Cancel isn't a value here since dismissing/cancelling the dialog already
+/// returns null on its own.
+enum _ExitChoice { confirmAll, discard }
 
 /// Lets the user resolve series/movie titles a TV Time import couldn't
 /// confidently match on its own - each with up to 5 TheTVDB candidates
@@ -52,28 +59,87 @@ class _PendingResolutionScreenState
       ref.read(pendingResolutionProvider.notifier).clearActionError();
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.pendingMoviesTitle),
-        actions: [
-          if (state.total > 0)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.md),
-              child: Center(
-                child: Text(
-                  '${state.resolvedCount}/${state.total}',
-                  style: const TextStyle(
-                    color: AppColors.coral,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
+    return PopScope(
+      // blocks the pop only while something's ticked but not yet confirmed
+      // - see _confirmExitIfNeeded()'s own docblock
+      canPop: state.selectedEntryCount == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _confirmExitIfNeeded(context, l10n, state.selectedEntryCount);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.pendingMoviesTitle),
+          actions: [
+            if (state.total > 0)
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.md),
+                child: Center(
+                  child: Text(
+                    '${state.resolvedCount}/${state.total}',
+                    style: const TextStyle(
+                      color: AppColors.coral,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ),
+          ],
+        ),
+        body: SafeArea(child: _buildBody(context, l10n, state)),
+        bottomNavigationBar: state.selectedEntryCount > 0
+            ? _ConfirmAllBar(count: state.selectedEntryCount, l10n: l10n)
+            : null,
+      ),
+    );
+  }
+
+  /// Backs the "asks before leaving with unconfirmed ticks" half of the
+  /// request - a plain pop would otherwise silently throw away every
+  /// candidate the user had already ticked (but not yet hit Confirma for)
+  /// the moment they navigate away, with no way back. Offers the same
+  /// three ways out a modified-form dialog would: confirm everything ticked
+  /// and then leave, leave without confirming (discarding the ticks), or
+  /// stay on the screen.
+  Future<void> _confirmExitIfNeeded(
+    BuildContext context,
+    AppLocalizations l10n,
+    int selectedEntryCount,
+  ) async {
+    final choice = await showDialog<_ExitChoice>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.confirmBeforeLeavingTitle),
+        content: Text(l10n.confirmBeforeLeavingBody(selectedEntryCount)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(
+              MaterialLocalizations.of(dialogContext).cancelButtonLabel,
             ),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_ExitChoice.discard),
+            child: Text(l10n.leaveWithoutConfirmingAction),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_ExitChoice.confirmAll),
+            child: Text(l10n.confirmAllAndLeaveAction),
+          ),
         ],
       ),
-      body: SafeArea(child: _buildBody(context, l10n, state)),
     );
+
+    if (!context.mounted || choice == null) return;
+    if (choice == _ExitChoice.confirmAll) {
+      await ref.read(pendingResolutionProvider.notifier).confirmAll();
+    } else {
+      ref.read(pendingResolutionProvider.notifier).clearAllSelections();
+    }
+    if (context.mounted) context.pop();
   }
 
   Widget _buildBody(
@@ -128,9 +194,9 @@ class _PendingResolutionScreenState
       itemBuilder: (context, index) => _PendingEntryCard(
         // keyed by the entry's own compound key, not the list index - once
         // an item is resolved/skipped and removed, the next one shifts into
-        // the same index; without this key Flutter reuses the removed
-        // card's State (and its _selected set) for whatever entry now
-        // occupies that index, instead of starting the new card fresh
+        // the same index; this key is what lets Flutter tell that shift
+        // apart from "this index's own entry changed" and animate/diff the
+        // list correctly instead of just reusing whatever was at that index
         key: ValueKey(state.items[index].key),
         entry: state.items[index],
         busy: state.busyKeys.contains(state.items[index].key),
@@ -144,9 +210,13 @@ class _PendingResolutionScreenState
 /// can be selected at once (relevant for a movie entry - e.g. "Mulan" 1998
 /// and 2020, both watched under TV Time's one ambiguous entry - see
 /// PendingMoviesApi.resolve()'s own docblock), confirmed with the explicit
-/// button once the selection is right, so a stray tap never applies the
-/// wrong series/movie by itself.
-class _PendingEntryCard extends ConsumerStatefulWidget {
+/// button once the selection is right (or the global "Confirma-ho tot" bar),
+/// so a stray tap never applies the wrong series/movie by itself.
+///
+/// A plain ConsumerWidget rather than a ...State with its own local
+/// selection - see PendingResolutionState.selected's own docblock on why
+/// that selection now lives in the provider instead.
+class _PendingEntryCard extends ConsumerWidget {
   const _PendingEntryCard({
     super.key,
     required this.entry,
@@ -158,22 +228,35 @@ class _PendingEntryCard extends ConsumerStatefulWidget {
   final bool busy;
   final AppLocalizations l10n;
 
-  @override
-  ConsumerState<_PendingEntryCard> createState() => _PendingEntryCardState();
-}
-
-class _PendingEntryCardState extends ConsumerState<_PendingEntryCard> {
   // a comfortable, fixed poster width - see the Wrap below for why this is
   // fixed rather than dividing the available width by candidate count
   static const double _candidateWidth = 96;
 
-  final Set<int> _selected = {};
-
   @override
-  Widget build(BuildContext context) {
-    final l10n = widget.l10n;
-    final entry = widget.entry;
-    final busy = widget.busy;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(
+      pendingResolutionProvider.select(
+        (s) => s.selected[entry.key] ?? const <int>{},
+      ),
+    );
+    final manualPick = ref.watch(
+      pendingResolutionProvider.select((s) => s.manualPicks[entry.key]),
+    );
+    // a "Cerca manualment" search prefilled with this entry's own title
+    // (see SearchScreen's own initState) very often just re-finds one of
+    // the very candidates already suggested below - without this, picking
+    // that one would show it twice: once as the manual pick, once again
+    // in the auto-suggested grid. Only actually the same show/movie if the
+    // kind matches too (tvdb_id spaces for series/movies are independent,
+    // so a numeric collision across kinds means nothing)
+    final manualPickSameKind = manualPick != null &&
+        (entry.kind == PendingEntryKind.series) ==
+            (manualPick.type == SearchResultType.series);
+    final visibleCandidates = manualPickSameKind
+        ? entry.candidates
+              .where((c) => c.tvdbId.toString() != manualPick.tvdbId)
+              .toList()
+        : entry.candidates;
     final subtitleStyle = Theme.of(context).textTheme.bodySmall;
 
     return Container(
@@ -206,9 +289,9 @@ class _PendingEntryCardState extends ConsumerState<_PendingEntryCard> {
             ],
           ),
           const SizedBox(height: 2),
-          Text(_subtitle(context), style: subtitleStyle),
+          Text(_subtitle(context, entry, l10n), style: subtitleStyle),
           const SizedBox(height: AppSpacing.sm),
-          if (entry.candidates.isEmpty)
+          if (entry.candidates.isEmpty && manualPick == null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               child: Text(
@@ -228,86 +311,38 @@ class _PendingEntryCardState extends ConsumerState<_PendingEntryCard> {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                for (final candidate in entry.candidates)
-                  SizedBox(
+                // the "Cerca manualment" pick (if any) always shows first
+                // and always reads as selected - tapping it again clears it
+                // (same toggle feel as an auto-candidate), which is the
+                // only way back to the auto-suggested grid below without
+                // going through search again
+                if (manualPick != null)
+                  _CandidateTile(
                     width: _candidateWidth,
-                    child: GestureDetector(
-                      onTap: busy
-                          ? null
-                          : () => setState(() {
-                              if (!_selected.remove(candidate.tvdbId)) {
-                                _selected.add(candidate.tvdbId);
-                              }
-                            }),
-                      child: Column(
-                        children: [
-                          Stack(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(AppRadius.sm),
-                                child: AspectRatio(
-                                  aspectRatio: 2 / 3,
-                                  child: candidate.imageUrl == null
-                                      ? const PlaceholderMark(fontSize: 15)
-                                      : CachedNetworkImage(
-                                          imageUrl: candidate.imageUrl!,
-                                          fit: BoxFit.cover,
-                                          placeholder: (context, url) =>
-                                              const PlaceholderMark(fontSize: 15),
-                                          errorWidget: (context, url, error) =>
-                                              const PlaceholderMark(fontSize: 15),
-                                        ),
-                                ),
-                              ),
-                              if (_selected.contains(candidate.tvdbId))
-                                Positioned.fill(
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                                      border: Border.all(
-                                        color: AppColors.sage,
-                                        width: 3,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              if (_selected.contains(candidate.tvdbId))
-                                const Positioned(
-                                  top: 4,
-                                  right: 4,
-                                  child: _CheckBadge(),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            candidate.year ?? candidate.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    imageUrl: manualPick.imageUrl,
+                    label: manualPick.year ?? manualPick.name,
+                    selected: true,
+                    onTap: busy
+                        ? null
+                        : () => ref
+                              .read(pendingResolutionProvider.notifier)
+                              .clearManualPick(entry.key),
+                  ),
+                for (final candidate in visibleCandidates)
+                  _CandidateTile(
+                    width: _candidateWidth,
+                    imageUrl: candidate.imageUrl,
+                    label: candidate.year ?? candidate.name,
+                    selected: selected.contains(candidate.tvdbId),
+                    onTap: busy
+                        ? null
+                        : () => ref
+                              .read(pendingResolutionProvider.notifier)
+                              .toggleCandidate(entry.key, candidate.tvdbId),
                   ),
               ],
             ),
           const SizedBox(height: AppSpacing.sm),
-          if (_selected.isNotEmpty)
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: busy
-                    ? null
-                    : () => ref
-                          .read(pendingResolutionProvider.notifier)
-                          .resolve(entry, _selected.toList()),
-                child: Text(l10n.confirmSelectionAction),
-              ),
-            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -340,13 +375,12 @@ class _PendingEntryCardState extends ConsumerState<_PendingEntryCard> {
     );
   }
 
-  String _subtitle(BuildContext context) {
-    final entry = widget.entry;
+  String _subtitle(BuildContext context, PendingEntry entry, AppLocalizations l10n) {
     if (entry.kind == PendingEntryKind.series) {
       final count = entry.series!.episodesWatchedCount;
       return count > 0
-          ? widget.l10n.pendingSeriesEpisodesWatched(count)
-          : widget.l10n.pendingMovieFromWatchlist;
+          ? l10n.pendingSeriesEpisodesWatched(count)
+          : l10n.pendingMovieFromWatchlist;
     }
 
     final movie = entry.movie!;
@@ -354,12 +388,12 @@ class _PendingEntryCardState extends ConsumerState<_PendingEntryCard> {
       final date = DateTime.tryParse(movie.watchedAt!);
       if (date != null) {
         final locale = Localizations.localeOf(context).toString();
-        return widget.l10n.pendingMovieWatchedOn(
+        return l10n.pendingMovieWatchedOn(
           DateFormat('d MMM y', locale).format(date),
         );
       }
     }
-    return widget.l10n.pendingMovieFromWatchlist;
+    return l10n.pendingMovieFromWatchlist;
   }
 }
 
@@ -375,6 +409,119 @@ String _actionErrorMessage(AppLocalizations l10n, String errorKey) {
       return l10n.resolveActionNotFound;
     default:
       return l10n.genericError;
+  }
+}
+
+/// Persistent bottom bar that resolves every currently-ticked entry at once
+/// - the "farragós" one-by-one Confirma the user was asking to avoid. Only
+/// shown once at least one card has a candidate ticked (see the Scaffold's
+/// own bottomNavigationBar).
+class _ConfirmAllBar extends ConsumerWidget {
+  const _ConfirmAllBar({required this.count, required this.l10n});
+
+  final int count;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isConfirmingAll = ref.watch(
+      pendingResolutionProvider.select((s) => s.isConfirmingAll),
+    );
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: isConfirmingAll
+                ? null
+                : () =>
+                      ref.read(pendingResolutionProvider.notifier).confirmAll(),
+            child: isConfirmingAll
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(l10n.confirmAllAction(count)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One poster+label tile in a pending entry's candidate grid - shared by
+/// both the auto-suggested candidates and the "Cerca manualment" pick (see
+/// _PendingEntryCard's own Wrap), since the two only ever differ in where
+/// their data comes from (PendingMovieCandidate vs SearchResult), not in
+/// how they're drawn or toggled.
+class _CandidateTile extends StatelessWidget {
+  const _CandidateTile({
+    required this.width,
+    required this.imageUrl,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final double width;
+  final String? imageUrl;
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: AspectRatio(
+                    aspectRatio: 2 / 3,
+                    child: imageUrl == null
+                        ? const PlaceholderMark(fontSize: 15)
+                        : CachedNetworkImage(
+                            imageUrl: imageUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) =>
+                                const PlaceholderMark(fontSize: 15),
+                            errorWidget: (context, url, error) =>
+                                const PlaceholderMark(fontSize: 15),
+                          ),
+                  ),
+                ),
+                if (selected)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(color: AppColors.sage, width: 3),
+                      ),
+                    ),
+                  ),
+                if (selected)
+                  const Positioned(top: 4, right: 4, child: _CheckBadge()),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

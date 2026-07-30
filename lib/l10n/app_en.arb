@@ -192,7 +192,6 @@
   "skipAction": "Skip",
   "searchManuallyAction": "Search manually",
   "resolveManuallyTitle": "Select the right series or movie",
-  "confirmSelectionAction": "Confirm",
   "showsFailedWarning": "{count, plural, one{1 show couldn't be synced (it may no longer exist on TheTVDB).} other{{count} shows couldn't be synced (they may no longer exist on TheTVDB).}}",
   "@showsFailedWarning": {
     "placeholders": { "count": { "type": "int" } }
@@ -202,5 +201,20 @@
   "importFailedSub": "Try again or check the file",
   "retry": "Try again",
   "resolveCandidateUnavailable": "That candidate is no longer available on TheTVDB. Try a different one.",
-  "resolveActionNotFound": "This item is no longer pending (it may have already been resolved on another device)."
+  "resolveActionNotFound": "This item is no longer pending (it may have already been resolved on another device).",
+  "listPendingItemsBanner": "{count, plural, one{1 item in this list is still pending resolution} other{{count} items in this list are still pending resolution}}",
+  "@listPendingItemsBanner": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmAllAction": "{count, plural, one{Confirm 1 selected} other{Confirm {count} selected}}",
+  "@confirmAllAction": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmBeforeLeavingTitle": "You have unconfirmed selections",
+  "confirmBeforeLeavingBody": "{count, plural, one{You've selected a candidate you haven't confirmed yet. Do you want to confirm it before leaving?} other{You've selected {count} candidates you haven't confirmed yet. Do you want to confirm them before leaving?}}",
+  "@confirmBeforeLeavingBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "leaveWithoutConfirmingAction": "Leave without confirming",
+  "confirmAllAndLeaveAction": "Confirm and leave"
 }

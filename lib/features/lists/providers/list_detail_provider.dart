@@ -17,6 +17,7 @@ class ListDetailState {
     this.movieItems = const [],
     this.movieHasMore = false,
     this.moviePage = 0,
+    this.pendingCount = 0,
     this.errorKey,
   });
 
@@ -30,6 +31,9 @@ class ListDetailState {
   final List<ListMovie> movieItems;
   final bool movieHasMore;
   final int moviePage;
+  // how many of this list's own series/movies are still waiting on a
+  // pending row - see ListsApi.getListDetail()'s own docblock
+  final int pendingCount;
   final String? errorKey;
 
   ListDetailState copyWith({
@@ -43,6 +47,7 @@ class ListDetailState {
     List<ListMovie>? movieItems,
     bool? movieHasMore,
     int? moviePage,
+    int? pendingCount,
     String? errorKey,
     bool clearError = false,
   }) {
@@ -57,6 +62,7 @@ class ListDetailState {
       movieItems: movieItems ?? this.movieItems,
       movieHasMore: movieHasMore ?? this.movieHasMore,
       moviePage: moviePage ?? this.moviePage,
+      pendingCount: pendingCount ?? this.pendingCount,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
     );
   }
@@ -94,6 +100,7 @@ class ListDetailController extends Notifier<ListDetailState> {
         hasMore: result.seriesHasMore,
         movieItems: _dedupeMovies(result.movies),
         movieHasMore: result.moviesHasMore,
+        pendingCount: result.pendingCount,
       );
     } on ListsException catch (e) {
       if (_listId != listId) return;

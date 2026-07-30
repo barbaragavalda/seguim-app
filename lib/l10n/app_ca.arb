@@ -192,7 +192,6 @@
   "skipAction": "Descarta",
   "searchManuallyAction": "Cerca manualment",
   "resolveManuallyTitle": "Selecciona la sèrie o pel·lícula correcta",
-  "confirmSelectionAction": "Confirma",
   "showsFailedWarning": "{count, plural, one{1 sèrie no s'ha pogut sincronitzar (potser ja no existeix a TheTVDB).} other{{count} sèries no s'han pogut sincronitzar (potser ja no existeixen a TheTVDB).}}",
   "@showsFailedWarning": {
     "placeholders": { "count": { "type": "int" } }
@@ -202,5 +201,20 @@
   "importFailedSub": "Torna-ho a provar o revisa el fitxer",
   "retry": "Torna-ho a provar",
   "resolveCandidateUnavailable": "Aquest candidat ja no és disponible a TheTVDB. Prova amb un altre.",
-  "resolveActionNotFound": "Aquest element ja no és pendent (potser ja s'ha resolt en un altre dispositiu)."
+  "resolveActionNotFound": "Aquest element ja no és pendent (potser ja s'ha resolt en un altre dispositiu).",
+  "listPendingItemsBanner": "{count, plural, one{1 element d'aquesta llista encara està pendent de resoldre} other{{count} elements d'aquesta llista encara estan pendents de resoldre}}",
+  "@listPendingItemsBanner": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmAllAction": "{count, plural, one{Confirma 1 seleccionat} other{Confirma {count} seleccionats}}",
+  "@confirmAllAction": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmBeforeLeavingTitle": "Tens seleccions sense confirmar",
+  "confirmBeforeLeavingBody": "{count, plural, one{Has seleccionat un candidat que encara no has confirmat. Vols confirmar-lo abans de sortir?} other{Has seleccionat {count} candidats que encara no has confirmat. Vols confirmar-los abans de sortir?}}",
+  "@confirmBeforeLeavingBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "leaveWithoutConfirmingAction": "Surt sense confirmar",
+  "confirmAllAndLeaveAction": "Confirma i surt"
 }
