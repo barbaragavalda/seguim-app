@@ -108,6 +108,11 @@
   "@welcomeGreeting": {
     "placeholders": { "username": { "type": "String" } }
   },
+  "statsSectionTitle": "Estadístiques",
+  "statEpisodesWatched": "episodis vistos",
+  "statSeriesAdded": "sèries afegides",
+  "statMoviesWatched": "pel·lícules vistes",
+  "statMoviesAdded": "pel·lícules afegides",
   "accountSectionTitle": "El meu compte",
   "changePasswordValue": "Canvia-la",
   "languageRow": "Idioma",
@@ -212,6 +217,13 @@
   "confirmAllAction": "{count, plural, one{Confirma 1 seleccionat} other{Confirma {count} seleccionats}}",
   "@confirmAllAction": {
     "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmingAllProgress": "Confirmant... {resolved}/{total}",
+  "@confirmingAllProgress": {
+    "placeholders": {
+      "resolved": { "type": "int" },
+      "total": { "type": "int" }
+    }
   },
   "confirmBeforeLeavingTitle": "Tens seleccions sense confirmar",
   "confirmBeforeLeavingBody": "{count, plural, one{Has seleccionat un candidat que encara no has confirmat. Vols confirmar-lo abans de sortir?} other{Has seleccionat {count} candidats que encara no has confirmat. Vols confirmar-los abans de sortir?}}",

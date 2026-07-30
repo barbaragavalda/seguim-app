@@ -108,6 +108,11 @@
   "@welcomeGreeting": {
     "placeholders": { "username": { "type": "String" } }
   },
+  "statsSectionTitle": "Estadísticas",
+  "statEpisodesWatched": "episodios vistos",
+  "statSeriesAdded": "series añadidas",
+  "statMoviesWatched": "películas vistas",
+  "statMoviesAdded": "películas añadidas",
   "accountSectionTitle": "Mi cuenta",
   "changePasswordValue": "Cámbiala",
   "languageRow": "Idioma",
@@ -212,6 +217,13 @@
   "confirmAllAction": "{count, plural, one{Confirmar 1 seleccionado} other{Confirmar {count} seleccionados}}",
   "@confirmAllAction": {
     "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmingAllProgress": "Confirmando... {resolved}/{total}",
+  "@confirmingAllProgress": {
+    "placeholders": {
+      "resolved": { "type": "int" },
+      "total": { "type": "int" }
+    }
   },
   "confirmBeforeLeavingTitle": "Tienes selecciones sin confirmar",
   "confirmBeforeLeavingBody": "{count, plural, one{Has seleccionado un candidato que aún no has confirmado. ¿Quieres confirmarlo antes de salir?} other{Has seleccionado {count} candidatos que aún no has confirmado. ¿Quieres confirmarlos antes de salir?}}",
