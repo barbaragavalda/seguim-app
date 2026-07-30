@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
-import '../../movies/data/movies_api.dart';
-import '../../movies/widgets/movie_row.dart';
+import '../../../widgets/series_poster.dart';
+import '../../../widgets/status_tag.dart';
+import '../../lists/data/list_movie.dart';
+import '../../movies/data/movies_api.dart' show MovieStatus;
 import '../providers/my_movies_provider.dart';
 
 String _statusLabel(AppLocalizations l10n, MovieStatus status) {
@@ -117,19 +121,87 @@ class _MyMoviesScreenState extends ConsumerState<MyMoviesScreen> {
       return Center(child: Text(l10n.myMoviesEmpty));
     }
 
-    return ListView.builder(
+    return CustomScrollView(
       controller: _scrollController,
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      itemCount: state.items.length + (state.hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == state.items.length) {
-          return LoadingMoreIndicator(isLoadingMore: state.isLoadingMore);
-        }
-        return MovieRow(
-          item: state.items[index],
-          onReturned: () => ref.read(myMoviesProvider.notifier).load(),
-        );
-      },
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 160,
+              mainAxisSpacing: AppSpacing.sm,
+              crossAxisSpacing: AppSpacing.sm,
+              childAspectRatio: 0.5,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _MovieGridCard(movie: state.items[index], l10n: l10n),
+              childCount: state.items.length,
+            ),
+          ),
+        ),
+        if (state.isLoadingMore)
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _MovieGridCard extends StatelessWidget {
+  const _MovieGridCard({required this.movie, required this.l10n});
+
+  final ListMovie movie;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final year = movie.year;
+    final status = movie.status == null
+        ? null
+        : localizedMovieStatus(l10n, movie.status!);
+    final textPrimary = Theme.of(context).textTheme.bodyLarge?.color;
+    final subtitleStyle = Theme.of(context).textTheme.bodySmall;
+
+    return GestureDetector(
+      onTap: () => context.push('/movies/${movie.tvdbId}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SeriesPoster(imageUrl: movie.imageUrl, watchProgress: movie.watchProgress),
+          const SizedBox(height: 6),
+          Text(
+            movie.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.fraunces(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          if (year != null || status != null)
+            Row(
+              children: [
+                if (year != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Text(year, style: subtitleStyle),
+                  ),
+                if (status != null)
+                  Flexible(
+                    child: StatusTag(
+                      label: status,
+                      color: movieStatusColor(movie.status!),
+                    ),
+                  ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }

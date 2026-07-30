@@ -35,7 +35,9 @@ class WatchlistItem {
     return WatchlistItem(
       tvdbId: '${json['tvdb_id']}',
       name: json['name'] as String? ?? '',
-      imageUrl: json['image'] as String?,
+      // this landscape row always wants the fanart, not the poster - see
+      // Api\Model\Watchlist::finalizeRows()'s own comment (backend)
+      imageUrl: json['background'] as String?,
       nextEpisodeCode: json['next_episode'] as String?,
       nextEpisodeName: json['next_episode_name'] as String?,
       remainingEpisodes: (json['remaining_episodes'] as num?)?.toInt() ?? 0,
