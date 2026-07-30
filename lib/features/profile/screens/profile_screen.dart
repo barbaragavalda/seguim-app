@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -14,7 +16,8 @@ import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../import/providers/pending_resolution_provider.dart';
+import '../../import/providers/pending_count_provider.dart';
+import '../data/account_api.dart';
 import '../providers/account_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -25,12 +28,43 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  // the "Sèries i pel·lícules pendents de resoldre" row's own badge count
+  // (_PendingResolutionAccountRow below) otherwise only ever reflects
+  // whatever it was the last time this screen itself was opened - stale for
+  // as long as an import keeps queueing new pending entries in the
+  // background while the user is sitting here instead. Same "poll every few
+  // seconds while this screen is up" shape as TvTimeImportProvider's own
+  // _pollTimer, just for this one count rather than a whole job's status.
+  // Uses its own pendingCountProvider rather than reading
+  // pendingResolutionProvider directly - see that provider's own docblock
+  // on why sharing it with PendingResolutionScreen used to lose selections.
+  static const _pendingCountPollInterval = Duration(seconds: 5);
+
+  Timer? _pendingCountPollTimer;
+
   @override
   void initState() {
     super.initState();
     // same "modify provider outside build" reasoning as SeriesDetailScreen/
     // WatchlistScreen's initState
     Future.microtask(() => ref.read(accountProvider.notifier).load());
+
+    if (kIsWeb) {
+      // both the import row and this pending-count badge are web-only (see
+      // _ImportSection's own docblock) - no point polling on a platform
+      // that never shows either
+      Future.microtask(() => ref.read(pendingCountProvider.notifier).load());
+      _pendingCountPollTimer = Timer.periodic(
+        _pendingCountPollInterval,
+        (_) => ref.read(pendingCountProvider.notifier).load(),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pendingCountPollTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -80,6 +114,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               username: account.username ?? '',
               email: account.email ?? '',
             ),
+            if (account.stats != null) _StatsSection(stats: account.stats!),
             _AccountSection(account: account),
             const _FollowingSection(),
             const _ImportSection(),
@@ -147,6 +182,86 @@ class _WelcomeSection extends StatelessWidget {
           ),
           const SizedBox(height: 3),
           Text(email, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+/// Same visual language as SeriesDetailScreen/MovieDetailScreen's own
+/// _StatsRow (bordered card, bold tabular-figure value + small label per
+/// cell) - just a 2x2 grid instead of one row, since 4 stats in a single
+/// row got cramped.
+class _StatsSection extends StatelessWidget {
+  const _StatsSection({required this.stats});
+
+  final AccountStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final dividerColor = Theme.of(context).dividerColor;
+
+    return _Section(
+      title: l10n.statsSectionTitle,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border.all(color: dividerColor),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Row(
+                children: [
+                  _statTile(context, stats.episodesWatched, l10n.statEpisodesWatched),
+                  _divider(dividerColor),
+                  _statTile(context, stats.seriesAdded, l10n.statSeriesAdded),
+                ],
+              ),
+            ),
+            Container(height: 1, color: dividerColor),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Row(
+                children: [
+                  _statTile(context, stats.moviesWatched, l10n.statMoviesWatched),
+                  _divider(dividerColor),
+                  _statTile(context, stats.moviesAdded, l10n.statMoviesAdded),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _divider(Color color) {
+    return Container(width: 1, height: 32, color: color);
+  }
+
+  Widget _statTile(BuildContext context, int value, String label) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            '$value',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              fontFeatures: [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+          ),
         ],
       ),
     );
@@ -526,9 +641,7 @@ class _ImportSection extends ConsumerWidget {
             onTap: () => context.push('/import/tvtime'),
           ),
           _PendingResolutionAccountRow(
-            badgeCount: ref.watch(
-              pendingResolutionProvider.select((s) => s.items.length),
-            ),
+            badgeCount: ref.watch(pendingCountProvider),
           ),
         ],
       ),

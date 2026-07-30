@@ -108,6 +108,11 @@
   "@welcomeGreeting": {
     "placeholders": { "username": { "type": "String" } }
   },
+  "statsSectionTitle": "Stats",
+  "statEpisodesWatched": "episodes watched",
+  "statSeriesAdded": "series added",
+  "statMoviesWatched": "movies watched",
+  "statMoviesAdded": "movies added",
   "accountSectionTitle": "My account",
   "changePasswordValue": "Change it",
   "languageRow": "Language",
@@ -212,6 +217,13 @@
   "confirmAllAction": "{count, plural, one{Confirm 1 selected} other{Confirm {count} selected}}",
   "@confirmAllAction": {
     "placeholders": { "count": { "type": "int" } }
+  },
+  "confirmingAllProgress": "Confirming... {resolved}/{total}",
+  "@confirmingAllProgress": {
+    "placeholders": {
+      "resolved": { "type": "int" },
+      "total": { "type": "int" }
+    }
   },
   "confirmBeforeLeavingTitle": "You have unconfirmed selections",
   "confirmBeforeLeavingBody": "{count, plural, one{You've selected a candidate you haven't confirmed yet. Do you want to confirm it before leaving?} other{You've selected {count} candidates you haven't confirmed yet. Do you want to confirm them before leaving?}}",

@@ -60,37 +60,53 @@ class _PendingResolutionScreenState
     });
 
     return PopScope(
-      // blocks the pop only while something's ticked but not yet confirmed
-      // - see _confirmExitIfNeeded()'s own docblock
-      canPop: state.selectedEntryCount == 0,
+      // blocks the pop only while something's ticked but not yet confirmed,
+      // or while confirmAll() is still working through them - see
+      // _confirmExitIfNeeded()'s own docblock
+      canPop: state.selectedEntryCount == 0 && !state.isConfirmingAll,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _confirmExitIfNeeded(context, l10n, state.selectedEntryCount);
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.pendingMoviesTitle),
-          actions: [
-            if (state.total > 0)
-              Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.md),
-                child: Center(
-                  child: Text(
-                    '${state.resolvedCount}/${state.total}',
-                    style: const TextStyle(
-                      color: AppColors.coral,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: Text(l10n.pendingMoviesTitle),
+              actions: [
+                if (state.total > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpacing.md),
+                    child: Center(
+                      child: Text(
+                        '${state.resolvedCount}/${state.total}',
+                        style: const TextStyle(
+                          color: AppColors.coral,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-          ],
-        ),
-        body: SafeArea(child: _buildBody(context, l10n, state)),
-        bottomNavigationBar: state.selectedEntryCount > 0
-            ? _ConfirmAllBar(count: state.selectedEntryCount, l10n: l10n)
-            : null,
+              ],
+            ),
+            body: SafeArea(child: _buildBody(context, l10n, state)),
+            bottomNavigationBar: state.selectedEntryCount > 0
+                ? _ConfirmAllBar(count: state.selectedEntryCount, l10n: l10n)
+                : null,
+          ),
+          // covers the whole screen (cards, buttons, the "Surt" back arrow)
+          // while confirmAll() works through every ticked entry one at a
+          // time - this can take a real while for many items (each one is
+          // its own TheTVDB sync), and without this the screen just sits
+          // there looking unresponsive rather than visibly busy
+          if (state.isConfirmingAll)
+            _ConfirmingAllOverlay(
+              resolvedCount: state.resolvedCount,
+              total: state.total,
+              l10n: l10n,
+            ),
+        ],
       ),
     );
   }
@@ -416,6 +432,52 @@ String _actionErrorMessage(AppLocalizations l10n, String errorKey) {
 /// - the "farragós" one-by-one Confirma the user was asking to avoid. Only
 /// shown once at least one card has a candidate ticked (see the Scaffold's
 /// own bottomNavigationBar).
+class _ConfirmingAllOverlay extends StatelessWidget {
+  const _ConfirmingAllOverlay({
+    required this.resolvedCount,
+    required this.total,
+    required this.l10n,
+  });
+
+  final int resolvedCount;
+  final int total;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: ColoredBox(
+        color: Colors.black.withValues(alpha: 0.45),
+        // this Stack sibling sits outside Scaffold's own Material, so
+        // without one of its own here, Text/CircularProgressIndicator fall
+        // back to Flutter's raw un-themed defaults (huge text, debug
+        // underline) instead of the app's actual theme
+        child: Material(
+          type: MaterialType.transparency,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(color: Colors.white),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  l10n.confirmingAllProgress(resolvedCount, total),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ConfirmAllBar extends ConsumerWidget {
   const _ConfirmAllBar({required this.count, required this.l10n});
 

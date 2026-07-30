@@ -15,11 +15,36 @@ class AccountInfo {
     required this.username,
     required this.email,
     required this.language,
+    required this.stats,
   });
 
   final String username;
   final String email;
   final String? language;
+  final AccountStats stats;
+}
+
+class AccountStats {
+  const AccountStats({
+    required this.episodesWatched,
+    required this.seriesAdded,
+    required this.moviesWatched,
+    required this.moviesAdded,
+  });
+
+  final int episodesWatched;
+  final int seriesAdded;
+  final int moviesWatched;
+  final int moviesAdded;
+
+  factory AccountStats.fromJson(Map<String, dynamic> json) {
+    return AccountStats(
+      episodesWatched: (json['episodes_watched'] as num?)?.toInt() ?? 0,
+      seriesAdded: (json['series_added'] as num?)?.toInt() ?? 0,
+      moviesWatched: (json['movies_watched'] as num?)?.toInt() ?? 0,
+      moviesAdded: (json['movies_added'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
 
 class AccountApi {
@@ -37,6 +62,9 @@ class AccountApi {
       username: data['username'] as String? ?? '',
       email: data['email'] as String? ?? '',
       language: data['language'] as String?,
+      stats: AccountStats.fromJson(
+        data['stats'] as Map<String, dynamic>? ?? {},
+      ),
     );
   }
 

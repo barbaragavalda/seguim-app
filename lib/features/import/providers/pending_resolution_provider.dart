@@ -112,10 +112,20 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
     return const PendingResolutionState();
   }
 
+  /// Safe to call again on an already-loaded screen (ProfileScreen polls
+  /// this same provider for its own pending-count badge - see its own
+  /// docblock on why): re-fetching must not discard whatever the user has
+  /// already ticked/picked on this screen, so `selected`/`manualPicks`/
+  /// `busyKeys` survive a reload, just filtered down to entries the fresh
+  /// list still has (an entry gone from the new list - resolved elsewhere,
+  /// or by this same poll racing a resolve() - can't stay half-selected).
+  /// `resolvedCount` is likewise left alone rather than reset to 0, so the
+  /// X/total progress bar doesn't visibly jump backwards on every poll.
   Future<void> load() async {
     final token = ref.read(authProvider).token;
     if (token == null) return;
-    state = state.copyWith(isLoading: true, clearError: true);
+    final isFirstLoad = state.items.isEmpty && state.resolvedCount == 0;
+    state = state.copyWith(isLoading: isFirstLoad, clearError: true);
     try {
       final series = await _seriesApi.list(token: token);
       final movies = await _movieApi.list(token: token);
@@ -123,7 +133,18 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
         ...series.map(PendingEntry.series),
         ...movies.map(PendingEntry.movie),
       ];
-      state = PendingResolutionState(isLoading: false, items: items);
+      final validKeys = items.map((item) => item.key).toSet();
+      state = state.copyWith(
+        isLoading: false,
+        items: items,
+        selected: Map.fromEntries(
+          state.selected.entries.where((e) => validKeys.contains(e.key)),
+        ),
+        manualPicks: Map.fromEntries(
+          state.manualPicks.entries.where((e) => validKeys.contains(e.key)),
+        ),
+        busyKeys: state.busyKeys.where(validKeys.contains).toSet(),
+      );
     } on PendingSeriesException catch (e) {
       state = state.copyWith(isLoading: false, errorKey: e.message);
     } on PendingMoviesException catch (e) {

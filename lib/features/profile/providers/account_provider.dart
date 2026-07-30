@@ -9,6 +9,7 @@ class AccountState {
     this.username,
     this.email,
     this.language,
+    this.stats,
     this.isSaving = false,
     this.errorKey,
   });
@@ -17,6 +18,7 @@ class AccountState {
   final String? username;
   final String? email;
   final String? language;
+  final AccountStats? stats;
   final bool isSaving;
   final String? errorKey;
 
@@ -25,6 +27,7 @@ class AccountState {
     String? username,
     String? email,
     String? language,
+    AccountStats? stats,
     bool? isSaving,
     String? errorKey,
     bool clearError = false,
@@ -34,6 +37,7 @@ class AccountState {
       username: username ?? this.username,
       email: email ?? this.email,
       language: language ?? this.language,
+      stats: stats ?? this.stats,
       isSaving: isSaving ?? this.isSaving,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
     );
@@ -60,6 +64,7 @@ class AccountController extends Notifier<AccountState> {
         username: info.username,
         email: info.email,
         language: info.language,
+        stats: info.stats,
       );
     } on AccountException catch (e) {
       state = state.copyWith(isLoading: false, errorKey: e.message);
