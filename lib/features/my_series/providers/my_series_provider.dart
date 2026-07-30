@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
-import '../../watchlist/data/watchlist_item.dart';
+import '../../search/data/series.dart';
 import '../data/my_series_api.dart';
 
 class MySeriesState {
@@ -22,7 +22,7 @@ class MySeriesState {
   final String search;
   final bool isLoading;
   final bool isLoadingMore;
-  final List<WatchlistItem> items;
+  final List<Series> items;
   final bool hasMore;
   final int page;
   final String? errorKey;
@@ -32,7 +32,7 @@ class MySeriesState {
     String? search,
     bool? isLoading,
     bool? isLoadingMore,
-    List<WatchlistItem>? items,
+    List<Series>? items,
     bool? hasMore,
     int? page,
     String? errorKey,

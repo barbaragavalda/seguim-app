@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../../core/config/api_config.dart';
 import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
-import '../../watchlist/data/watchlist_item.dart';
+import '../../search/data/series.dart';
 
 class MySeriesException implements Exception {
   const MySeriesException(this.message);
@@ -31,7 +31,7 @@ extension SeriesStatusApiValue on SeriesStatus {
 class MySeriesPage {
   const MySeriesPage({required this.items, required this.hasMore});
 
-  final List<WatchlistItem> items;
+  final List<Series> items;
   final bool hasMore;
 }
 
@@ -69,7 +69,7 @@ class MySeriesApi {
     final results = data['watchlist'] as List<dynamic>? ?? [];
     return MySeriesPage(
       items: results
-          .map((item) => WatchlistItem.fromJson(item as Map<String, dynamic>))
+          .map((item) => Series.fromListRow(item as Map<String, dynamic>))
           .toList(),
       hasMore: data['hasMore'] as bool? ?? false,
     );

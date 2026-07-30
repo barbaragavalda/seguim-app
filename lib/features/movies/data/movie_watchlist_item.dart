@@ -22,7 +22,9 @@ class MovieWatchlistItem {
     return MovieWatchlistItem(
       tvdbId: '${json['tvdb_id']}',
       name: json['name'] as String? ?? '',
-      imageUrl: json['image'] as String?,
+      // this landscape row always wants the fanart, not the poster - see
+      // Api\Model\MovieWatchlist::finalizeRows()'s own comment (backend)
+      imageUrl: json['background'] as String?,
       year: json['year'] as String?,
       watched: json['watched'] as bool? ?? false,
       watchCount: (json['watch_count'] as num?)?.toInt() ?? 0,

@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
-import '../../movies/data/movie_watchlist_item.dart';
-import '../../movies/data/movies_api.dart';
+import '../../lists/data/list_movie.dart';
+import '../../movies/data/movies_api.dart' show MovieStatus;
+import '../data/my_movies_api.dart';
 
 class MyMoviesState {
   const MyMoviesState({
@@ -22,7 +23,7 @@ class MyMoviesState {
   final String search;
   final bool isLoading;
   final bool isLoadingMore;
-  final List<MovieWatchlistItem> items;
+  final List<ListMovie> items;
   final bool hasMore;
   final int page;
   final String? errorKey;
@@ -32,7 +33,7 @@ class MyMoviesState {
     String? search,
     bool? isLoading,
     bool? isLoadingMore,
-    List<MovieWatchlistItem>? items,
+    List<ListMovie>? items,
     bool? hasMore,
     int? page,
     String? errorKey,
@@ -56,13 +57,13 @@ class MyMoviesState {
 class MyMoviesController extends Notifier<MyMoviesState> {
   static const _debounceDuration = Duration(milliseconds: 400);
 
-  late final MoviesApi _api;
+  late final MyMoviesApi _api;
   Timer? _debounce;
   int _requestId = 0;
 
   @override
   MyMoviesState build() {
-    _api = MoviesApi();
+    _api = MyMoviesApi();
     ref.onDispose(() => _debounce?.cancel());
     return const MyMoviesState();
   }
@@ -87,7 +88,7 @@ class MyMoviesController extends Notifier<MyMoviesState> {
         hasMore: result.hasMore,
         page: 0,
       );
-    } on MoviesException catch (e) {
+    } on MyMoviesException catch (e) {
       if (requestId != _requestId) return;
       state = state.copyWith(isLoading: false, errorKey: e.message);
     } catch (_) {
