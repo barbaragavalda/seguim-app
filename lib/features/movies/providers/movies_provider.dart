@@ -41,11 +41,11 @@ class MoviesState {
   }
 }
 
-/// Backs the bottom-tab "Pel·lícules" screen - every saved movie
-/// (`status: all`), most-recently-added first. The searchable, filterable
-/// "Les meves pel·lícules" profile screen is a separate provider
-/// (myMoviesProvider) - same split as WatchlistController vs
-/// MySeriesController for series.
+/// Backs the bottom-tab "Pel·lícules" screen - only movies not yet watched
+/// (`status: notWatched`), most-recently-added first. The searchable,
+/// filterable "Les meves pel·lícules" profile screen (which does show
+/// watched ones too, filterable) is a separate provider (myMoviesProvider)
+/// - same split as WatchlistController vs MySeriesController for series.
 class MoviesController extends Notifier<MoviesState> {
   late final MoviesApi _api;
 
@@ -60,7 +60,7 @@ class MoviesController extends Notifier<MoviesState> {
     if (token == null) return;
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final result = await _api.list(status: MovieStatus.all, token: token);
+      final result = await _api.list(status: MovieStatus.notWatched, token: token);
       state = MoviesState(
         isLoading: false,
         items: result.items,
@@ -82,7 +82,7 @@ class MoviesController extends Notifier<MoviesState> {
     try {
       final nextPage = state.page + 1;
       final result = await _api.list(
-        status: MovieStatus.all,
+        status: MovieStatus.notWatched,
         page: nextPage,
         token: token,
       );

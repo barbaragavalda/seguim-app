@@ -12,7 +12,7 @@ String _statusLabel(AppLocalizations l10n, SeriesStatus status) {
   return switch (status) {
     SeriesStatus.all => l10n.statusAll,
     SeriesStatus.watching => l10n.watchlistSectionWatching,
-    SeriesStatus.notStarted => l10n.watchlistSectionNotStarted,
+    SeriesStatus.notStarted => l10n.sectionNotWatchedYet,
     SeriesStatus.finished => l10n.statusFinished,
     SeriesStatus.archived => l10n.statusArchived,
     SeriesStatus.removed => l10n.statusRemoved,

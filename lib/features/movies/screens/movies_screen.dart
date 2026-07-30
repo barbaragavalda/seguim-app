@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/section_header.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/movies_provider.dart';
 import '../widgets/movie_row.dart';
@@ -95,19 +97,28 @@ class _MoviesScreenState extends ConsumerState<MoviesScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => ref.read(moviesProvider.notifier).load(),
-          child: ListView.builder(
+          child: CustomScrollView(
             controller: _scrollController,
-            padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.md),
-            itemCount: state.items.length + (state.hasMore ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == state.items.length) {
-                return LoadingMoreIndicator(isLoadingMore: state.isLoadingMore);
-              }
-              return MovieRow(
-                item: state.items[index],
-                onReturned: () => ref.read(moviesProvider.notifier).load(),
-              );
-            },
+            slivers: [
+              SliverStickyHeader(
+                header: SectionHeader(title: l10n.sectionNotWatchedYet),
+                sliver: SliverList.builder(
+                  itemCount: state.items.length + (state.hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == state.items.length) {
+                      return LoadingMoreIndicator(
+                        isLoadingMore: state.isLoadingMore,
+                      );
+                    }
+                    return MovieRow(
+                      item: state.items[index],
+                      onReturned: () => ref.read(moviesProvider.notifier).load(),
+                    );
+                  },
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
+            ],
           ),
         ),
       ),

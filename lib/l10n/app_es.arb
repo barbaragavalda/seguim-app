@@ -89,7 +89,7 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "watchlistSectionWatching": "Viendo",
-  "watchlistSectionNotStarted": "Sin empezar",
+  "sectionNotWatchedYet": "No vista todavía",
   "premiereUpcoming": "Próximamente",
   "premiereInDays": "{days, plural, one{dentro de 1 día} other{dentro de {days} días}}",
   "@premiereInDays": {
