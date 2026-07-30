@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
@@ -76,6 +78,10 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _StatsRow(movie: movie, l10n: l10n),
+                if (movie.genres.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  _GenreChips(genres: movie.genres, l10n: l10n),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 if (state.watched)
                   SizedBox(
@@ -134,9 +140,26 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                   const SizedBox(height: AppSpacing.md),
                   _buildOverview(context, l10n, movie.overview!),
                 ],
+                if (movie.trailer != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _TrailerButton(trailer: movie.trailer!, l10n: l10n),
+                ],
+                if (movie.cast.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    l10n.castSectionTitle,
+                    style: GoogleFonts.fraunces(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
               ],
             ),
           ),
+          if (movie.cast.isNotEmpty) _CastRow(cast: movie.cast),
         ],
       ),
     );
@@ -420,6 +443,17 @@ class _StatsRow extends StatelessWidget {
   final MovieDetail movie;
   final AppLocalizations l10n;
 
+  // full date when TheTVDB has one (its `first_release.date`), falling back
+  // to just the year for a movie synced before that field was added
+  String? _releaseDateLabel(BuildContext context) {
+    final releaseDate = movie.releaseDate;
+    if (releaseDate == null) return movie.year;
+    final date = DateTime.tryParse(releaseDate);
+    if (date == null) return movie.year;
+    final locale = Localizations.localeOf(context).toString();
+    return DateFormat('d MMM y', locale).format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     final dividerColor = Theme.of(context).dividerColor;
@@ -432,13 +466,21 @@ class _StatsRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: [
-          _stat(context, movie.year ?? '–', l10n.yearStatLabel),
+          _stat(context, _releaseDateLabel(context) ?? '–', l10n.yearStatLabel),
           _divider(dividerColor),
           _stat(
             context,
             movie.runtime == null ? '–' : l10n.runtimeMinutes(movie.runtime!),
-            l10n.runtimeStatLabel,
+            l10n.movieRuntimeStatLabel,
           ),
+          if (movie.contentRating != null) ...[
+            _divider(dividerColor),
+            _stat(
+              context,
+              movie.contentRating!.rating,
+              l10n.contentRatingStatLabel,
+            ),
+          ],
         ],
       ),
     );
@@ -470,6 +512,117 @@ class _StatsRow extends StatelessWidget {
             ).textTheme.bodySmall?.copyWith(fontSize: 10),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GenreChips extends StatelessWidget {
+  const _GenreChips({required this.genres, required this.l10n});
+
+  final List<MovieGenre> genres;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final genre in genres)
+          StatusTag(
+            label: localizedGenre(l10n, genre.slug, genre.name),
+            color: Theme.of(context).colorScheme.primary,
+          ),
+      ],
+    );
+  }
+}
+
+class _TrailerButton extends StatelessWidget {
+  const _TrailerButton({required this.trailer, required this.l10n});
+
+  final MovieTrailer trailer;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => launchUrl(
+          Uri.parse(trailer.url),
+          mode: LaunchMode.externalApplication,
+        ),
+        icon: const Icon(Icons.play_circle_outline),
+        label: Text(l10n.watchTrailerAction),
+      ),
+    );
+  }
+}
+
+class _CastRow extends StatelessWidget {
+  const _CastRow({required this.cast});
+
+  final List<MovieCastMember> cast;
+
+  static const _cardWidth = 84.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitleStyle = Theme.of(context).textTheme.bodySmall;
+
+    return SizedBox(
+      height: 150,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        itemCount: cast.length,
+        separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.sm),
+        itemBuilder: (context, index) {
+          final member = cast[index];
+          return SizedBox(
+            width: _cardWidth,
+            child: Column(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  child: SizedBox(
+                    width: _cardWidth,
+                    height: _cardWidth,
+                    child: member.imageUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: member.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorWidget: (context, url, error) =>
+                                const PlaceholderMark(fontSize: 20),
+                          )
+                        : const PlaceholderMark(fontSize: 20),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  member.personName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (member.characterName != null)
+                  Text(
+                    member.characterName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: subtitleStyle?.copyWith(fontSize: 11),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
