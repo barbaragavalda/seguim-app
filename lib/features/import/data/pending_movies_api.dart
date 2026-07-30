@@ -24,18 +24,28 @@ class PendingMoviesApi {
         .toList();
   }
 
-  /// [tvdbIds] can have more than one entry - TV Time's own single entry
-  /// sometimes represents more than one real movie it couldn't tell apart
-  /// (e.g. "Mulan" 1998 and 2020, both watched) - see the backend's own
-  /// Api\Model\MovieImportPending::resolve() docblock
-  Future<void> resolve(int id, List<int> tvdbIds, {required String token}) async {
+  /// [watchedTvdbIds]/[pendingTvdbIds] together can have more than one
+  /// entry - TV Time's own single entry sometimes represents more than one
+  /// real movie it couldn't tell apart (e.g. "Mulan" 1998 and 2020) - a
+  /// candidate goes in whichever list matches what the user actually knows
+  /// happened to it (watched, vs. just added to the watchlist) - see the
+  /// backend's own Api\Model\MovieImportPending::resolve() docblock
+  Future<void> resolve(
+    int id, {
+    List<int> watchedTvdbIds = const [],
+    List<int> pendingTvdbIds = const [],
+    required String token,
+  }) async {
     final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/import/movies/pending/$id/resolve'),
       headers: {
         ...apiHeaders(token),
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: tvdbIds.map((tvdbId) => 'tvdb_ids[]=$tvdbId').join('&'),
+      body: [
+        ...watchedTvdbIds.map((id) => 'watched_tvdb_ids[]=$id'),
+        ...pendingTvdbIds.map((id) => 'pending_tvdb_ids[]=$id'),
+      ].join('&'),
     );
     _decode(response.body);
   }

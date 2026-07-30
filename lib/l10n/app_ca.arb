@@ -218,6 +218,13 @@
   "@confirmAllAction": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "confirmAllSplitAction": "Confirma {watched, plural, one{1 ja vista} other{{watched} ja vistes}} i {pending, plural, one{1 per veure} other{{pending} per veure}}",
+  "@confirmAllSplitAction": {
+    "placeholders": {
+      "watched": { "type": "int" },
+      "pending": { "type": "int" }
+    }
+  },
   "confirmingAllProgress": "Confirmant... {resolved}/{total}",
   "@confirmingAllProgress": {
     "placeholders": {

@@ -15,6 +15,7 @@ class PendingResolutionState {
     this.resolvedCount = 0,
     this.busyKeys = const {},
     this.selected = const {},
+    this.pendingSelected = const {},
     this.manualPicks = const {},
     this.isConfirmingAll = false,
     this.errorKey,
@@ -34,6 +35,16 @@ class PendingResolutionState {
   // confirmAll() below can see every card's selection at once, not just
   // whichever one owns the tap that triggered it
   final Map<String, Set<int>> selected;
+  // entry.key -> the subset of selected[entryKey] marked "pendent de veure"
+  // instead of "vist" - only meaningful for movies (a title with no release
+  // date anywhere in the export can't be told apart from a same-movie
+  // re-follow at import time, see TvTimeImport\Parser::parseMovies()'s own
+  // docblock, so more than one real candidate can end up ticked here and
+  // each needs its own watched/pending call). toggleCandidate() cycles a
+  // candidate through unselected -> one ticked state -> the other ticked
+  // state -> back to unselected, so this is always a subset of `selected`,
+  // never wider
+  final Map<String, Set<int>> pendingSelected;
   // entry.key -> a result picked via "Cerca manualment" for it, held here
   // rather than applied immediately - same reasoning as `selected` above
   // (survives the round trip to SearchScreen and back, and is only actually
@@ -64,12 +75,30 @@ class PendingResolutionState {
   int get selectedEntryCount =>
       selected.values.where((s) => s.isNotEmpty).length + manualPicks.length;
 
+  // ticked candidates (across every entry) that will end up "pendent de
+  // veure" - always 0 for a series-only selection, see pendingSelected's
+  // own docblock. Used for the "Confirma-ho tot" button's own X vist / Y
+  // pendent breakdown
+  int get pendingCandidateCount =>
+      pendingSelected.values.fold(0, (sum, ids) => sum + ids.length);
+
+  // ticked candidates (across every entry) that will end up "vist" - every
+  // manual pick counts as one (see resolveWithResult()'s own docblock: it
+  // always applies the entry's full snapshot, same as a "vist" candidate
+  // would), plus every ticked candidate not already counted in
+  // pendingCandidateCount above
+  int get watchedCandidateCount =>
+      selected.values.fold(0, (sum, ids) => sum + ids.length) +
+      manualPicks.length -
+      pendingCandidateCount;
+
   PendingResolutionState copyWith({
     bool? isLoading,
     List<PendingEntry>? items,
     int? resolvedCount,
     Set<String>? busyKeys,
     Map<String, Set<int>>? selected,
+    Map<String, Set<int>>? pendingSelected,
     Map<String, SearchResult>? manualPicks,
     bool? isConfirmingAll,
     String? errorKey,
@@ -83,6 +112,7 @@ class PendingResolutionState {
       resolvedCount: resolvedCount ?? this.resolvedCount,
       busyKeys: busyKeys ?? this.busyKeys,
       selected: selected ?? this.selected,
+      pendingSelected: pendingSelected ?? this.pendingSelected,
       manualPicks: manualPicks ?? this.manualPicks,
       isConfirmingAll: isConfirmingAll ?? this.isConfirmingAll,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
@@ -134,12 +164,19 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
         ...movies.map(PendingEntry.movie),
       ];
       final validKeys = items.map((item) => item.key).toSet();
+      final selected = Map<String, Set<int>>.fromEntries(
+        state.selected.entries.where((e) => validKeys.contains(e.key)),
+      );
+      final pendingSelected = Map<String, Set<int>>.fromEntries(
+        state.pendingSelected.entries.where(
+          (e) => validKeys.contains(e.key),
+        ),
+      );
       state = state.copyWith(
         isLoading: false,
         items: items,
-        selected: Map.fromEntries(
-          state.selected.entries.where((e) => validKeys.contains(e.key)),
-        ),
+        selected: selected,
+        pendingSelected: pendingSelected,
         manualPicks: Map.fromEntries(
           state.manualPicks.entries.where((e) => validKeys.contains(e.key)),
         ),
@@ -156,9 +193,16 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
 
   /// [tvdbIds] can have more than one entry for a movie - see
   /// PendingMoviesApi.resolve()'s own docblock on why (e.g. "Mulan" 1998 and
-  /// 2020, both watched). A series never genuinely needs more than one, but
-  /// the request shape stays the same either way.
-  Future<void> resolve(PendingEntry entry, List<int> tvdbIds) async {
+  /// 2020). [pendingTvdbIds] (a subset of [tvdbIds]) marks which of those
+  /// should be added as "pendent de veure" instead of "vist" - only ever
+  /// non-empty for a movie, see PendingResolutionState.pendingSelected's own
+  /// docblock. A series never genuinely needs more than one candidate and
+  /// never uses this split, but the request shape stays the same either way.
+  Future<void> resolve(
+    PendingEntry entry,
+    List<int> tvdbIds, {
+    Set<int> pendingTvdbIds = const {},
+  }) async {
     final token = ref.read(authProvider).token;
     if (token == null || state.busyKeys.contains(entry.key) || tvdbIds.isEmpty) {
       return;
@@ -171,7 +215,13 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
       if (entry.kind == PendingEntryKind.series) {
         await _seriesApi.resolve(entry.series!.id, tvdbIds, token: token);
       } else {
-        await _movieApi.resolve(entry.movie!.id, tvdbIds, token: token);
+        final watched = tvdbIds.where((id) => !pendingTvdbIds.contains(id));
+        await _movieApi.resolve(
+          entry.movie!.id,
+          watchedTvdbIds: watched.toList(),
+          pendingTvdbIds: pendingTvdbIds.toList(),
+          token: token,
+        );
       }
       _removeResolved(entry.key);
     } catch (e) {
@@ -234,18 +284,54 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
     }
   }
 
-  /// Ticks/unticks one candidate for [entryKey] - the card's own selection
-  /// no longer lives in its widget State (see PendingResolutionState.
-  /// selected's own docblock on why). Clears any manual pick for the same
-  /// entry - see PendingResolutionState.manualPicks's own docblock on why
-  /// the two are mutually exclusive.
-  void toggleCandidate(String entryKey, int tvdbId) {
-    final current = {...(state.selected[entryKey] ?? const <int>{})};
-    if (!current.remove(tvdbId)) {
-      current.add(tvdbId);
+  /// Cycles one candidate for [entryKey] through three states on each tap -
+  /// every candidate starts unselected (load() no longer pre-ticks any of
+  /// them - the user asked for "per defecte" to mean only which state the
+  /// *first* tap lands on, not that everything should already look ticked
+  /// before any tap at all). [allowPending] gates whether there even is a
+  /// second ticked state - false for a series candidate, whose watch history
+  /// is per-episode, not per-candidate-resolve, so the cycle there is just
+  /// unselected -> selected -> back to unselected.
+  ///
+  /// [defaultToPending] flips which of the two ticked states the first tap
+  /// lands on: false (the entry's own TV Time snapshot really was watched)
+  /// -> unselected -> "vist" -> "pendent de veure" -> unselected; true (it
+  /// was only ever added to the watchlist) -> unselected -> "pendent de
+  /// veure" -> "vist" -> unselected. Ignored when [allowPending] is false.
+  ///
+  /// The card's own selection no longer lives in its widget State (see
+  /// PendingResolutionState.selected's own docblock on why). Clears any
+  /// manual pick for the same entry - see PendingResolutionState.
+  /// manualPicks's own docblock on why the two are mutually exclusive.
+  void toggleCandidate(
+    String entryKey,
+    int tvdbId, {
+    bool allowPending = false,
+    bool defaultToPending = false,
+  }) {
+    final selected = {...(state.selected[entryKey] ?? const <int>{})};
+    final pending = {...(state.pendingSelected[entryKey] ?? const <int>{})};
+
+    final isSelected = selected.contains(tvdbId);
+    final isPending = pending.contains(tvdbId);
+
+    if (!isSelected) {
+      selected.add(tvdbId);
+      if (allowPending && defaultToPending) {
+        pending.add(tvdbId);
+      }
+    } else if (allowPending && !isPending && !defaultToPending) {
+      pending.add(tvdbId);
+    } else if (allowPending && isPending && defaultToPending) {
+      pending.remove(tvdbId);
+    } else {
+      selected.remove(tvdbId);
+      pending.remove(tvdbId);
     }
+
     state = state.copyWith(
-      selected: {...state.selected, entryKey: current},
+      selected: {...state.selected, entryKey: selected},
+      pendingSelected: {...state.pendingSelected, entryKey: pending},
       manualPicks: {...state.manualPicks}..remove(entryKey),
     );
   }
@@ -300,7 +386,11 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
       }
       final tvdbIds = state.selected[entry.key];
       if (tvdbIds == null || tvdbIds.isEmpty) continue;
-      await resolve(entry, tvdbIds.toList());
+      await resolve(
+        entry,
+        tvdbIds.toList(),
+        pendingTvdbIds: state.pendingSelected[entry.key] ?? const {},
+      );
     }
     state = state.copyWith(isConfirmingAll: false);
   }
@@ -333,8 +423,16 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
   /// candidates still ticked from a selection the user explicitly chose to
   /// abandon.
   void clearAllSelections() {
-    if (state.selected.isEmpty && state.manualPicks.isEmpty) return;
-    state = state.copyWith(selected: const {}, manualPicks: const {});
+    if (state.selected.isEmpty &&
+        state.pendingSelected.isEmpty &&
+        state.manualPicks.isEmpty) {
+      return;
+    }
+    state = state.copyWith(
+      selected: const {},
+      pendingSelected: const {},
+      manualPicks: const {},
+    );
   }
 
   void clearActionError() {
@@ -348,6 +446,7 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
       resolvedCount: state.resolvedCount + 1,
       busyKeys: {...state.busyKeys}..remove(key),
       selected: {...state.selected}..remove(key),
+      pendingSelected: {...state.pendingSelected}..remove(key),
       manualPicks: {...state.manualPicks}..remove(key),
     );
   }

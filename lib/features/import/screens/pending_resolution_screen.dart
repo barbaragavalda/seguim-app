@@ -255,6 +255,11 @@ class _PendingEntryCard extends ConsumerWidget {
         (s) => s.selected[entry.key] ?? const <int>{},
       ),
     );
+    final pendingSelected = ref.watch(
+      pendingResolutionProvider.select(
+        (s) => s.pendingSelected[entry.key] ?? const <int>{},
+      ),
+    );
     final manualPick = ref.watch(
       pendingResolutionProvider.select((s) => s.manualPicks[entry.key]),
     );
@@ -337,7 +342,7 @@ class _PendingEntryCard extends ConsumerWidget {
                     width: _candidateWidth,
                     imageUrl: manualPick.imageUrl,
                     label: manualPick.year ?? manualPick.name,
-                    selected: true,
+                    selection: _CandidateSelection.watched,
                     onTap: busy
                         ? null
                         : () => ref
@@ -349,12 +354,24 @@ class _PendingEntryCard extends ConsumerWidget {
                     width: _candidateWidth,
                     imageUrl: candidate.imageUrl,
                     label: candidate.year ?? candidate.name,
-                    selected: selected.contains(candidate.tvdbId),
+                    selection: !selected.contains(candidate.tvdbId)
+                        ? _CandidateSelection.none
+                        : pendingSelected.contains(candidate.tvdbId)
+                        ? _CandidateSelection.pending
+                        : _CandidateSelection.watched,
                     onTap: busy
                         ? null
                         : () => ref
                               .read(pendingResolutionProvider.notifier)
-                              .toggleCandidate(entry.key, candidate.tvdbId),
+                              .toggleCandidate(
+                                entry.key,
+                                candidate.tvdbId,
+                                allowPending:
+                                    entry.kind == PendingEntryKind.movie,
+                                defaultToPending:
+                                    entry.kind == PendingEntryKind.movie &&
+                                    !entry.movie!.watched,
+                              ),
                   ),
               ],
             ),
@@ -489,6 +506,12 @@ class _ConfirmAllBar extends ConsumerWidget {
     final isConfirmingAll = ref.watch(
       pendingResolutionProvider.select((s) => s.isConfirmingAll),
     );
+    final pendingCandidates = ref.watch(
+      pendingResolutionProvider.select((s) => s.pendingCandidateCount),
+    );
+    final watchedCandidates = ref.watch(
+      pendingResolutionProvider.select((s) => s.watchedCandidateCount),
+    );
 
     return SafeArea(
       child: Padding(
@@ -506,13 +529,32 @@ class _ConfirmAllBar extends ConsumerWidget {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(l10n.confirmAllAction(count)),
+                // the split wording only makes sense once at least one
+                // candidate is actually going to end up "pendent de veure" -
+                // for the common case (every selection a plain "vist", no
+                // ambiguity to split) the plain X-seleccionats count reads
+                // better than "X ja vistes i 0 per veure"
+                : Text(
+                    pendingCandidates > 0
+                        ? l10n.confirmAllSplitAction(
+                            watchedCandidates,
+                            pendingCandidates,
+                          )
+                        : l10n.confirmAllAction(count),
+                  ),
           ),
         ),
       ),
     );
   }
 }
+
+/// A candidate tile's three states - see PendingResolutionState.
+/// pendingSelected's own docblock. `watched`/`pending` share the same
+/// "ticked, will be applied on confirm" meaning as far as selectedEntryCount
+/// etc. are concerned; they only differ in which watch status the backend
+/// gives the candidate once resolved.
+enum _CandidateSelection { none, watched, pending }
 
 /// One poster+label tile in a pending entry's candidate grid - shared by
 /// both the auto-suggested candidates and the "Cerca manualment" pick (see
@@ -524,18 +566,29 @@ class _CandidateTile extends StatelessWidget {
     required this.width,
     required this.imageUrl,
     required this.label,
-    required this.selected,
+    required this.selection,
     required this.onTap,
   });
 
   final double width;
   final String? imageUrl;
   final String label;
-  final bool selected;
+  final _CandidateSelection selection;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    // sage+check reads as "vist" (a real watched_at gets applied), coral+
+    // clock as "a la teva watchlist" (added, not specifically watched) -
+    // matches the same two outcomes _subtitle() already describes in text
+    // for the entry as a whole, and toggleCandidate()'s own defaultToPending
+    // (which of the two a candidate's first tap lands on)
+    final color = switch (selection) {
+      _CandidateSelection.none => null,
+      _CandidateSelection.watched => AppColors.sage,
+      _CandidateSelection.pending => AppColors.coral,
+    };
+
     return SizedBox(
       width: width,
       child: GestureDetector(
@@ -560,17 +613,19 @@ class _CandidateTile extends StatelessWidget {
                           ),
                   ),
                 ),
-                if (selected)
+                if (color != null)
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
-                        border: Border.all(color: AppColors.sage, width: 3),
+                        border: Border.all(color: color, width: 3),
                       ),
                     ),
                   ),
-                if (selected)
-                  const Positioned(top: 4, right: 4, child: _CheckBadge()),
+                if (selection == _CandidateSelection.watched)
+                  const Positioned(top: 4, right: 4, child: _WatchedOnBadge()),
+                if (selection == _CandidateSelection.pending)
+                  const Positioned(top: 4, right: 4, child: _WatchlistBadge()),
               ],
             ),
             const SizedBox(height: 4),
@@ -587,8 +642,33 @@ class _CandidateTile extends StatelessWidget {
   }
 }
 
-class _CheckBadge extends StatelessWidget {
-  const _CheckBadge();
+/// Coral + clock - "a la teva watchlist" (added, no watched_at applied),
+/// same color _subtitle() would describe in text for the entry as a whole.
+class _WatchlistBadge extends StatelessWidget {
+  const _WatchlistBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: const BoxDecoration(
+        color: AppColors.coral,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.schedule,
+        size: 13,
+        color: AppColors.onCoralLight,
+      ),
+    );
+  }
+}
+
+/// Sage + check - "vist" (the entry's own snapshotted watched_at gets
+/// applied to this candidate), same pairing _subtitle() uses in text.
+class _WatchedOnBadge extends StatelessWidget {
+  const _WatchedOnBadge();
 
   @override
   Widget build(BuildContext context) {
