@@ -142,6 +142,7 @@
   "deleteAccountConfirmTitle": "Delete account?",
   "deleteAccountConfirmBody": "This can't be undone. All your Seguim! data will be deleted.",
   "deleteAccountConfirmButton": "Delete it",
+  "theTvdbAttribution": "Metadata provided by TheTVDB.",
   "versionLabel": "Seguim! · version {version}",
   "@versionLabel": {
     "placeholders": { "version": { "type": "String" } }

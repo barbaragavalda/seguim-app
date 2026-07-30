@@ -142,6 +142,7 @@
   "deleteAccountConfirmTitle": "Elimina el compte?",
   "deleteAccountConfirmBody": "Aquesta acció no es pot desfer. S'eliminaran totes les teves dades de Seguim!.",
   "deleteAccountConfirmButton": "Elimina'l",
+  "theTvdbAttribution": "Metadata provided by TheTVDB.",
   "versionLabel": "Seguim! · versió {version}",
   "@versionLabel": {
     "placeholders": { "version": { "type": "String" } }

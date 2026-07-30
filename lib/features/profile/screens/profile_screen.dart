@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/locale/locale_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -655,12 +656,40 @@ class _FooterSection extends ConsumerWidget {
             color: AppColors.coral,
             onTap: () => _deleteAccount(context, ref, l10n),
           ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: Center(
+              child: GestureDetector(
+                // TheTVDB's API terms require attribution with a direct
+                // link to TheTVDB.com, visible to end users viewing their
+                // metadata - this app's only real source of series/movie
+                // data
+                onTap: () => launchUrl(Uri.parse('https://thetvdb.com')),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/attribution/thetvdb_logo.png',
+                      height: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      l10n.theTvdbAttribution,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           FutureBuilder<PackageInfo>(
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {
               final version = snapshot.data?.version ?? '';
               return Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.md),
+                padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   l10n.versionLabel(version),
                   textAlign: TextAlign.center,
