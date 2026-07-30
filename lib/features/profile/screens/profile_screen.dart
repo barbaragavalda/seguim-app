@@ -782,7 +782,14 @@ class _FooterSection extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'assets/attribution/thetvdb_logo.png',
+                      // the default logo's "db" half is dark navy text,
+                      // unreadable against a dark theme's own background -
+                      // TheTVDB also publishes a white-text variant meant
+                      // exactly for that (thetvdb.com/images/attribution/
+                      // logo1.png), bundled here as a second asset
+                      Theme.of(context).brightness == Brightness.dark
+                          ? 'assets/attribution/thetvdb_logo_dark.png'
+                          : 'assets/attribution/thetvdb_logo.png',
                       height: 14,
                     ),
                     const SizedBox(width: 6),
