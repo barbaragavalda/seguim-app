@@ -93,6 +93,33 @@ class SeriesDetailState {
   }
 }
 
+/// Which season the detail screen lands on by default - the first one still
+/// "in progress" (has at least one already-aired episode still unwatched),
+/// so finishing a season moves the default on to the next one instead of
+/// getting stuck on the last one with any watched episode at all (the old
+/// rule - e.g. finishing House of the Dragon's season 2 kept defaulting
+/// back to season 2 instead of showing season 3). An unaired episode never
+/// counts against a season here either way, so a season nothing has aired
+/// for yet is trivially "in progress" too - which is exactly what's wanted
+/// once every earlier season really is finished, with nothing left to fall
+/// through to instead. Falls back to the last season once every season is
+/// done this way (fully caught up, or genuinely finished the whole series).
+int? _defaultSeasonFor(List<int> seasons, List<Episode> episodes) {
+  if (seasons.isEmpty) return null;
+  final now = DateTime.now();
+  bool seasonDone(int season) {
+    return episodes.where((e) => e.seasonNumber == season).every((e) {
+      final aired = e.aired == null ? null : DateTime.tryParse(e.aired!);
+      return e.watched || aired == null || aired.isAfter(now);
+    });
+  }
+
+  for (final season in seasons) {
+    if (!seasonDone(season)) return season;
+  }
+  return seasons.last;
+}
+
 class SeriesDetailController extends Notifier<SeriesDetailState> {
   late final SeriesDetailApi _api;
   String? _tvdbId;
@@ -117,15 +144,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
               .toSet()
               .toList()
             ..sort();
-      // default to the season the user is actually progressing through -
-      // the highest one with a watched episode - rather than always
-      // season 1, falling back to that only when nothing's been watched
-      final watchedSeasons = result.episodes
-          .where((e) => e.watched && e.seasonNumber > 0)
-          .map((e) => e.seasonNumber);
-      final defaultSeason = watchedSeasons.isEmpty
-          ? (seasons.isEmpty ? null : seasons.first)
-          : watchedSeasons.reduce((a, b) => a > b ? a : b);
+      final defaultSeason = _defaultSeasonFor(seasons, result.episodes);
       state = SeriesDetailState(
         isLoading: false,
         series: result.series,

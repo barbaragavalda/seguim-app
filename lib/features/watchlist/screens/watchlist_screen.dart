@@ -84,12 +84,19 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
     }
 
     final state = ref.watch(watchlistProvider);
+    final hasData = state.watching.isNotEmpty || state.notStarted.isNotEmpty;
 
-    if (state.isLoading) {
+    // only the very first load (nothing to show yet) blocks the screen with
+    // a spinner - a later reload (WatchlistItemRow's own onReturned after
+    // coming back from a series/movie detail screen, or a manual pull-to-
+    // refresh) keeps the existing CustomScrollView on screen instead of
+    // tearing it down and rebuilding it, which would otherwise reset its
+    // own scroll position back to the top every time
+    if (state.isLoading && !hasData) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (state.watching.isEmpty && state.notStarted.isEmpty) {
+    if (!hasData) {
       return Scaffold(
         body: SafeArea(child: Center(child: Text(l10n.watchlistEmpty))),
       );

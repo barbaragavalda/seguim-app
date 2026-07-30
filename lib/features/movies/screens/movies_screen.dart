@@ -82,12 +82,18 @@ class _MoviesScreenState extends ConsumerState<MoviesScreen> {
     }
 
     final state = ref.watch(moviesProvider);
+    final hasData = state.items.isNotEmpty;
 
-    if (state.isLoading) {
+    // see WatchlistScreen's own comment on the identical guard - only the
+    // very first load blocks the screen with a spinner, so a later reload
+    // (MovieRow's own onReturned, or pull-to-refresh) doesn't tear down and
+    // rebuild the CustomScrollView, which would otherwise reset its scroll
+    // position back to the top every time
+    if (state.isLoading && !hasData) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (state.items.isEmpty) {
+    if (!hasData) {
       return Scaffold(
         body: SafeArea(child: Center(child: Text(l10n.watchlistEmpty))),
       );

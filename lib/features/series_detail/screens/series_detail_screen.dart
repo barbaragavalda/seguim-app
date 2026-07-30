@@ -653,6 +653,14 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
   // same chip across rebuilds regardless of list content changes
   final Map<int, GlobalKey> _chipKeys = {};
 
+  // owned directly (rather than relying on the static Scrollable.ensureVisible
+  // helper) so _scrollToSelected can call ensureVisible on *this* scroll
+  // position alone - the static helper walks every ancestor Scrollable of
+  // alternating axes it can find, which here means the page's own outer
+  // vertical SingleChildScrollView too, visibly jumping the whole page
+  // just to bring a horizontal chip into view
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -671,11 +679,18 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
     }
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   void _scrollToSelected() {
     final chipContext = _chipKeys[widget.selectedSeason]?.currentContext;
-    if (chipContext == null) return;
-    Scrollable.ensureVisible(
-      chipContext,
+    final renderObject = chipContext?.findRenderObject();
+    if (renderObject == null || !_scrollController.hasClients) return;
+    _scrollController.position.ensureVisible(
+      renderObject,
       alignment: 0.5,
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
@@ -690,6 +705,7 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
       child: Stack(
         children: [
           SingleChildScrollView(
+            controller: _scrollController,
             scrollDirection: Axis.horizontal,
             // built eagerly (not ListView.builder/.separated's lazy,
             // viewport-only building) so ensureVisible always has a real
