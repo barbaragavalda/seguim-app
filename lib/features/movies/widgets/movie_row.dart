@@ -52,15 +52,15 @@ class MovieRow extends StatelessWidget {
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: item.imageUrl == null
-                      ? const PlaceholderMark(fontSize: 15, label: 'P!')
+                      ? const PlaceholderMark(fontSize: 15)
                       : CachedNetworkImage(
                           imageUrl: item.imageUrl!,
                           fit: BoxFit.cover,
                           alignment: Alignment.topCenter,
                           placeholder: (context, url) =>
-                              const PlaceholderMark(fontSize: 15, label: 'P!'),
+                              const PlaceholderMark(fontSize: 15),
                           errorWidget: (context, url, error) =>
-                              const PlaceholderMark(fontSize: 15, label: 'P!'),
+                              const PlaceholderMark(fontSize: 15),
                         ),
                 ),
               ),

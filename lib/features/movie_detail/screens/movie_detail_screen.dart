@@ -370,7 +370,7 @@ class _Header extends ConsumerWidget {
 
   Widget _buildFallback() {
     if (movie.imageUrl == null) {
-      return const PlaceholderMark(fontSize: 40, label: 'P!');
+      return const PlaceholderMark(fontSize: 40);
     }
     return ImageFiltered(
       imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -383,7 +383,7 @@ class _Header extends ConsumerWidget {
           imageUrl: movie.imageUrl!,
           fit: BoxFit.cover,
           errorWidget: (context, url, error) =>
-              const PlaceholderMark(fontSize: 40, label: 'P!'),
+              const PlaceholderMark(fontSize: 40),
         ),
       ),
     );
