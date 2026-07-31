@@ -17,7 +17,7 @@ String _statusLabel(AppLocalizations l10n, SeriesStatus status) {
     SeriesStatus.all => l10n.statusAll,
     SeriesStatus.watching => l10n.watchlistSectionWatching,
     SeriesStatus.notStarted => l10n.sectionNotWatchedYet,
-    SeriesStatus.finished => l10n.statusFinished,
+    SeriesStatus.finished => l10n.statusUpToDate,
     SeriesStatus.archived => l10n.statusArchived,
     SeriesStatus.removed => l10n.statusRemoved,
   };

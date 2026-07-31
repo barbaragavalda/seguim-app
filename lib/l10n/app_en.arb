@@ -144,7 +144,7 @@
   "myMoviesRow": "My movies",
   "myMoviesEmpty": "There's nothing here",
   "statusAll": "All",
-  "statusFinished": "Finished",
+  "statusUpToDate": "Caught up",
   "statusArchived": "Watch later",
   "statusRemoved": "Dropped",
   "statusNotWatched": "To watch",
