@@ -918,15 +918,19 @@ class _AccountRow extends StatelessWidget {
                 ),
               ),
             ),
-            Expanded(
-              child: Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.right,
-                style: TextStyle(fontSize: 13, color: textSecondary),
+            // an empty value (e.g. the TV Time import row, which has none)
+            // shouldn't still claim half the row for nothing - that's what
+            // was pushing "Importa des de TV Time" onto two lines
+            if (value.isNotEmpty)
+              Expanded(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                ),
               ),
-            ),
             Icon(Icons.chevron_right, size: 18, color: textSecondary),
           ],
         ),
