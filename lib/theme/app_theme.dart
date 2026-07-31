@@ -19,6 +19,11 @@ class AppTheme {
           onSecondary: AppColors.onSageLight,
           surface: AppColors.lightSurface,
           onSurface: AppColors.lightTextPrimary,
+          // no separate red "error" accent - reuses the same coral as
+          // primary, so destructive/error UI stays inside the app's own
+          // palette instead of Material's default red
+          error: AppColors.coral,
+          onError: AppColors.onCoralLight,
         ),
         scaffoldBackground: AppColors.lightBg,
         cardColor: AppColors.lightSurface,
@@ -39,6 +44,8 @@ class AppTheme {
           onSecondary: AppColors.onSageDark,
           surface: AppColors.darkBg,
           onSurface: AppColors.darkTextPrimary,
+          error: AppColors.coral,
+          onError: AppColors.onCoralDark,
         ),
         scaffoldBackground: AppColors.darkBg,
         cardColor: AppColors.darkSurface,
