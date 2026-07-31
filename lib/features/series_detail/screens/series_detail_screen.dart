@@ -50,6 +50,16 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(seriesDetailProvider);
 
+    ref.listen(seriesDetailProvider, (previous, next) {
+      final actionErrorKey = next.actionErrorKey;
+      if (actionErrorKey != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_actionErrorMessage(l10n, actionErrorKey))),
+        );
+        ref.read(seriesDetailProvider.notifier).clearActionError();
+      }
+    });
+
     return Scaffold(body: SafeArea(child: _buildBody(context, l10n, state)));
   }
 
@@ -80,7 +90,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
               children: [
                 _StatsRow(series: series, l10n: l10n),
                 const SizedBox(height: AppSpacing.md),
-                if (state.inWatchlist)
+                if (state.inWatchlist) ...[
                   Row(
                     children: [
                       Expanded(
@@ -117,8 +127,28 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
                         ),
                       ),
                     ],
-                  )
-                else
+                  ),
+                  // only offered once there's nothing watched to lose - see
+                  // SeriesDetailController.removeFromWatchlist()'s docblock
+                  if (!state.hasAnyWatchedEpisode) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        onPressed: () => _requireLogin(
+                          context,
+                          ref,
+                          () => _handleRemoveFromWatchlist(context, ref),
+                        ),
+                        icon: const Icon(Icons.delete_outline),
+                        label: Text(l10n.removeFromWatchlistAction),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ] else
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
@@ -224,6 +254,14 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // same pill shape regardless of state - the theme's own FilledButton
+    // default (AppRadius.sm) and OutlinedButton's unstyled Material default
+    // used to disagree, so the two states of the same toggle visibly
+    // changed shape along with color
+    final shape = const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
+    );
+
     // same two-state look as the old "+ Watchlist"/"A la watchlist" toggle:
     // filled (solid background) for the inactive/default action, outlined
     // (border only) once it's active
@@ -236,6 +274,7 @@ class _ToggleButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: primary,
           side: BorderSide(color: primary),
+          shape: shape,
         ),
       );
     }
@@ -243,7 +282,17 @@ class _ToggleButton extends StatelessWidget {
       onPressed: onPressed,
       icon: Icon(inactiveIcon),
       label: Text(inactiveLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
+      style: FilledButton.styleFrom(shape: shape),
     );
+  }
+}
+
+String _actionErrorMessage(AppLocalizations l10n, String errorKey) {
+  switch (errorKey) {
+    case 'has_watch_history':
+      return l10n.removeFromWatchlistHasHistoryError;
+    default:
+      return l10n.genericError;
   }
 }
 
@@ -309,6 +358,38 @@ Future<void> _handleEpisodeTap(
     await notifier.markWatchedThrough(episode);
   } else {
     await notifier.toggleEpisodeWatched(episode);
+  }
+}
+
+/// Confirms before the hard-delete action - unlike setArchived/setRemoved,
+/// this one can't be undone from within the app.
+Future<void> _handleRemoveFromWatchlist(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final l10n = AppLocalizations.of(context)!;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l10n.removeFromWatchlistConfirmTitle),
+      content: Text(l10n.removeFromWatchlistConfirmBody),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(MaterialLocalizations.of(dialogContext).cancelButtonLabel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(dialogContext).colorScheme.error,
+          ),
+          child: Text(l10n.removeFromWatchlistConfirmButton),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true) {
+    await ref.read(seriesDetailProvider.notifier).removeFromWatchlist();
   }
 }
 

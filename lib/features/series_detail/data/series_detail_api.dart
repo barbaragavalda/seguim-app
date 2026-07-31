@@ -83,6 +83,20 @@ class SeriesDetailApi {
         : _client.delete(uri, headers: apiHeaders(token));
   }
 
+  /// Hard delete - unlike setArchived/setRemoved (reversible flags on the
+  /// same row), this drops the row entirely. The backend rejects it
+  /// (`has_watch_history`) once anything from the series has ever been
+  /// watched - see Api\Controller\Watchlist\Remove's own docblock - which
+  /// the UI itself already prevents reaching by only offering this action
+  /// when there's nothing watched to lose.
+  Future<void> removeFromWatchlist(String tvdbId, {required String token}) async {
+    final response = await _client.delete(
+      Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId'),
+      headers: apiHeaders(token),
+    );
+    _decode(response.body);
+  }
+
   Future<void> markEpisodeWatched(
     String episodeTvdbId, {
     required String token,

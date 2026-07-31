@@ -17,7 +17,9 @@ class SeriesDetailState {
     this.watchlistPending = false,
     this.archivePending = false,
     this.removedPending = false,
+    this.removeFromWatchlistPending = false,
     this.errorKey,
+    this.actionErrorKey,
   });
 
   final bool isLoading;
@@ -30,7 +32,15 @@ class SeriesDetailState {
   final bool watchlistPending;
   final bool archivePending;
   final bool removedPending;
+  final bool removeFromWatchlistPending;
   final String? errorKey;
+  // set when removeFromWatchlist() fails (e.g. the backend's own
+  // has_watch_history rejection - see that controller's own docblock)
+  // rather than the whole detail failing to load - kept separate from
+  // errorKey above, which replaces the entire screen with a full-screen
+  // error message. The screen consumes this via a SnackBar and clears it
+  // right after, same pattern as PendingResolutionState.actionErrorKey
+  final String? actionErrorKey;
 
   List<int> get seasonNumbers {
     final numbers =
@@ -46,6 +56,12 @@ class SeriesDetailState {
           ..sort((a, b) => a.episodeNumber.compareTo(b.episodeNumber));
     return filtered;
   }
+
+  /// Whether removeFromWatchlist() below is even offered - the backend
+  /// rejects a hard delete once anything's been watched (see that
+  /// controller's own docblock on why), so there's no point showing the
+  /// action at all once that's true.
+  bool get hasAnyWatchedEpisode => episodes.any((e) => e.watched);
 
   /// null when there's nothing to show a progress bar for (no aired
   /// regular episodes at all) - same "season > 0, already aired" counting
@@ -74,8 +90,11 @@ class SeriesDetailState {
     bool? watchlistPending,
     bool? archivePending,
     bool? removedPending,
+    bool? removeFromWatchlistPending,
     String? errorKey,
     bool clearError = false,
+    String? actionErrorKey,
+    bool clearActionError = false,
   }) {
     return SeriesDetailState(
       isLoading: isLoading ?? this.isLoading,
@@ -88,7 +107,12 @@ class SeriesDetailState {
       watchlistPending: watchlistPending ?? this.watchlistPending,
       archivePending: archivePending ?? this.archivePending,
       removedPending: removedPending ?? this.removedPending,
+      removeFromWatchlistPending:
+          removeFromWatchlistPending ?? this.removeFromWatchlistPending,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
+      actionErrorKey: clearActionError
+          ? null
+          : (actionErrorKey ?? this.actionErrorKey),
     );
   }
 }
@@ -216,6 +240,45 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     }
   }
 
+  /// Hard delete - only offered by the UI when hasAnyWatchedEpisode is
+  /// false, but the backend enforces that too (has_watch_history), so a
+  /// stale/race-y state still surfaces as an actionErrorKey instead of
+  /// silently losing watch history.
+  Future<void> removeFromWatchlist() async {
+    final tvdbId = _tvdbId;
+    final token = ref.read(authProvider).token;
+    if (tvdbId == null || token == null || state.removeFromWatchlistPending) {
+      return;
+    }
+    state = state.copyWith(
+      removeFromWatchlistPending: true,
+      clearActionError: true,
+    );
+    try {
+      await _api.removeFromWatchlist(tvdbId, token: token);
+      state = state.copyWith(
+        inWatchlist: false,
+        archived: false,
+        removed: false,
+        removeFromWatchlistPending: false,
+      );
+    } on SeriesDetailException catch (e) {
+      state = state.copyWith(
+        removeFromWatchlistPending: false,
+        actionErrorKey: e.message,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        removeFromWatchlistPending: false,
+        actionErrorKey: 'unknown_error',
+      );
+    }
+  }
+
+  void clearActionError() {
+    state = state.copyWith(clearActionError: true);
+  }
+
   /// Toggles between fully unwatched (watchCount 0) and watched-once
   /// (watchCount 1) - only reachable for a currently-unwatched episode, or
   /// as the "delete" choice from the already-watched dialog (see
@@ -228,8 +291,13 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     final wasWatched = episode.watched;
     final previousCount = episode.watchCount;
     // marking an episode watched implies following the series - see
-    // Api\Controller\Episode\Watch's matching backend-side add()
+    // Api\Controller\Episode\Watch's matching backend-side add(). Marking
+    // one watched also clears `archived` there ("veure més tard" is the
+    // opposite of actually watching something from the series) - mirrored
+    // here so the toggle button updates immediately instead of waiting for
+    // a reload; unwatching (wasWatched true) doesn't touch it either way.
     final wasInWatchlist = state.inWatchlist;
+    final wasArchived = state.archived;
     state = state.copyWith(
       episodes: [
         for (final e in state.episodes)
@@ -239,6 +307,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
             e,
       ],
       inWatchlist: wasWatched ? wasInWatchlist : true,
+      archived: wasWatched ? null : false,
     );
     try {
       if (wasWatched) {
@@ -256,6 +325,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
               e,
         ],
         inWatchlist: wasInWatchlist,
+        archived: wasWatched ? null : wasArchived,
       );
     }
   }
@@ -267,6 +337,9 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     final token = ref.read(authProvider).token;
     if (token == null) return;
     final previousCount = episode.watchCount;
+    // same "clears archived" reasoning as toggleEpisodeWatched() - a
+    // rewatch is just as much watching something from the series
+    final wasArchived = state.archived;
     state = state.copyWith(
       episodes: [
         for (final e in state.episodes)
@@ -275,6 +348,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
           else
             e,
       ],
+      archived: false,
     );
     try {
       await _api.rewatchEpisode(episode.tvdbId, token: token);
@@ -287,6 +361,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
             else
               e,
         ],
+        archived: wasArchived,
       );
     }
   }
@@ -336,6 +411,8 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     if (toMark.isEmpty) return;
     final idsToMark = toMark.map((e) => e.tvdbId).toSet();
     final wasInWatchlist = state.inWatchlist;
+    // same "clears archived" reasoning as toggleEpisodeWatched()
+    final wasArchived = state.archived;
     state = state.copyWith(
       episodes: [
         for (final e in state.episodes)
@@ -345,6 +422,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
             e,
       ],
       inWatchlist: true,
+      archived: false,
     );
     try {
       await Future.wait(
@@ -360,6 +438,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
               e,
         ],
         inWatchlist: wasInWatchlist,
+        archived: wasArchived,
       );
     }
   }
