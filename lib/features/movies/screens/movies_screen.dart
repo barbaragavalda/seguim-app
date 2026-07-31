@@ -8,7 +8,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/section_header.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/movies_provider.dart';
-import '../widgets/movie_row.dart';
+import '../widgets/movie_grid_card.dart';
 
 class MoviesScreen extends ConsumerStatefulWidget {
   const MoviesScreen({super.key});
@@ -86,9 +86,9 @@ class _MoviesScreenState extends ConsumerState<MoviesScreen> {
 
     // see WatchlistScreen's own comment on the identical guard - only the
     // very first load blocks the screen with a spinner, so a later reload
-    // (MovieRow's own onReturned, or pull-to-refresh) doesn't tear down and
-    // rebuild the CustomScrollView, which would otherwise reset its scroll
-    // position back to the top every time
+    // (MovieGridCard's own onReturned, or pull-to-refresh) doesn't tear
+    // down and rebuild the CustomScrollView, which would otherwise reset
+    // its scroll position back to the top every time
     if (state.isLoading && !hasData) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -108,21 +108,42 @@ class _MoviesScreenState extends ConsumerState<MoviesScreen> {
             slivers: [
               SliverStickyHeader(
                 header: SectionHeader(title: l10n.sectionNotWatchedYet),
-                sliver: SliverList.builder(
-                  itemCount: state.items.length + (state.hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == state.items.length) {
-                      return LoadingMoreIndicator(
-                        isLoadingMore: state.isLoadingMore,
-                      );
-                    }
-                    return MovieRow(
-                      item: state.items[index],
-                      onReturned: () => ref.read(moviesProvider.notifier).load(),
-                    );
-                  },
+                // same poster-grid delegate as MyMoviesScreen's own grid -
+                // the year+status (movie's own release status, e.g.
+                // "Estrenada"/"Pròximament" - useful here since a not-yet-
+                // released movie can already sit in the watchlist) shown
+                // under each poster isn't lost, just moved off the row
+                // layout this replaced
+                sliver: SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                  ),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 160,
+                      mainAxisSpacing: AppSpacing.sm,
+                      crossAxisSpacing: AppSpacing.sm,
+                      childAspectRatio: 0.5,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => MovieGridCard(
+                        movie: state.items[index],
+                        l10n: l10n,
+                        onReturned: () =>
+                            ref.read(moviesProvider.notifier).load(),
+                      ),
+                      childCount: state.items.length,
+                    ),
+                  ),
                 ),
               ),
+              if (state.isLoadingMore)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
               const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
             ],
           ),

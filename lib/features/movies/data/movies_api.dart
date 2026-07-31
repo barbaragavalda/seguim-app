@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../../../core/config/api_config.dart';
 import '../../../core/network/api_headers.dart';
 import '../../../core/network/api_response_parser.dart';
-import 'movie_watchlist_item.dart';
+import '../../lists/data/list_movie.dart';
 
 class MoviesException implements Exception {
   const MoviesException(this.message);
@@ -28,10 +28,14 @@ extension MovieStatusApiValue on MovieStatus {
 class MoviesPage {
   const MoviesPage({required this.items, required this.hasMore});
 
-  final List<MovieWatchlistItem> items;
+  final List<ListMovie> items;
   final bool hasMore;
 }
 
+/// Parses into [ListMovie] (poster, not fanart) - the "Pel·lícules" tab
+/// shows a poster grid, same shape MyMoviesApi already parses this same
+/// endpoint into (see that class' own docblock on why it isn't shared as
+/// one class, mirroring the series-side WatchlistApi/MySeriesApi split).
 class MoviesApi {
   MoviesApi({http.Client? client}) : _client = client ?? http.Client();
 
@@ -66,9 +70,7 @@ class MoviesApi {
     final results = data['watchlist'] as List<dynamic>? ?? [];
     return MoviesPage(
       items: results
-          .map(
-            (item) => MovieWatchlistItem.fromJson(item as Map<String, dynamic>),
-          )
+          .map((item) => ListMovie.fromListRow(item as Map<String, dynamic>))
           .toList(),
       hasMore: data['hasMore'] as bool? ?? false,
     );

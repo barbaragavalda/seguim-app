@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/series_poster.dart';
-import '../../../widgets/status_tag.dart';
-import '../../lists/data/list_movie.dart';
 import '../../movies/data/movies_api.dart' show MovieStatus;
+import '../../movies/widgets/movie_grid_card.dart';
 import '../providers/my_movies_provider.dart';
 
 String _statusLabel(AppLocalizations l10n, MovieStatus status) {
@@ -134,7 +130,7 @@ class _MyMoviesScreenState extends ConsumerState<MyMoviesScreen> {
               childAspectRatio: 0.5,
             ),
             delegate: SliverChildBuilderDelegate(
-              (context, index) => _MovieGridCard(movie: state.items[index], l10n: l10n),
+              (context, index) => MovieGridCard(movie: state.items[index], l10n: l10n),
               childCount: state.items.length,
             ),
           ),
@@ -151,60 +147,6 @@ class _MyMoviesScreenState extends ConsumerState<MyMoviesScreen> {
   }
 }
 
-class _MovieGridCard extends StatelessWidget {
-  const _MovieGridCard({required this.movie, required this.l10n});
-
-  final ListMovie movie;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final year = movie.year;
-    final status = movie.status == null
-        ? null
-        : localizedMovieStatus(l10n, movie.status!);
-    final textPrimary = Theme.of(context).textTheme.bodyLarge?.color;
-    final subtitleStyle = Theme.of(context).textTheme.bodySmall;
-
-    return GestureDetector(
-      onTap: () => context.push('/movies/${movie.tvdbId}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SeriesPoster(imageUrl: movie.imageUrl, watchProgress: movie.watchProgress),
-          const SizedBox(height: 6),
-          Text(
-            movie.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.fraunces(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-          if (year != null || status != null)
-            Row(
-              children: [
-                if (year != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Text(year, style: subtitleStyle),
-                  ),
-                if (status != null)
-                  Flexible(
-                    child: StatusTag(
-                      label: status,
-                      color: movieStatusColor(movie.status!),
-                    ),
-                  ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
 
 class _StatusSelector extends ConsumerWidget {
   const _StatusSelector({required this.status, required this.l10n});

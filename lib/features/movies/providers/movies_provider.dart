@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/providers/auth_provider.dart';
-import '../data/movie_watchlist_item.dart';
+import '../../lists/data/list_movie.dart';
 import '../data/movies_api.dart';
 
 class MoviesState {
@@ -16,7 +16,7 @@ class MoviesState {
 
   final bool isLoading;
   final bool isLoadingMore;
-  final List<MovieWatchlistItem> items;
+  final List<ListMovie> items;
   final bool hasMore;
   final int page;
   final String? errorKey;
@@ -24,7 +24,7 @@ class MoviesState {
   MoviesState copyWith({
     bool? isLoading,
     bool? isLoadingMore,
-    List<MovieWatchlistItem>? items,
+    List<ListMovie>? items,
     bool? hasMore,
     int? page,
     String? errorKey,
