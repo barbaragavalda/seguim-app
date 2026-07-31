@@ -117,31 +117,59 @@ class SeriesDetailState {
   }
 }
 
-/// Which season the detail screen lands on by default - the first one still
-/// "in progress" (has at least one already-aired episode still unwatched),
-/// so finishing a season moves the default on to the next one instead of
-/// getting stuck on the last one with any watched episode at all (the old
-/// rule - e.g. finishing House of the Dragon's season 2 kept defaulting
-/// back to season 2 instead of showing season 3). An unaired episode never
-/// counts against a season here either way, so a season nothing has aired
-/// for yet is trivially "in progress" too - which is exactly what's wanted
-/// once every earlier season really is finished, with nothing left to fall
-/// through to instead. Falls back to the last season once every season is
-/// done this way (fully caught up, or genuinely finished the whole series).
+/// Which season the detail screen lands on by default - anchored on the
+/// season of the user's own furthest-watched episode (by season/episode
+/// number, same "how far along" definition Watchlist::hasWatchedLastEpisode()
+/// uses server-side for "finished"), not on the first season with any gap
+/// at all. That distinction matters in practice: an earlier, never-filled-in
+/// gap (a genuinely skipped episode, or one the TV Time import couldn't
+/// recover - see Api\Model\TvTimeImport\Parser's own docblock on why that
+/// isn't always 100%) used to pull the default all the way back to that old
+/// season instead of showing where the user actually left off. Finishing
+/// the furthest-watched season moves the default on to the next one (same
+/// "an unaired episode never blocks a season from counting as done" rule as
+/// before, so "estic al dia" still lands on the next season even before it
+/// airs) rather than re-showing the one just finished. Nothing watched at
+/// all yet falls back to the first season with anything left to watch, same
+/// as always.
 int? _defaultSeasonFor(List<int> seasons, List<Episode> episodes) {
   if (seasons.isEmpty) return null;
   final now = DateTime.now();
-  bool seasonDone(int season) {
-    return episodes.where((e) => e.seasonNumber == season).every((e) {
-      final aired = e.aired == null ? null : DateTime.tryParse(e.aired!);
-      return e.watched || aired == null || aired.isAfter(now);
-    });
+  bool aired(Episode e) {
+    final date = e.aired == null ? null : DateTime.tryParse(e.aired!);
+    return date != null && !date.isAfter(now);
   }
 
-  for (final season in seasons) {
-    if (!seasonDone(season)) return season;
+  Episode? lastWatched;
+  for (final e in episodes) {
+    if (e.seasonNumber <= 0 || !e.watched) continue;
+    final current = lastWatched;
+    final isFurther =
+        current == null ||
+        e.seasonNumber > current.seasonNumber ||
+        (e.seasonNumber == current.seasonNumber &&
+            e.episodeNumber > current.episodeNumber);
+    if (isFurther) lastWatched = e;
   }
-  return seasons.last;
+
+  if (lastWatched == null) {
+    for (final season in seasons) {
+      final hasUnwatchedAired = episodes
+          .where((e) => e.seasonNumber == season)
+          .any((e) => !e.watched && aired(e));
+      if (hasUnwatchedAired) return season;
+    }
+    return seasons.first;
+  }
+
+  final season = lastWatched.seasonNumber;
+  final seasonDone = episodes
+      .where((e) => e.seasonNumber == season)
+      .every((e) => e.watched || !aired(e));
+  if (!seasonDone) return season;
+
+  final index = seasons.indexOf(season);
+  return index != -1 && index + 1 < seasons.length ? seasons[index + 1] : season;
 }
 
 class SeriesDetailController extends Notifier<SeriesDetailState> {
