@@ -35,6 +35,8 @@ class PendingResolutionScreen extends ConsumerStatefulWidget {
 
 class _PendingResolutionScreenState
     extends ConsumerState<PendingResolutionScreen> {
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -44,19 +46,43 @@ class _PendingResolutionScreenState
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(pendingResolutionProvider);
 
     ref.listen(pendingResolutionProvider, (previous, next) {
       final actionErrorKey = next.actionErrorKey;
-      if (actionErrorKey == null) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_actionErrorMessage(l10n, actionErrorKey))),
-      );
-      // consumed - clear it so navigating away and back (or the next
-      // rebuild) doesn't re-show the same SnackBar
-      ref.read(pendingResolutionProvider.notifier).clearActionError();
+      if (actionErrorKey != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_actionErrorMessage(l10n, actionErrorKey))),
+        );
+        // consumed - clear it so navigating away and back (or the next
+        // rebuild) doesn't re-show the same SnackBar
+        ref.read(pendingResolutionProvider.notifier).clearActionError();
+      }
+
+      // confirmAll() just finished (isConfirmingAll true -> false) - jump
+      // back to the top of the list, since every entry the user was
+      // looking at is gone now and what's left (or the "all done" empty
+      // state) starts there. Not needed for the "confirm and leave" exit-
+      // dialog path (_confirmExitIfNeeded) - that one pops the screen
+      // outright once confirmAll() resolves, so there's nothing left here
+      // to scroll.
+      if (previous?.isConfirmingAll == true &&
+          !next.isConfirmingAll &&
+          _scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     });
 
     return PopScope(
@@ -205,6 +231,7 @@ class _PendingResolutionScreenState
     }
 
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(AppSpacing.md),
       itemCount: state.items.length,
       itemBuilder: (context, index) => _PendingEntryCard(
