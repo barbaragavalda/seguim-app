@@ -16,17 +16,25 @@ import '../data/watchlist_item.dart';
 /// with a different [onReturned] hook so each screen can refresh its own
 /// provider after the series detail screen may have changed watched/
 /// watchlist state.
+///
+/// [onToggleWatched], when given, adds a third column to the row - a small
+/// circle marking [item.nextEpisodeTvdbId] watched right from the list,
+/// without opening the series detail screen. Only WatchlistScreen passes
+/// it today; hidden entirely once there's nothing left to mark (item's own
+/// nextEpisodeTvdbId null, e.g. a not-yet-aired series).
 class WatchlistItemRow extends StatelessWidget {
   const WatchlistItemRow({
     super.key,
     required this.item,
     required this.l10n,
     this.onReturned,
+    this.onToggleWatched,
   });
 
   final WatchlistItem item;
   final AppLocalizations l10n;
   final VoidCallback? onReturned;
+  final VoidCallback? onToggleWatched;
 
   @override
   Widget build(BuildContext context) {
@@ -90,58 +98,90 @@ class WatchlistItemRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  if (item.episodeCode != null)
-                    Text.rich(
-                      TextSpan(
-                        style: bodySmall,
-                        children: [
-                          TextSpan(text: '${l10n.nextEpisodeLabel} '),
-                          TextSpan(
-                            text: item.episodeCode,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.color,
-                            ),
-                          ),
-                          TextSpan(text: ' · ${item.nextEpisodeName ?? ''}'),
-                        ],
+                  // AnimatedSwitcher cross-fades the whole block (next
+                  // episode + remaining count together, not each text
+                  // separately) whenever any of them changes - keyed on
+                  // their own values so marking an episode watched from
+                  // this row (which reloads the list, see
+                  // WatchlistController.markEpisodeWatched()'s own
+                  // docblock) visibly signals "this updated", not just a
+                  // silent snap to the new numbers
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: Column(
+                      key: ValueKey(
+                        '${item.episodeCode}-${item.premiereInDays}-${item.remainingEpisodes}',
                       ),
-                    )
-                  else if (item.premiereInDays != null)
-                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        StatusTag(
-                          label: l10n.premiereUpcoming,
-                          color: seriesStatusColor('Upcoming'),
-                        ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            l10n.premiereInDays(item.premiereInDays!),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: bodySmall,
+                        if (item.episodeCode != null)
+                          Text.rich(
+                            TextSpan(
+                              style: bodySmall,
+                              children: [
+                                TextSpan(text: '${l10n.nextEpisodeLabel} '),
+                                TextSpan(
+                                  text: item.episodeCode,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: ' · ${item.nextEpisodeName ?? ''}',
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (item.premiereInDays != null)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              StatusTag(
+                                label: l10n.premiereUpcoming,
+                                color: seriesStatusColor('Upcoming'),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  l10n.premiereInDays(item.premiereInDays!),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: bodySmall,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                        if (item.remainingEpisodes > 0) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            l10n.episodesRemaining(item.remainingEpisodes),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                              color: AppColors.coral,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
-                  if (item.remainingEpisodes > 0) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.episodesRemaining(item.remainingEpisodes),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                        color: AppColors.coral,
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
             ),
+            if (onToggleWatched != null && item.nextEpisodeTvdbId != null) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: _MarkWatchedButton(
+                  dividerColor: dividerColor,
+                  onTap: onToggleWatched!,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -166,6 +206,68 @@ class LoadingMoreIndicator extends StatelessWidget {
           width: 20,
           height: 20,
           child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+}
+
+/// The row's "mark next episode watched" button - an empty circle (not a
+/// checkmark) on purpose, see WatchlistItemRow's own child comment on why.
+/// Stateful only for its own tap animation (a quick scale pulse, entirely
+/// separate from AnimatedSwitcher's own fade on the next-episode text once
+/// the reload actually lands) - gives instant feedback that the tap
+/// registered even during the network round-trip, using nothing beyond
+/// core Flutter animation classes (AnimationController/CurvedAnimation/
+/// ScaleTransition).
+class _MarkWatchedButton extends StatefulWidget {
+  const _MarkWatchedButton({required this.dividerColor, required this.onTap});
+
+  final Color dividerColor;
+  final VoidCallback onTap;
+
+  @override
+  State<_MarkWatchedButton> createState() => _MarkWatchedButtonState();
+}
+
+class _MarkWatchedButtonState extends State<_MarkWatchedButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 120),
+  );
+  late final Animation<double> _scale = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOut,
+  ).drive(Tween(begin: 1.0, end: 1.35));
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleTap() async {
+    widget.onTap();
+    await _controller.forward();
+    await _controller.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          width: 26,
+          height: 26,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: widget.dividerColor, width: 1.5),
+          ),
+          child: Icon(Icons.check, size: 14, color: widget.dividerColor),
         ),
       ),
     );

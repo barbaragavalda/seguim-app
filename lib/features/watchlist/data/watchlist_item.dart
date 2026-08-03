@@ -5,6 +5,7 @@ class WatchlistItem {
     this.imageUrl,
     this.nextEpisodeCode,
     this.nextEpisodeName,
+    this.nextEpisodeTvdbId,
     required this.remainingEpisodes,
     this.premiereInDays,
   });
@@ -15,6 +16,9 @@ class WatchlistItem {
   // raw "T{season} - E{episode}" from the API - see [episodeCode]
   final String? nextEpisodeCode;
   final String? nextEpisodeName;
+  // lets the watchlist row mark this one episode watched directly - null
+  // exactly when nextEpisodeCode is (nothing left to mark)
+  final String? nextEpisodeTvdbId;
   final int remainingEpisodes;
   // only ever set when nextEpisodeCode is null (a not-started series with
   // nothing aired yet) - see Api\Model\Watchlist::finalizeRows()'s docblock
@@ -40,6 +44,9 @@ class WatchlistItem {
       imageUrl: json['background'] as String?,
       nextEpisodeCode: json['next_episode'] as String?,
       nextEpisodeName: json['next_episode_name'] as String?,
+      nextEpisodeTvdbId: json['next_episode_tvdb_id'] == null
+          ? null
+          : '${json['next_episode_tvdb_id']}',
       remainingEpisodes: (json['remaining_episodes'] as num?)?.toInt() ?? 0,
       premiereInDays: (json['premiere_in_days'] as num?)?.toInt(),
     );

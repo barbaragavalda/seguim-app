@@ -119,6 +119,11 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
                       l10n: l10n,
                       onReturned: () =>
                           ref.read(watchlistProvider.notifier).load(),
+                      onToggleWatched: () => ref
+                          .read(watchlistProvider.notifier)
+                          .markEpisodeWatched(
+                            state.watching[index].nextEpisodeTvdbId!,
+                          ),
                     ),
                   ),
                 ),
@@ -142,6 +147,11 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
                         l10n: l10n,
                         onReturned: () =>
                             ref.read(watchlistProvider.notifier).load(),
+                        onToggleWatched: () => ref
+                            .read(watchlistProvider.notifier)
+                            .markEpisodeWatched(
+                              state.notStarted[index].nextEpisodeTvdbId!,
+                            ),
                       );
                     },
                   ),
