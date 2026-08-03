@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "seguim-web",
+      "runtimeExecutable": "/Users/barbaragavalda/Documents/OPTISISTEM/SDKs/flutter/bin/flutter",
+      "runtimeArgs": ["run", "-d", "web-server", "--web-port", "8766", "--dart-define-from-file=env/dev.json"],
+      "port": 8766
+    },
+    {
+      "name": "seguim-web-prod",
+      "runtimeExecutable": "/Users/barbaragavalda/Documents/OPTISISTEM/SDKs/flutter/bin/flutter",
+      "runtimeArgs": ["run", "-d", "web-server", "--web-port", "8767", "--dart-define-from-file=env/prod.json"],
+      "port": 8767
+    }
+  ]
+}

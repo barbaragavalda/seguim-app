@@ -1,0 +1,4 @@
+{
+  "API_BASE_URL": "http://tv-tracker.local",
+  "API_DEFAULT_TOKEN": "REPLACE_WITH_DEV_DEFAULT_TOKEN"
+}

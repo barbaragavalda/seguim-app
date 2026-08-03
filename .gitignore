@@ -25,7 +25,6 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 /lib/l10n/generated/
-/lib/core/config/api_config.dart
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -45,3 +44,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Per-environment --dart-define-from-file configs (real secrets) - see
+# env/*.json.example for the tracked templates
+/env/dev.json
+/env/prod.json
