@@ -58,7 +58,7 @@ class MySeriesApi {
     );
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(response.body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const MySeriesException('unknown_error');
     }

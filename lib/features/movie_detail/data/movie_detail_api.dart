@@ -38,7 +38,7 @@ class MovieDetailApi {
       Uri.parse('${ApiConfig.baseUrl}/api/movies/$tvdbId'),
       headers: apiHeaders(token),
     );
-    final data = _decode(response.body);
+    final data = _decode(response);
     final movieJson = data['movie'] as Map<String, dynamic>? ?? {};
     return MovieDetailResult(
       movie: MovieDetail.fromJson(movieJson),
@@ -48,51 +48,56 @@ class MovieDetailApi {
     );
   }
 
-  Future<void> addToWatchlist(String tvdbId, {required String token}) {
-    return _client.post(
+  Future<void> addToWatchlist(String tvdbId, {required String token}) async {
+    final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/movies/$tvdbId/watchlist'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
-  Future<void> markWatched(String tvdbId, {required String token}) {
-    return _client.post(
+  Future<void> markWatched(String tvdbId, {required String token}) async {
+    final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/movies/$tvdbId/watched'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
   /// A full reset - every watch event for this movie is removed, not just
   /// the most recent rewatch (see rewatch below).
-  Future<void> markUnwatched(String tvdbId, {required String token}) {
-    return _client.delete(
+  Future<void> markUnwatched(String tvdbId, {required String token}) async {
+    final response = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/movies/$tvdbId/watched'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
   /// Unlike markWatched (a no-op if already watched), always records a new
   /// watch event.
-  Future<void> rewatch(String tvdbId, {required String token}) {
-    return _client.post(
+  Future<void> rewatch(String tvdbId, {required String token}) async {
+    final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/movies/$tvdbId/rewatch'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
   /// The inverse of rewatch - collapses back down to a single watch rather
   /// than fully unwatching it (unlike markUnwatched).
-  Future<void> undoRewatch(String tvdbId, {required String token}) {
-    return _client.delete(
+  Future<void> undoRewatch(String tvdbId, {required String token}) async {
+    final response = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/movies/$tvdbId/rewatch'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
-  Map<String, dynamic> _decode(String body) {
+  Map<String, dynamic> _decode(http.Response response) {
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const MovieDetailException('unknown_error');
     }

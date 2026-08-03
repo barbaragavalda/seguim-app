@@ -40,7 +40,7 @@ class SeriesDetailApi {
       Uri.parse('${ApiConfig.baseUrl}/api/series/$tvdbId'),
       headers: apiHeaders(token),
     );
-    final data = _decode(response.body);
+    final data = _decode(response);
     final seriesJson = data['series'] as Map<String, dynamic>? ?? {};
     final episodesJson = data['episodes'] as List<dynamic>? ?? [];
     return SeriesDetailResult(
@@ -54,33 +54,36 @@ class SeriesDetailApi {
     );
   }
 
-  Future<void> addToWatchlist(String tvdbId, {required String token}) {
-    return _client.post(
+  Future<void> addToWatchlist(String tvdbId, {required String token}) async {
+    final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
   Future<void> setArchived(
     String tvdbId,
     bool archived, {
     required String token,
-  }) {
+  }) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId/archived');
-    return archived
-        ? _client.post(uri, headers: apiHeaders(token))
-        : _client.delete(uri, headers: apiHeaders(token));
+    final response = archived
+        ? await _client.post(uri, headers: apiHeaders(token))
+        : await _client.delete(uri, headers: apiHeaders(token));
+    _decode(response);
   }
 
   Future<void> setRemoved(
     String tvdbId,
     bool removed, {
     required String token,
-  }) {
+  }) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId/removed');
-    return removed
-        ? _client.post(uri, headers: apiHeaders(token))
-        : _client.delete(uri, headers: apiHeaders(token));
+    final response = removed
+        ? await _client.post(uri, headers: apiHeaders(token))
+        : await _client.delete(uri, headers: apiHeaders(token));
+    _decode(response);
   }
 
   /// Hard delete - unlike setArchived/setRemoved (reversible flags on the
@@ -94,17 +97,18 @@ class SeriesDetailApi {
       Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId'),
       headers: apiHeaders(token),
     );
-    _decode(response.body);
+    _decode(response);
   }
 
   Future<void> markEpisodeWatched(
     String episodeTvdbId, {
     required String token,
-  }) {
-    return _client.post(
+  }) async {
+    final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/watched'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
   /// A full reset - every watch event for this episode is removed, not
@@ -112,35 +116,38 @@ class SeriesDetailApi {
   Future<void> markEpisodeUnwatched(
     String episodeTvdbId, {
     required String token,
-  }) {
-    return _client.delete(
+  }) async {
+    final response = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/watched'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
   /// Unlike markEpisodeWatched (a no-op if already watched), always
   /// records a new watch event.
-  Future<void> rewatchEpisode(String episodeTvdbId, {required String token}) {
-    return _client.post(
+  Future<void> rewatchEpisode(String episodeTvdbId, {required String token}) async {
+    final response = await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/rewatch'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
   /// The inverse of rewatchEpisode - collapses back down to a single watch
   /// rather than fully unwatching it (unlike markEpisodeUnwatched).
-  Future<void> undoRewatch(String episodeTvdbId, {required String token}) {
-    return _client.delete(
+  Future<void> undoRewatch(String episodeTvdbId, {required String token}) async {
+    final response = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/episode/$episodeTvdbId/rewatch'),
       headers: apiHeaders(token),
     );
+    _decode(response);
   }
 
-  Map<String, dynamic> _decode(String body) {
+  Map<String, dynamic> _decode(http.Response response) {
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const SeriesDetailException('unknown_error');
     }

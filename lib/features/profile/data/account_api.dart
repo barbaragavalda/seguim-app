@@ -149,7 +149,7 @@ class AccountApi {
 
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(response.body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const AccountException('unknown_error');
     }

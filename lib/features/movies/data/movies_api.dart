@@ -59,7 +59,7 @@ class MoviesApi {
     );
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(response.body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const MoviesException('unknown_error');
     }

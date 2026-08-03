@@ -93,8 +93,8 @@ class TvTimeImportApi {
     );
 
     final streamed = await _client.send(request);
-    final body = await streamed.stream.bytesToString();
-    final data = _decode(body);
+    final response = await http.Response.fromStream(streamed);
+    final data = _decode(response);
     return (data['id'] as num).toInt();
   }
 
@@ -103,13 +103,13 @@ class TvTimeImportApi {
       Uri.parse('${ApiConfig.baseUrl}/api/import/tvtime/$id'),
       headers: apiHeaders(token),
     );
-    return TvTimeImportStatus.fromJson(_decode(response.body));
+    return TvTimeImportStatus.fromJson(_decode(response));
   }
 
-  Map<String, dynamic> _decode(String body) {
+  Map<String, dynamic> _decode(http.Response response) {
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const TvTimeImportException('unknown_error');
     }

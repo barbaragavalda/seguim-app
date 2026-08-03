@@ -47,7 +47,7 @@ class PendingMoviesApi {
         ...pendingTvdbIds.map((id) => 'pending_tvdb_ids[]=$id'),
       ].join('&'),
     );
-    _decode(response.body);
+    _decode(response);
   }
 
   Future<void> skip(int id, {required String token}) async {
@@ -55,7 +55,7 @@ class PendingMoviesApi {
       Uri.parse('${ApiConfig.baseUrl}/api/import/movies/pending/$id'),
       headers: apiHeaders(token),
     );
-    _decode(response.body);
+    _decode(response);
   }
 
   Future<Map<String, dynamic>> _get(String path, {required String token}) async {
@@ -63,13 +63,13 @@ class PendingMoviesApi {
       Uri.parse('${ApiConfig.baseUrl}$path'),
       headers: apiHeaders(token),
     );
-    return _decode(response.body);
+    return _decode(response);
   }
 
-  Map<String, dynamic> _decode(String body) {
+  Map<String, dynamic> _decode(http.Response response) {
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const PendingMoviesException('unknown_error');
     }

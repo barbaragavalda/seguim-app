@@ -3,12 +3,27 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/locale/locale_provider.dart';
+import 'core/network/api_response_parser.dart';
+import 'features/auth/providers/auth_provider.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'navigation/app_router.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  runApp(const ProviderScope(child: SeguimApp()));
+  // A plain ProviderContainer (rather than just ProviderScope) so
+  // decodeApiResponse - a top-level function outside the widget tree, called
+  // from every *_api.dart file - can still reach authProvider when any
+  // request comes back 401 (deleted/invalidated user - see checkToken()'s
+  // own docblock on the backend). UncontrolledProviderScope makes the widget
+  // tree use this same container instead of creating its own.
+  final container = ProviderContainer();
+  onAuthExpired = () => container.read(authProvider.notifier).logOut();
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const SeguimApp(),
+    ),
+  );
 }
 
 class SeguimApp extends ConsumerWidget {

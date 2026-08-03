@@ -198,7 +198,7 @@ class ListsApi {
       Uri.parse('${ApiConfig.baseUrl}$path'),
       headers: apiHeaders(token),
     );
-    return _decode(response.body);
+    return _decode(response);
   }
 
   Future<Map<String, dynamic>> _post(
@@ -211,7 +211,7 @@ class ListsApi {
       headers: apiHeaders(token),
       body: body,
     );
-    return _decode(response.body);
+    return _decode(response);
   }
 
   Future<void> _delete(String path, {required String token}) async {
@@ -219,13 +219,13 @@ class ListsApi {
       Uri.parse('${ApiConfig.baseUrl}$path'),
       headers: apiHeaders(token),
     );
-    _decode(response.body);
+    _decode(response);
   }
 
-  Map<String, dynamic> _decode(String body) {
+  Map<String, dynamic> _decode(http.Response response) {
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const ListsException('unknown_error');
     }

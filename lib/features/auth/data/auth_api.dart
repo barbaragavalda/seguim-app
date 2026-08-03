@@ -64,7 +64,7 @@ class AuthApi {
     );
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(response.body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const AuthException('unknown_error');
     }
@@ -82,7 +82,7 @@ class AuthApi {
     );
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(response.body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const AuthException('unknown_error');
     }

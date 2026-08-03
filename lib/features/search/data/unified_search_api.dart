@@ -44,7 +44,7 @@ class UnifiedSearchApi {
     );
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(response.body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const UnifiedSearchException('unknown_error');
     }

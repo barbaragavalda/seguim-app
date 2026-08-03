@@ -1,6 +1,19 @@
 import 'dart:convert';
 
-Map<String, dynamic> decodeApiResponse(String body) {
+import 'package:http/http.dart' as http;
+
+/// Called whenever a response comes back with HTTP 401 - the backend's way
+/// of saying the request's token no longer resolves to a real user (deleted
+/// account, revoked token). Set once at startup (see main.dart) to the
+/// current authProvider's logOut(), so a stale session gets cleared as soon
+/// as any API call notices it, not just the ones a screen happens to watch.
+void Function()? onAuthExpired;
+
+Map<String, dynamic> decodeApiResponse(http.Response response) {
+  if (response.statusCode == 401) {
+    onAuthExpired?.call();
+  }
+  final body = response.body;
   // The dev backend prepends PHP debug/warning noise before the JSON
   // payload (a known missing appacman_app_config table, or a deprecation
   // notice from a curl call) — never valid JSON from position 0. The last

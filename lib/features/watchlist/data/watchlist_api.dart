@@ -58,7 +58,7 @@ class WatchlistApi {
     );
     late final Map<String, dynamic> data;
     try {
-      data = decodeApiResponse(response.body);
+      data = decodeApiResponse(response);
     } on FormatException {
       throw const WatchlistException('unknown_error');
     }
