@@ -69,6 +69,7 @@
       "season": { "type": "int" }
     }
   },
+  "specialsLabel": "Specials",
   "forgotPassword": "Forgot your password?",
   "forgotPasswordTitle": "Reset your password",
   "forgotPasswordPrompt": "Enter your email and we'll send you a code to reset your password.",

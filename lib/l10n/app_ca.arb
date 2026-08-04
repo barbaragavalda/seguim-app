@@ -69,6 +69,7 @@
       "season": { "type": "int" }
     }
   },
+  "specialsLabel": "Especials",
   "forgotPassword": "Has oblidat la contrasenya?",
   "forgotPasswordTitle": "Recupera la contrasenya",
   "forgotPasswordPrompt": "Introdueix el teu correu i t'enviarem un codi per restablir la contrasenya.",

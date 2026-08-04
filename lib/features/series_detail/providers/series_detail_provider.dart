@@ -42,10 +42,14 @@ class SeriesDetailState {
   // right after, same pattern as PendingResolutionState.actionErrorKey
   final String? actionErrorKey;
 
+  /// TheTVDB's season 0 is "Especials" - extras/behind-the-scenes/holiday
+  /// episodes that don't belong to a numbered season - included here (kept
+  /// out of watchProgress/_defaultSeasonFor below, same as the backend's
+  /// own season_count/remainingEpisodes), sorted after every real season
+  /// rather than first, matching where 0 would otherwise land numerically.
   List<int> get seasonNumbers {
-    final numbers =
-        episodes.map((e) => e.seasonNumber).where((n) => n > 0).toSet().toList()
-          ..sort();
+    final numbers = episodes.map((e) => e.seasonNumber).toSet().toList()
+      ..sort(_bySeasonWithSpecialsLast);
     return numbers;
   }
 
@@ -115,6 +119,14 @@ class SeriesDetailState {
           : (actionErrorKey ?? this.actionErrorKey),
     );
   }
+}
+
+/// Sorts season numbers ascending, except 0 ("Especials") always goes last
+/// rather than where it'd numerically fall first.
+int _bySeasonWithSpecialsLast(int a, int b) {
+  if (a == 0) return b == 0 ? 0 : 1;
+  if (b == 0) return -1;
+  return a.compareTo(b);
 }
 
 /// Which season the detail screen lands on by default - anchored on the
@@ -189,6 +201,9 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     try {
       final result = await _api.getDetail(tvdbId, token: token);
       if (_tvdbId != tvdbId) return;
+      // season 0 ("Especials") deliberately excluded here, unlike
+      // SeriesDetailState.seasonNumbers - it should never become the
+      // screen's default-selected season
       final seasons =
           result.episodes
               .map((e) => e.seasonNumber)

@@ -833,7 +833,9 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
                             ),
                           ),
                           child: Text(
-                            widget.l10n.seasonLabel(season),
+                            season == 0
+                                ? widget.l10n.specialsLabel
+                                : widget.l10n.seasonLabel(season),
                             style: TextStyle(
                               color: selected
                                   ? Colors.white
@@ -932,7 +934,12 @@ class _EpisodeRow extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${episode.seasonNumber}x${episode.episodeNumber.toString().padLeft(2, '0')}'
+                  // "0x03" would just be noise inside the Especials tab -
+                  // there's only ever one season 0, so the episode number
+                  // alone (still zero-padded, same as every other episode
+                  // code) already fully identifies it
+                  '${episode.seasonNumber == 0 ? 'E' : '${episode.seasonNumber}x'}'
+                  '${episode.episodeNumber.toString().padLeft(2, '0')}'
                   '${episode.name != null ? ' · ${episode.name}' : ''}',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
