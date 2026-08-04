@@ -1,9 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/providers/auth_provider.dart';
-import '../features/import/providers/pending_resolution_provider.dart';
+import '../features/import/providers/pending_count_provider.dart';
 import '../features/lists/providers/lists_provider.dart';
 import '../features/movies/providers/movies_provider.dart';
 import '../features/watchlist/providers/watchlist_provider.dart';
@@ -23,23 +26,43 @@ class _AppShellState extends ConsumerState<AppShell> {
   static const _moviesBranchIndex = 1;
   static const _listsBranchIndex = 3;
 
+  // AppShell is mounted for the whole logged-in/out lifetime of the tab bar,
+  // so it - not ProfileScreen - is what keeps this badge live: an import
+  // running in the background keeps adding pending titles the whole time,
+  // not just while the user happens to be looking at the Perfil tab. Own
+  // provider (pendingCountProvider), not pendingResolutionProvider - see
+  // that provider's own docblock on why: this poll must never be the one
+  // that reloads PendingResolutionScreen's full item list, or a poll firing
+  // while the user has candidates ticked there would wipe them out.
+  static const _pendingCountPollInterval = Duration(seconds: 5);
+
+  Timer? _pendingCountPollTimer;
+
   @override
   void initState() {
     super.initState();
-    // loaded here (rather than only from ProfileScreen/PendingResolutionScreen)
-    // so the "Perfil" tab's badge already has a real count the moment the
-    // app opens, not just once the user actually visits one of those
-    // screens - same "modify provider outside build" reasoning as every
-    // other screen's initState in this app
-    Future.microtask(() => ref.read(pendingResolutionProvider.notifier).load());
+    // web-only - see _ImportSection's own docblock on why the whole TV Time
+    // import feature (the only source of pending titles) is web-only, so
+    // polling for this count elsewhere would never find anything
+    if (kIsWeb) {
+      Future.microtask(() => ref.read(pendingCountProvider.notifier).load());
+      _pendingCountPollTimer = Timer.periodic(
+        _pendingCountPollInterval,
+        (_) => ref.read(pendingCountProvider.notifier).load(),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pendingCountPollTimer?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final pendingMoviesCount = ref.watch(
-      pendingResolutionProvider.select((s) => s.items.length),
-    );
+    final pendingMoviesCount = ref.watch(pendingCountProvider);
 
     // AppShell is mounted once for the whole logged-in/out lifetime of the
     // tab bar - re-load when the user logs in from elsewhere (e.g. the
@@ -47,14 +70,13 @@ class _AppShellState extends ConsumerState<AppShell> {
     // own auth listeners
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isLoggedIn && previous?.isLoggedIn != true) {
-        ref.read(pendingResolutionProvider.notifier).load();
+        ref.read(pendingCountProvider.notifier).load();
       }
     });
 
     return Scaffold(
       body: widget.navigationShell,
       bottomNavigationBar: NavigationBar(
-        height: 70,
         selectedIndex: widget.navigationShell.currentIndex,
         onDestinationSelected: (index) {
           // each tab's screen stays alive in the IndexedStack once visited,

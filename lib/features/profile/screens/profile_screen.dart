@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -15,8 +13,10 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
+import '../../../widgets/status_tag.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../import/providers/pending_count_provider.dart';
+import '../../import/providers/tvtime_import_provider.dart';
 import '../data/account_api.dart';
 import '../providers/account_provider.dart';
 
@@ -28,43 +28,16 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  // the "Sèries i pel·lícules pendents de resoldre" row's own badge count
-  // (_PendingResolutionAccountRow below) otherwise only ever reflects
-  // whatever it was the last time this screen itself was opened - stale for
-  // as long as an import keeps queueing new pending entries in the
-  // background while the user is sitting here instead. Same "poll every few
-  // seconds while this screen is up" shape as TvTimeImportProvider's own
-  // _pollTimer, just for this one count rather than a whole job's status.
-  // Uses its own pendingCountProvider rather than reading
-  // pendingResolutionProvider directly - see that provider's own docblock
-  // on why sharing it with PendingResolutionScreen used to lose selections.
-  static const _pendingCountPollInterval = Duration(seconds: 5);
-
-  Timer? _pendingCountPollTimer;
-
   @override
   void initState() {
     super.initState();
     // same "modify provider outside build" reasoning as SeriesDetailScreen/
-    // WatchlistScreen's initState
+    // WatchlistScreen's initState. pendingCountProvider itself (the
+    // "Sèries i pel·lícules pendents de resoldre" row's badge, and the
+    // bottom nav Perfil tab's own badge) doesn't need loading/polling here -
+    // AppShell already keeps it fresh for as long as the app is open, not
+    // just while this screen happens to be the visible one.
     Future.microtask(() => ref.read(accountProvider.notifier).load());
-
-    if (kIsWeb) {
-      // both the import row and this pending-count badge are web-only (see
-      // _ImportSection's own docblock) - no point polling on a platform
-      // that never shows either
-      Future.microtask(() => ref.read(pendingCountProvider.notifier).load());
-      _pendingCountPollTimer = Timer.periodic(
-        _pendingCountPollInterval,
-        (_) => ref.read(pendingCountProvider.notifier).load(),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _pendingCountPollTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -81,18 +54,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!isLoggedIn) {
       return Scaffold(
         body: SafeArea(
-          child: CenteredForm(
+          child: Column(
             children: [
-              Text(l10n.profileLoginPrompt, textAlign: TextAlign.center),
-              const SizedBox(height: AppSpacing.md),
-              FilledButton(
-                onPressed: () => context.push('/login'),
-                child: Text(l10n.logIn),
+              Expanded(
+                child: CenteredForm(
+                  children: [
+                    Text(
+                      l10n.profileLoginPrompt,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    FilledButton(
+                      onPressed: () => context.push('/login'),
+                      child: Text(l10n.logIn),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextButton(
+                      onPressed: () => context.push('/register'),
+                      child: Text(l10n.createAccount),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              TextButton(
-                onPressed: () => context.push('/register'),
-                child: Text(l10n.createAccount),
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: _AttributionFooter(),
               ),
             ],
           ),
@@ -630,6 +616,32 @@ class _ImportSection extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    // reflects this app session's own tvTimeImportProvider state, not a
+    // fresh server check - free (no request, so no risk of nudging the
+    // TvTimeCurrent endpoint into doing a real processing batch just to
+    // render a chip), and already covers the realistic case: the user
+    // started an import and switched to this tab while it's still running.
+    // Only misses an import left running from a previous, since-restarted
+    // app session that hasn't reopened the import screen yet (which is what
+    // actually resumes/rehydrates this state - see resumeIfInProgress()).
+    // "done" only lasts until the user dismisses TvTimeImportScreen's own
+    // _DoneView with its "Fet" button (which resets this state to idle) -
+    // a transient just-finished signal, not a permanent status.
+    final importPhase = ref.watch(
+      tvTimeImportProvider.select((s) => s.phase),
+    );
+    final importChip = switch (importPhase) {
+      TvTimeImportPhase.processing => StatusTag(
+        label: l10n.importInProgressChip,
+        color: AppColors.coral,
+      ),
+      TvTimeImportPhase.done => StatusTag(
+        label: l10n.importDoneChip,
+        color: AppColors.sage,
+      ),
+      _ => null,
+    };
+
     return _Section(
       title: l10n.importSectionTitle,
       child: _Card(
@@ -638,6 +650,7 @@ class _ImportSection extends ConsumerWidget {
             icon: Icons.folder_zip_outlined,
             label: l10n.importFromTvTime,
             value: '',
+            trailing: importChip,
             onTap: () => context.push('/import/tvtime'),
           ),
           _PendingResolutionAccountRow(
@@ -769,57 +782,76 @@ class _FooterSection extends ConsumerWidget {
             color: AppColors.coral,
             onTap: () => _deleteAccount(context, ref, l10n),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.md),
-            child: Center(
-              child: GestureDetector(
-                // TheTVDB's API terms require attribution with a direct
-                // link to TheTVDB.com, visible to end users viewing their
-                // metadata - this app's only real source of series/movie
-                // data
-                onTap: () => launchUrl(Uri.parse('https://thetvdb.com')),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      // the default logo's "db" half is dark navy text,
-                      // unreadable against a dark theme's own background -
-                      // TheTVDB also publishes a white-text variant meant
-                      // exactly for that (thetvdb.com/images/attribution/
-                      // logo1.png), bundled here as a second asset
-                      Theme.of(context).brightness == Brightness.dark
-                          ? 'assets/attribution/thetvdb_logo_dark.png'
-                          : 'assets/attribution/thetvdb_logo.png',
-                      height: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      l10n.theTvdbAttribution,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          FutureBuilder<PackageInfo>(
-            future: PackageInfo.fromPlatform(),
-            builder: (context, snapshot) {
-              final version = snapshot.data?.version ?? '';
-              return Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  l10n.versionLabel(version),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              );
-            },
+          const Padding(
+            padding: EdgeInsets.only(top: AppSpacing.md),
+            child: _AttributionFooter(),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// TheTVDB attribution + app version - shown regardless of login state
+/// (see ProfileScreen.build()'s two branches), unlike the rest of
+/// _FooterSection's rows which need a real session (log out, delete
+/// account, ...).
+class _AttributionFooter extends StatelessWidget {
+  const _AttributionFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      children: [
+        Center(
+          child: GestureDetector(
+            // TheTVDB's API terms require attribution with a direct
+            // link to TheTVDB.com, visible to end users viewing their
+            // metadata - this app's only real source of series/movie
+            // data
+            onTap: () => launchUrl(Uri.parse('https://thetvdb.com')),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset(
+                  // the default logo's "db" half is dark navy text,
+                  // unreadable against a dark theme's own background -
+                  // TheTVDB also publishes a white-text variant meant
+                  // exactly for that (thetvdb.com/images/attribution/
+                  // logo1.png), bundled here as a second asset
+                  Theme.of(context).brightness == Brightness.dark
+                      ? 'assets/attribution/thetvdb_logo_dark.png'
+                      : 'assets/attribution/thetvdb_logo.png',
+                  height: 14,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  l10n.theTvdbAttribution,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        FutureBuilder<PackageInfo>(
+          future: PackageInfo.fromPlatform(),
+          builder: (context, snapshot) {
+            final version = snapshot.data?.version ?? '';
+            return Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                l10n.versionLabel(version),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -883,12 +915,17 @@ class _AccountRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onTap,
+    this.trailing,
   });
 
   final IconData icon;
   final String label;
   final String value;
   final VoidCallback onTap;
+  // e.g. the TV Time import row's "En procés" chip - shown between the
+  // label and the chevron, independent of value (which this row leaves
+  // empty)
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -931,6 +968,10 @@ class _AccountRow extends StatelessWidget {
                   style: TextStyle(fontSize: 13, color: textSecondary),
                 ),
               ),
+            if (trailing != null) ...[
+              trailing!,
+              const SizedBox(width: AppSpacing.sm),
+            ],
             Icon(Icons.chevron_right, size: 18, color: textSecondary),
           ],
         ),

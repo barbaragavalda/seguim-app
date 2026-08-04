@@ -20,16 +20,31 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="seguim">
+  <meta name="apple-mobile-web-app-title" content="Seguim!">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
 
-  <title>seguim</title>
+  <title>Seguim!</title>
   <link rel="manifest" href="manifest.json">
   <style id="splash-screen-style">
+    /* Kills iOS's own rubber-band bounce on the outer page - Flutter
+       renders into one element that fills the viewport and handles all of
+       its own scrolling internally via its own gesture recognizers, so the
+       actual html/body document never needs to scroll itself.
+       overscroll-behavior alone doesn't reliably stop this on iOS Safari/
+       standalone home-screen apps, hence also pinning html/body with
+       position: fixed so there's nothing left for the OS bounce to grab. */
+    html, body {
+      overscroll-behavior: none;
+      position: fixed;
+      overflow: hidden;
+      width: 100%;
+    }
+
     html {
       height: 100%
     }

@@ -150,6 +150,8 @@
   "statusNotWatched": "To watch",
   "statusWatched": "Watched",
   "importFromTvTime": "Import from TV Time",
+  "importInProgressChip": "In progress",
+  "importDoneChip": "Done",
   "deleteAccountRow": "Delete account",
   "deleteAccountConfirmTitle": "Delete account?",
   "deleteAccountConfirmBody": "This can't be undone. All your Seguim! data will be deleted.",

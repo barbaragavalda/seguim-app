@@ -19,6 +19,8 @@ class TvTimeImportSummary {
     required this.listsCreated,
     required this.moviesSynced,
     required this.moviesPending,
+    required this.showsTotal,
+    required this.moviesTotal,
   });
 
   final int showsSynced;
@@ -35,6 +37,12 @@ class TvTimeImportSummary {
   // on its own - waiting in Api\Model\MovieImportPending for the user to
   // pick the right one by hand (see PendingResolutionScreen)
   final int moviesPending;
+  // the export's fixed totals (from the backend re-parsing the same zip
+  // every batch - same numbers every time), not accumulated like the rest
+  // of this class - lets ProcessingView show a real progress fraction
+  // instead of a plain spinner
+  final int showsTotal;
+  final int moviesTotal;
 
   factory TvTimeImportSummary.fromJson(Map<String, dynamic> json) {
     return TvTimeImportSummary(
@@ -45,17 +53,23 @@ class TvTimeImportSummary {
       listsCreated: (json['lists_created'] as num?)?.toInt() ?? 0,
       moviesSynced: (json['movies_synced'] as num?)?.toInt() ?? 0,
       moviesPending: (json['movies_pending'] as num?)?.toInt() ?? 0,
+      showsTotal: (json['shows_total'] as num?)?.toInt() ?? 0,
+      moviesTotal: (json['movies_total'] as num?)?.toInt() ?? 0,
     );
   }
 }
 
 class TvTimeImportStatus {
   const TvTimeImportStatus({
+    this.id,
     required this.status,
     this.summary,
     this.errorMessage,
   });
 
+  // only set by getCurrent() - getStatus() already knows the id it asked
+  // for, so its own response never bothers echoing it back
+  final int? id;
   // "pending" | "processing" | "done" | "failed"
   final String status;
   final TvTimeImportSummary? summary;
@@ -64,6 +78,7 @@ class TvTimeImportStatus {
   factory TvTimeImportStatus.fromJson(Map<String, dynamic> json) {
     final summaryJson = json['summary'] as Map<String, dynamic>?;
     return TvTimeImportStatus(
+      id: (json['id'] as num?)?.toInt(),
       status: json['status'] as String? ?? 'pending',
       summary: summaryJson != null
           ? TvTimeImportSummary.fromJson(summaryJson)
@@ -104,6 +119,20 @@ class TvTimeImportApi {
       headers: apiHeaders(token),
     );
     return TvTimeImportStatus.fromJson(_decode(response));
+  }
+
+  /// Finds and advances this user's own latest not-yet-finished job, if
+  /// any - lets a fresh app process (with no remembered job id at all)
+  /// recover an import it doesn't know is still running. Null means there's
+  /// nothing to resume.
+  Future<TvTimeImportStatus?> getCurrent({required String token}) async {
+    final response = await _client.get(
+      Uri.parse('${ApiConfig.baseUrl}/api/import/tvtime/current'),
+      headers: apiHeaders(token),
+    );
+    final data = _decode(response);
+    if (data['id'] == null) return null;
+    return TvTimeImportStatus.fromJson(data);
   }
 
   Map<String, dynamic> _decode(http.Response response) {

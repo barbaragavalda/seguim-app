@@ -150,6 +150,8 @@
   "statusNotWatched": "Por ver",
   "statusWatched": "Vistas",
   "importFromTvTime": "Importar desde TV Time",
+  "importInProgressChip": "En proceso",
+  "importDoneChip": "Finalizada",
   "deleteAccountRow": "Eliminar cuenta",
   "deleteAccountConfirmTitle": "¿Eliminar la cuenta?",
   "deleteAccountConfirmBody": "Esta acción no se puede deshacer. Se eliminarán todos tus datos de Seguim!.",

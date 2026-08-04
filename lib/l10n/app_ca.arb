@@ -150,6 +150,8 @@
   "statusNotWatched": "Per veure",
   "statusWatched": "Vistes",
   "importFromTvTime": "Importa des de TV Time",
+  "importInProgressChip": "En procés",
+  "importDoneChip": "Finalitzada",
   "deleteAccountRow": "Elimina el compte",
   "deleteAccountConfirmTitle": "Elimina el compte?",
   "deleteAccountConfirmBody": "Aquesta acció no es pot desfer. S'eliminaran totes les teves dades de Seguim!.",
