@@ -78,10 +78,6 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _StatsRow(movie: movie, l10n: l10n),
-                if (movie.genres.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  _GenreChips(genres: movie.genres, l10n: l10n),
-                ],
                 const SizedBox(height: AppSpacing.md),
                 if (state.watched)
                   SizedBox(
@@ -136,8 +132,12 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                     ),
                   ),
                 ],
+                if (movie.genres.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  _GenreChips(genres: movie.genres, l10n: l10n),
+                ],
                 if (movie.overview != null && movie.overview!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   _buildOverview(context, l10n, movie.overview!),
                 ],
                 if (movie.trailer != null) ...[

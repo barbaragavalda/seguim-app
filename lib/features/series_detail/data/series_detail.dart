@@ -1,3 +1,5 @@
+import '../../movie_detail/data/movie_detail.dart' show MovieGenre;
+
 class SeriesDetail {
   const SeriesDetail({
     required this.tvdbId,
@@ -11,6 +13,7 @@ class SeriesDetail {
     this.status,
     this.seasonCount,
     this.averageRuntime,
+    this.genres = const [],
   });
 
   final String tvdbId;
@@ -24,6 +27,9 @@ class SeriesDetail {
   final String? status;
   final int? seasonCount;
   final int? averageRuntime;
+  // MovieGenre, not a series-only class - TheTVDB's genre taxonomy (id/
+  // slug/name) is shared between the two, same as localizedGenre()
+  final List<MovieGenre> genres;
 
   // TheTVDB translation for the app's language may not exist yet - fall
   // back to a title built from the slug rather than showing a blank header
@@ -49,6 +55,9 @@ class SeriesDetail {
       status: json['status'] as String?,
       seasonCount: (json['season_count'] as num?)?.toInt(),
       averageRuntime: (json['average_runtime'] as num?)?.toInt(),
+      genres: (json['genres'] as List<dynamic>? ?? [])
+          .map((g) => MovieGenre.fromJson(g as Map<String, dynamic>))
+          .toList(),
     );
   }
 }

@@ -16,6 +16,7 @@ import '../../../widgets/status_tag.dart';
 import '../../../widgets/watch_progress_bar.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../lists/widgets/add_to_lists_sheet.dart';
+import '../../movie_detail/data/movie_detail.dart' show MovieGenre;
 import '../data/series_detail.dart';
 import '../providers/series_detail_provider.dart';
 
@@ -163,8 +164,12 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
                       label: Text(l10n.addToWatchlist),
                     ),
                   ),
+                if (series.genres.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  _GenreChips(genres: series.genres, l10n: l10n),
+                ],
                 if (series.overview != null && series.overview!.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                   _buildOverview(context, l10n, series.overview!),
                 ],
                 const SizedBox(height: AppSpacing.lg),
@@ -710,6 +715,28 @@ class _StatsRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _GenreChips extends StatelessWidget {
+  const _GenreChips({required this.genres, required this.l10n});
+
+  final List<MovieGenre> genres;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final genre in genres)
+          StatusTag(
+            label: localizedGenre(l10n, genre.slug, genre.name),
+            color: Theme.of(context).colorScheme.primary,
+          ),
+      ],
     );
   }
 }
