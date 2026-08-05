@@ -146,6 +146,7 @@
   "myMoviesEmpty": "No hay ninguna película aquí",
   "statusAll": "Todas",
   "statusUpToDate": "Al día",
+  "statusFinishedPending": "Al día con pendientes",
   "statusArchived": "Ver más tarde",
   "statusRemoved": "Dejadas de ver",
   "statusNotWatched": "Por ver",

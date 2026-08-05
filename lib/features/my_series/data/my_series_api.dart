@@ -11,11 +11,22 @@ class MySeriesException implements Exception {
   final String message;
 }
 
-/// The 6 statuses `GET /api/watchlist?status=` partitions every series
-/// into - see Api\Model\Watchlist::listByStatus()'s docblock on the
-/// backend for how they're computed. `all` is unfiltered - every other
-/// status is a subset of it.
-enum SeriesStatus { all, watching, notStarted, finished, archived, removed }
+/// The statuses `GET /api/watchlist?status=` partitions every series into -
+/// see Api\Model\Watchlist::listByStatus()'s docblock on the backend for
+/// how they're computed. `all` is unfiltered - every other status is a
+/// subset of it. `finishedPending` is also a subset of `finished` itself
+/// (a finished series with an earlier watch gap still shows up under
+/// `finished` too - it's an additional, narrower status, not a different
+/// definition of "finished").
+enum SeriesStatus {
+  all,
+  watching,
+  notStarted,
+  finished,
+  finishedPending,
+  archived,
+  removed,
+}
 
 extension SeriesStatusApiValue on SeriesStatus {
   String get apiValue => switch (this) {
@@ -23,6 +34,7 @@ extension SeriesStatusApiValue on SeriesStatus {
     SeriesStatus.watching => 'watching',
     SeriesStatus.notStarted => 'not_started',
     SeriesStatus.finished => 'finished',
+    SeriesStatus.finishedPending => 'finished_pending',
     SeriesStatus.archived => 'archived',
     SeriesStatus.removed => 'removed',
   };

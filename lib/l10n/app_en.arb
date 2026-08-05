@@ -146,6 +146,7 @@
   "myMoviesEmpty": "There's nothing here",
   "statusAll": "All",
   "statusUpToDate": "Caught up",
+  "statusFinishedPending": "Caught up, gaps left",
   "statusArchived": "Watch later",
   "statusRemoved": "Dropped",
   "statusNotWatched": "To watch",

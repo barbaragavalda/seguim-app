@@ -146,6 +146,7 @@
   "myMoviesEmpty": "No hi ha cap pel·lícula aquí",
   "statusAll": "Totes",
   "statusUpToDate": "Al dia",
+  "statusFinishedPending": "Al dia amb pendents",
   "statusArchived": "Veure més tard",
   "statusRemoved": "Deixades de veure",
   "statusNotWatched": "Per veure",
