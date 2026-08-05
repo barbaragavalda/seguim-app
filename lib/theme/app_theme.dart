@@ -120,6 +120,22 @@ class AppTheme {
           ),
         ),
       ),
+      // without this, OutlinedButton falls back to Material 3's own
+      // defaults (a plain colorScheme.outline border, ~20dp corners) -
+      // visibly different from FilledButton's shape above and from every
+      // call site that was manually re-styling itself to compensate (see
+      // e.g. SeriesDetailScreen's _ToggleButton docblock). One shared
+      // definition here instead of repeating the same styleFrom() call
+      // at every outlined button in the app.
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.primary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
@@ -16,7 +17,7 @@ import '../../../widgets/status_tag.dart';
 import '../../../widgets/watch_progress_bar.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../lists/widgets/add_to_lists_sheet.dart';
-import '../../movie_detail/data/movie_detail.dart' show MovieGenre;
+import '../../movie_detail/data/movie_detail.dart' show MovieGenre, MovieTrailer;
 import '../data/series_detail.dart';
 import '../providers/series_detail_provider.dart';
 
@@ -85,7 +86,15 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
         children: [
           _Header(series: series, l10n: l10n, watchProgress: state.watchProgress),
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            // no bottom inset - _SeasonChips (below, outside this Padding)
+            // needs to bleed edge-to-edge the same way _CastRow does on
+            // MovieDetailScreen, not be boxed in by this page margin
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -172,6 +181,10 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   _buildOverview(context, l10n, series.overview!),
                 ],
+                if (series.trailer != null) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _TrailerButton(trailer: series.trailer!, l10n: l10n),
+                ],
                 const SizedBox(height: AppSpacing.lg),
                 Text(
                   l10n.episodesSectionTitle,
@@ -181,14 +194,32 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
                     color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                if (state.seasonNumbers.isNotEmpty)
-                  _SeasonChips(
-                    seasons: state.seasonNumbers,
-                    selectedSeason: state.selectedSeason,
-                    l10n: l10n,
-                  ),
-                const SizedBox(height: AppSpacing.sm),
+              ],
+            ),
+          ),
+          if (state.seasonNumbers.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _SeasonChips(
+              seasons: state.seasonNumbers,
+              selectedSeason: state.selectedSeason,
+              l10n: l10n,
+            ),
+          ],
+          Padding(
+            // top: sm recreates the gap the old single Padding gave for
+            // free between the season chips (or, with none, the "Episodis"
+            // title above) and the episode list; bottom: md closes out the
+            // page's own bottom margin that this Padding's top-half (above)
+            // deliberately dropped
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 ...state.episodesForSelectedSeason.map(
                   (episode) => _EpisodeRow(episode: episode),
                 ),
@@ -259,10 +290,10 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // same pill shape regardless of state - the theme's own FilledButton
-    // default (AppRadius.sm) and OutlinedButton's unstyled Material default
-    // used to disagree, so the two states of the same toggle visibly
-    // changed shape along with color
+    // same pill shape regardless of state, overriding the theme's default
+    // AppRadius.sm (both FilledButtonTheme and OutlinedButtonTheme) - the
+    // two states of this one toggle deliberately look more rounded than
+    // buttons elsewhere in the app
     final shape = const RoundedRectangleBorder(
       borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
     );
@@ -271,16 +302,11 @@ class _ToggleButton extends StatelessWidget {
     // filled (solid background) for the inactive/default action, outlined
     // (border only) once it's active
     if (active) {
-      final primary = Theme.of(context).colorScheme.primary;
       return OutlinedButton.icon(
         onPressed: onPressed,
         icon: Icon(activeIcon),
         label: Text(activeLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primary,
-          side: BorderSide(color: primary),
-          shape: shape,
-        ),
+        style: OutlinedButton.styleFrom(shape: shape),
       );
     }
     return FilledButton.icon(
@@ -741,6 +767,28 @@ class _GenreChips extends StatelessWidget {
   }
 }
 
+class _TrailerButton extends StatelessWidget {
+  const _TrailerButton({required this.trailer, required this.l10n});
+
+  final MovieTrailer trailer;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => launchUrl(
+          Uri.parse(trailer.url),
+          mode: LaunchMode.externalApplication,
+        ),
+        icon: const Icon(Icons.play_circle_outline),
+        label: Text(l10n.watchTrailerAction),
+      ),
+    );
+  }
+}
+
 class _SeasonChips extends ConsumerStatefulWidget {
   const _SeasonChips({
     required this.seasons,
@@ -807,111 +855,75 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
 
   @override
   Widget build(BuildContext context) {
-    final scaffoldBg = Theme.of(context).scaffoldBackgroundColor;
     return SizedBox(
       height: 34,
-      child: Stack(
-        children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            // built eagerly (not ListView.builder/.separated's lazy,
-            // viewport-only building) so ensureVisible always has a real
-            // context to scroll to, even for a season chip that starts out
-            // off-screen - season counts are small enough that this never
-            // costs anything in practice
-            //
-            // extra blank space on both ends (matching the fade gradients'
-            // width below) so ensureVisible's alignment:0.5 can actually
-            // center the first/last chip instead of clamping against
-            // min/maxScrollExtent - without this, the first or last chip
-            // (exactly the "default to the last watched season" case) ends
-            // up flush against the edge, under the fade, looking like the
-            // scroll didn't happen at all
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Row(
-              children: [
-                for (final season in widget.seasons) ...[
-                  Builder(
-                    builder: (context) {
-                      final selected = season == widget.selectedSeason;
-                      final chipKey = _chipKeys.putIfAbsent(
-                        season,
-                        () => GlobalKey(),
-                      );
-                      return GestureDetector(
-                        key: chipKey,
-                        onTap: () => ref
-                            .read(seriesDetailProvider.notifier)
-                            .selectSeason(season),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          height: 34,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? AppColors.darkBg
-                                : Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(AppRadius.pill),
-                            border: Border.all(
-                              color: selected
-                                  ? AppColors.darkBg
-                                  : Theme.of(context).dividerColor,
-                            ),
-                          ),
-                          child: Text(
-                            season == 0
-                                ? widget.l10n.specialsLabel
-                                : widget.l10n.seasonLabel(season),
-                            style: TextStyle(
-                              color: selected
-                                  ? Colors.white
-                                  : Theme.of(context).textTheme.bodySmall?.color,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        // built eagerly (not ListView.builder/.separated's lazy,
+        // viewport-only building) so ensureVisible always has a real
+        // context to scroll to, even for a season chip that starts out
+        // off-screen - season counts are small enough that this never
+        // costs anything in practice
+        //
+        // unlike _CastRow, this row sits right under a plain text title
+        // ("Episodis") that itself has the page's usual AppSpacing.md
+        // margin - no fade gradient, but the same horizontal inset here so
+        // the first/last chip lines up with that title (and with
+        // everything else on the page) at rest, rather than starting flush
+        // against the screen edge like a photo gallery would
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+        child: Row(
+          children: [
+            for (final season in widget.seasons) ...[
+              Builder(
+                builder: (context) {
+                  final selected = season == widget.selectedSeason;
+                  final chipKey = _chipKeys.putIfAbsent(
+                    season,
+                    () => GlobalKey(),
+                  );
+                  return GestureDetector(
+                    key: chipKey,
+                    onTap: () => ref
+                        .read(seriesDetailProvider.notifier)
+                        .selectSeason(season),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? AppColors.darkBg
+                            : Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: selected
+                              ? AppColors.darkBg
+                              : Theme.of(context).dividerColor,
                         ),
-                      );
-                    },
-                  ),
-                  if (season != widget.seasons.last)
-                    const SizedBox(width: AppSpacing.sm),
-                ],
-              ],
-            ),
-          ),
-          Positioned(
-            top: 0,
-            bottom: 0,
-            left: 0,
-            child: IgnorePointer(
-              child: Container(
-                width: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [scaffoldBg, scaffoldBg.withValues(alpha: 0)],
-                  ),
-                ),
+                      ),
+                      child: Text(
+                        season == 0
+                            ? widget.l10n.specialsLabel
+                            : widget.l10n.seasonLabel(season),
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.white
+                              : Theme.of(context).textTheme.bodySmall?.color,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          ),
-          Positioned(
-            top: 0,
-            bottom: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Container(
-                width: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [scaffoldBg.withValues(alpha: 0), scaffoldBg],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+              if (season != widget.seasons.last)
+                const SizedBox(width: AppSpacing.sm),
+            ],
+          ],
+        ),
       ),
     );
   }

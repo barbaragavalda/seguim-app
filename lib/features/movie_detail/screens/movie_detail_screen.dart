@@ -73,7 +73,17 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
         children: [
           _Header(movie: movie, l10n: l10n),
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            // no bottom inset when there's a cast to show - _CastRow
+            // (below, outside this Padding) needs to bleed edge-to-edge,
+            // same reasoning as SeriesDetailScreen's own split Padding
+            // around _SeasonChips; the page's usual bottom margin is
+            // restored by the SizedBox right after _CastRow instead
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md,
+              AppSpacing.md,
+              movie.cast.isNotEmpty ? 0 : AppSpacing.md,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -95,12 +105,6 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                             : l10n.watchedLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.primary,
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
                       ),
                     ),
                   )
@@ -159,7 +163,10 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
               ],
             ),
           ),
-          if (movie.cast.isNotEmpty) _CastRow(cast: movie.cast),
+          if (movie.cast.isNotEmpty) ...[
+            _CastRow(cast: movie.cast),
+            const SizedBox(height: AppSpacing.md),
+          ],
         ],
       ),
     );
