@@ -1,0 +1,51 @@
+name: Bump version
+
+# Auto-increments pubspec.yaml's build number (the +N after the semver) on
+# every push to main, unless the push itself already touched the version
+# line - that's the signal a human bumped it on purpose (semver and/or
+# build number), and this workflow should leave their exact value alone
+# rather than adding one more build on top of it. Mirrors tv-tracker-local's
+# own bump-version.yml (a VERSION file there, pubspec.yaml's version: line
+# here) - deliberately not kept in sync with the backend's own version
+# number, since the two track different things: this one is the actual
+# app build a user has installed, that one is the API's own compatibility
+# level.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check whether pubspec.yaml's version line was already touched in this push
+        id: check
+        run: |
+          if git diff HEAD^ HEAD -- pubspec.yaml | grep -q '^[+-]version:'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump build number
+        if: steps.check.outputs.changed == 'false'
+        run: |
+          current=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          semver="${current%+*}"
+          build="${current##*+}"
+          new_version="$semver+$((build + 1))"
+          sed -i "s/^version:.*/version: $new_version/" pubspec.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git commit -m "Bump build number to $new_version [skip ci]"
+          git push
