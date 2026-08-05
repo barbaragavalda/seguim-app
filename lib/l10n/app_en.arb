@@ -11,6 +11,8 @@
   "createAccount": "Create an account",
   "email": "Email",
   "password": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
   "username": "Username",
   "noAccountRegister": "Don't have an account? Sign up",
   "haveAccountLogin": "Already have an account? Log in",

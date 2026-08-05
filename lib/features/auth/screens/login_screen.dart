@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
+import '../../../widgets/password_field.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -55,10 +56,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(
+          PasswordField(
             controller: _passwordController,
-            decoration: InputDecoration(labelText: l10n.password),
-            obscureText: true,
+            labelText: l10n.password,
           ),
           if (authState.errorKey != null) ...[
             const SizedBox(height: AppSpacing.sm),

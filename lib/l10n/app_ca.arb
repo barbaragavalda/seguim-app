@@ -11,6 +11,8 @@
   "createAccount": "Crea un compte",
   "email": "Correu electrònic",
   "password": "Contrasenya",
+  "showPassword": "Mostra la contrasenya",
+  "hidePassword": "Amaga la contrasenya",
   "username": "Nom d'usuari",
   "noAccountRegister": "No tens compte? Registra't",
   "haveAccountLogin": "Ja tens compte? Inicia sessió",

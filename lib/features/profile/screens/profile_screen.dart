@@ -13,6 +13,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
+import '../../../widgets/password_field.dart';
 import '../../../widgets/status_tag.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../import/providers/pending_count_provider.dart';
@@ -463,21 +464,15 @@ class _AccountSection extends ConsumerWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
+                PasswordField(
                   controller: currentController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.currentPasswordLabel,
-                  ),
+                  labelText: l10n.currentPasswordLabel,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                TextField(
+                PasswordField(
                   controller: newController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.newPasswordLabel,
-                    errorText: errorText,
-                  ),
+                  labelText: l10n.newPasswordLabel,
+                  errorText: errorText,
                 ),
               ],
             ),

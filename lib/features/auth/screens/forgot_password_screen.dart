@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
+import '../../../widgets/password_field.dart';
 import '../data/auth_api.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -116,10 +117,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               decoration: InputDecoration(labelText: l10n.resetCode),
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextField(
+            PasswordField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: l10n.newPassword),
-              obscureText: true,
+              labelText: l10n.newPassword,
             ),
           ],
           if (_errorKey != null) ...[
