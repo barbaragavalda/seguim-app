@@ -38,7 +38,7 @@ class ListDetailPage {
   final List<ListMovie> movies;
   final bool moviesHasMore;
   // how many of this list's own series/movies are still waiting on a
-  // series_import_pending/movie_import_pending row - see
+  // user_serie_pending/user_movie_pending row - see
   // Api\Controller\Lists\Show's own docblock (backend)
   final int pendingCount;
 }

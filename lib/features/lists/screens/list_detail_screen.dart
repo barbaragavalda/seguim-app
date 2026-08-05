@@ -368,7 +368,7 @@ class _RemoveButton extends StatelessWidget {
 /// Shown when TvTimeImport::Processor couldn't confidently resolve one or
 /// more of this list's own series/movies (a dead/renumbered tvdb_id with no
 /// name match, or several same-titled TheTVDB candidates) - see
-/// series_import_pending_list/movie_import_pending_list's own docblocks in
+/// user_serie_list_pending/user_movie_list_pending's own docblocks in
 /// db.sql. Tapping it opens the same pending-resolution screen every other
 /// unresolved import item already goes through - it isn't scoped to just
 /// this list's own items, but resolving any of them updates this count on
