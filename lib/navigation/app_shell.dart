@@ -36,20 +36,20 @@ class _AppShellState extends ConsumerState<AppShell> {
   // that reloads PendingResolutionScreen's full item list, or a poll firing
   // while the user has candidates ticked there would wipe them out.
   //
-  // Two speeds, not one fixed tick - polling every 5s forever, even with
-  // nothing pending and no import running (the overwhelmingly common case),
-  // was pure waste. _activeInterval only applies while there's an actual
-  // reason to expect the count to change soon (something already pending,
-  // or an import that could add more); otherwise _idleInterval is just an
-  // occasional heartbeat, mainly to notice an import started from another
-  // device/tab. _currentInterval tracks which one the running timer was
-  // last (re)created with, so build() only ever restarts it on an actual
-  // active/idle transition, not on every unrelated rebuild.
-  static const _activeInterval = Duration(seconds: 5);
-  static const _idleInterval = Duration(minutes: 2);
+  // Only polls while an import is genuinely running - an import is the
+  // only thing that can add new pending titles while this widget is
+  // mounted, so there's nothing to gain by polling outside that window.
+  // `importing` covers both a just-created import and one this app process
+  // discovered already in progress (TvTimeImportController.
+  // resumeIfInProgress() sets the same phase either way), so starting/
+  // stopping alongside it alone is enough - no separate "poll forever
+  // whenever something's already pending" fallback: confirmed with the
+  // user that even an occasional background heartbeat with nothing to show
+  // for it was still more than they wanted.
+  static const _pollInterval = Duration(seconds: 5);
 
   Timer? _pendingCountPollTimer;
-  Duration? _currentInterval;
+  bool _isPolling = false;
 
   @override
   void initState() {
@@ -62,14 +62,21 @@ class _AppShellState extends ConsumerState<AppShell> {
     }
   }
 
-  void _setPollInterval(Duration interval) {
-    if (_currentInterval == interval) return;
-    _currentInterval = interval;
+  void _setPolling(bool shouldPoll) {
+    if (_isPolling == shouldPoll) return;
+    final wasPolling = _isPolling;
+    _isPolling = shouldPoll;
     _pendingCountPollTimer?.cancel();
-    _pendingCountPollTimer = Timer.periodic(
-      interval,
-      (_) => ref.read(pendingCountProvider.notifier).load(),
-    );
+    if (shouldPoll) {
+      _pendingCountPollTimer = Timer.periodic(
+        _pollInterval,
+        (_) => ref.read(pendingCountProvider.notifier).load(),
+      );
+    } else if (wasPolling) {
+      // one last fetch to catch anything the import added between the
+      // previous tick and it actually finishing
+      ref.read(pendingCountProvider.notifier).load();
+    }
   }
 
   @override
@@ -87,11 +94,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         TvTimeImportPhase.processing;
 
     if (kIsWeb) {
-      _setPollInterval(
-        pendingMoviesCount > 0 || importing
-            ? _activeInterval
-            : _idleInterval,
-      );
+      _setPolling(importing);
     }
 
     // AppShell is mounted once for the whole logged-in/out lifetime of the
