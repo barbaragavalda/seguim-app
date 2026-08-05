@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/providers/auth_provider.dart';
 import '../features/import/providers/pending_count_provider.dart';
+import '../features/import/providers/tvtime_import_provider.dart';
 import '../features/lists/providers/lists_provider.dart';
 import '../features/movies/providers/movies_provider.dart';
 import '../features/watchlist/providers/watchlist_provider.dart';
@@ -34,9 +35,21 @@ class _AppShellState extends ConsumerState<AppShell> {
   // that provider's own docblock on why: this poll must never be the one
   // that reloads PendingResolutionScreen's full item list, or a poll firing
   // while the user has candidates ticked there would wipe them out.
-  static const _pendingCountPollInterval = Duration(seconds: 5);
+  //
+  // Two speeds, not one fixed tick - polling every 5s forever, even with
+  // nothing pending and no import running (the overwhelmingly common case),
+  // was pure waste. _activeInterval only applies while there's an actual
+  // reason to expect the count to change soon (something already pending,
+  // or an import that could add more); otherwise _idleInterval is just an
+  // occasional heartbeat, mainly to notice an import started from another
+  // device/tab. _currentInterval tracks which one the running timer was
+  // last (re)created with, so build() only ever restarts it on an actual
+  // active/idle transition, not on every unrelated rebuild.
+  static const _activeInterval = Duration(seconds: 5);
+  static const _idleInterval = Duration(minutes: 2);
 
   Timer? _pendingCountPollTimer;
+  Duration? _currentInterval;
 
   @override
   void initState() {
@@ -46,11 +59,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     // polling for this count elsewhere would never find anything
     if (kIsWeb) {
       Future.microtask(() => ref.read(pendingCountProvider.notifier).load());
-      _pendingCountPollTimer = Timer.periodic(
-        _pendingCountPollInterval,
-        (_) => ref.read(pendingCountProvider.notifier).load(),
-      );
     }
+  }
+
+  void _setPollInterval(Duration interval) {
+    if (_currentInterval == interval) return;
+    _currentInterval = interval;
+    _pendingCountPollTimer?.cancel();
+    _pendingCountPollTimer = Timer.periodic(
+      interval,
+      (_) => ref.read(pendingCountProvider.notifier).load(),
+    );
   }
 
   @override
@@ -63,6 +82,17 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final pendingMoviesCount = ref.watch(pendingCountProvider);
+    final importing =
+        ref.watch(tvTimeImportProvider.select((s) => s.phase)) ==
+        TvTimeImportPhase.processing;
+
+    if (kIsWeb) {
+      _setPollInterval(
+        pendingMoviesCount > 0 || importing
+            ? _activeInterval
+            : _idleInterval,
+      );
+    }
 
     // AppShell is mounted once for the whole logged-in/out lifetime of the
     // tab bar - re-load when the user logs in from elsewhere (e.g. the
