@@ -86,10 +86,7 @@ class _TvTimeImportScreenState extends ConsumerState<TvTimeImportScreen> {
                     l10n: l10n,
                     summary: state.summary,
                   ),
-                  TvTimeImportPhase.failed => _FailedView(
-                    l10n: l10n,
-                    errorMessage: state.errorMessage,
-                  ),
+                  TvTimeImportPhase.failed => _FailedView(l10n: l10n),
                 },
               ],
             ),
@@ -558,10 +555,9 @@ class _DoneView extends ConsumerWidget {
 }
 
 class _FailedView extends ConsumerWidget {
-  const _FailedView({required this.l10n, required this.errorMessage});
+  const _FailedView({required this.l10n});
 
   final AppLocalizations l10n;
-  final String? errorMessage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -587,21 +583,6 @@ class _FailedView extends ConsumerWidget {
           l10n.importFailedSub,
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        if (errorMessage != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            child: Text(
-              errorMessage!,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ),
-        ],
         const SizedBox(height: AppSpacing.lg),
         SizedBox(
           width: double.infinity,

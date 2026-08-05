@@ -6,6 +6,11 @@ import '../data/tvtime_import_api.dart';
 
 enum TvTimeImportPhase { idle, selected, uploading, processing, done, failed }
 
+// TvTimeImportStatus.errorMessage (the backend's own error string, e.g. a
+// PHP stack trace) is deliberately never carried into this state - it's a
+// server-side implementation detail (already recorded in user_import.error
+// for debugging), not something a user could act on. TvTimeImportPhase.
+// failed alone is enough for _FailedView's generic "try again" message.
 class TvTimeImportState {
   const TvTimeImportState({
     this.phase = TvTimeImportPhase.idle,
@@ -13,7 +18,6 @@ class TvTimeImportState {
     this.fileSize,
     this.fileBytes,
     this.summary,
-    this.errorMessage,
   });
 
   final TvTimeImportPhase phase;
@@ -21,7 +25,6 @@ class TvTimeImportState {
   final int? fileSize;
   final List<int>? fileBytes;
   final TvTimeImportSummary? summary;
-  final String? errorMessage;
 
   TvTimeImportState copyWith({
     TvTimeImportPhase? phase,
@@ -29,7 +32,6 @@ class TvTimeImportState {
     int? fileSize,
     List<int>? fileBytes,
     TvTimeImportSummary? summary,
-    String? errorMessage,
   }) {
     return TvTimeImportState(
       phase: phase ?? this.phase,
@@ -37,7 +39,6 @@ class TvTimeImportState {
       fileSize: fileSize ?? this.fileSize,
       fileBytes: fileBytes ?? this.fileBytes,
       summary: summary ?? this.summary,
-      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 }
@@ -96,10 +97,7 @@ class TvTimeImportController extends Notifier<TvTimeImportState> {
       state = state.copyWith(phase: TvTimeImportPhase.processing);
       _poll(id);
     } catch (_) {
-      state = state.copyWith(
-        phase: TvTimeImportPhase.failed,
-        errorMessage: null,
-      );
+      state = state.copyWith(phase: TvTimeImportPhase.failed);
     }
   }
 
@@ -125,10 +123,7 @@ class TvTimeImportController extends Notifier<TvTimeImportState> {
           summary: current.summary,
         );
       } else if (current.status == 'failed') {
-        state = state.copyWith(
-          phase: TvTimeImportPhase.failed,
-          errorMessage: current.errorMessage,
-        );
+        state = state.copyWith(phase: TvTimeImportPhase.failed);
       } else {
         state = state.copyWith(
           phase: TvTimeImportPhase.processing,
@@ -169,10 +164,7 @@ class TvTimeImportController extends Notifier<TvTimeImportState> {
           return;
         } else if (status.status == 'failed') {
           _polling = false;
-          state = state.copyWith(
-            phase: TvTimeImportPhase.failed,
-            errorMessage: status.errorMessage,
-          );
+          state = state.copyWith(phase: TvTimeImportPhase.failed);
           return;
         }
       } catch (_) {
