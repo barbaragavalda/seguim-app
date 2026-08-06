@@ -923,9 +923,36 @@ class _AttributionFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // static privacy-*.html pages deployed alongside the web build itself
+    // (web/legal/) rather than served by the API - see those files' own
+    // header comment. Falls back to 'ca' for any locale beyond the app's
+    // three supported ones, same convention as profileQuotesByLanguage.
+    final privacyLang = const {
+      'ca',
+      'es',
+      'en',
+    }.contains(Localizations.localeOf(context).languageCode)
+        ? Localizations.localeOf(context).languageCode
+        : 'ca';
 
     return Column(
       children: [
+        Center(
+          child: GestureDetector(
+            onTap: () => launchUrl(
+              Uri.parse(
+                'https://seguim.cuinadeprofit.cat/legal/privacy-$privacyLang.html',
+              ),
+            ),
+            child: Text(
+              l10n.privacyPolicyLink,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         Center(
           child: GestureDetector(
             // TheTVDB's API terms require attribution with a direct

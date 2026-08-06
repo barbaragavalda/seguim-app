@@ -8,6 +8,11 @@
   "navLists": "Llistes",
   "logIn": "Inicia sessió",
   "continueWithGoogle": "Continua amb Google",
+  "installHintTitle": "Instal·la Seguim! a la pantalla d'inici",
+  "installHintStep1": "Toca el menú ⋮ (els tres puntets) a la part superior dreta de Chrome.",
+  "installHintStep2": "Toca \"Afegeix a la pantalla d'inici\" (o \"Instal·la l'aplicació\").",
+  "installHintStep3": "Confirma el nom i toca \"Afegeix\" — la icona de Seguim! apareixerà a la teva pantalla d'inici.",
+  "installHintDismiss": "Entesos",
   "orDividerLabel": "o",
   "logOut": "Tanca sessió",
   "createAccount": "Crea un compte",
@@ -184,6 +189,7 @@
   "deleteAccountConfirmBody": "Aquesta acció no es pot desfer. S'eliminaran totes les teves dades de Seguim!.",
   "deleteAccountConfirmButton": "Elimina'l",
   "theTvdbAttribution": "Metadades proporcionades per TheTVDB.",
+  "privacyPolicyLink": "Política de privacitat",
   "versionLabel": "Seguim! · versió {version}",
   "@versionLabel": {
     "placeholders": { "version": { "type": "String" } }
