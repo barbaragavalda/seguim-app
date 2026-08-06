@@ -181,13 +181,17 @@ class _WelcomeSection extends StatelessWidget {
             ).createShader(rect),
             blendMode: BlendMode.dstIn,
             child: DecoratedBox(
+              // same sage-to-coral, top-to-bottom gradient as the app icon's
+              // own "S!" wordmark (assets/icon/icon.png), just at a much
+              // lower alpha so it reads as a background wash behind text
+              // rather than a bold logo fill
               decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(-0.7, -1.4),
-                  radius: 1.6,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.coral.withValues(alpha: 0.24),
-                    AppColors.coral.withValues(alpha: 0),
+                    AppColors.sage.withValues(alpha: 0.22),
+                    AppColors.coral.withValues(alpha: 0.22),
                   ],
                 ),
               ),
