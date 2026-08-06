@@ -153,6 +153,7 @@
   "deleteListConfirmBody": "Esta acción no se puede deshacer.",
   "deleteListConfirmButton": "Eliminarla",
   "addSeriesTooltip": "Añadir a la lista",
+  "addFavoriteTitle": "Añadir a favoritos",
   "listDetailEmpty": "Esta lista todavía no tiene ninguna serie",
   "removeFromListAction": "Quitar de la lista",
   "addToListsTitle": "Añade a una lista",

@@ -89,6 +89,26 @@ class FavoritesApi {
     );
   }
 
+  /// Used by SearchScreen's own favorites-picker mode (see FavoriteSeriesScreen/
+  /// FavoriteMoviesScreen's "+" button) - the detail screens' own heart
+  /// toggle goes through SeriesDetailApi/MovieDetailApi instead, same
+  /// endpoint either way
+  Future<void> addSerie(String tvdbId, {required String token}) async {
+    final response = await _client.post(
+      Uri.parse('${ApiConfig.baseUrl}/api/favorites/series/$tvdbId'),
+      headers: apiHeaders(token),
+    );
+    _decode(response);
+  }
+
+  Future<void> addMovie(String tvdbId, {required String token}) async {
+    final response = await _client.post(
+      Uri.parse('${ApiConfig.baseUrl}/api/favorites/movies/$tvdbId'),
+      headers: apiHeaders(token),
+    );
+    _decode(response);
+  }
+
   Future<void> removeSerie(String tvdbId, {required String token}) async {
     final response = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/favorites/series/$tvdbId'),

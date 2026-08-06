@@ -153,6 +153,7 @@
   "deleteListConfirmBody": "Aquesta acció no es pot desfer.",
   "deleteListConfirmButton": "Elimina-la",
   "addSeriesTooltip": "Afegeix a la llista",
+  "addFavoriteTitle": "Afegeix a favorits",
   "listDetailEmpty": "Aquesta llista encara no té cap sèrie",
   "removeFromListAction": "Treu de la llista",
   "addToListsTitle": "Afegeix a una llista",

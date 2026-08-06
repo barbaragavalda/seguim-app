@@ -72,6 +72,16 @@ final appRouter = GoRouter(
       builder: (context, state) => const FavoriteMoviesScreen(),
     ),
     GoRoute(
+      path: '/favorites/series/add',
+      builder: (context, state) =>
+          const SearchScreen(favoritesPickerIsMovie: false),
+    ),
+    GoRoute(
+      path: '/favorites/movies/add',
+      builder: (context, state) =>
+          const SearchScreen(favoritesPickerIsMovie: true),
+    ),
+    GoRoute(
       path: '/lists/:id',
       builder: (context, state) => ListDetailScreen(
         listId: int.parse(state.pathParameters['id']!),

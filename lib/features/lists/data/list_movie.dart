@@ -24,13 +24,6 @@ class ListMovie {
   // does carry a watched flag
   final bool? watched;
 
-  /// null when there's nothing to show a progress bar for (see [watched]'s
-  /// own docblock) - a movie has no partial progress, so this is only ever
-  /// 0.0 or 1.0, and 0.0 (never watched) is left null too - same "no data,
-  /// not 0%" convention as Series.watchProgress, and there's nothing to
-  /// gain from drawing an empty bar under an unwatched poster.
-  double? get watchProgress => watched == true ? 1.0 : null;
-
   factory ListMovie.fromListRow(Map<String, dynamic> json) {
     return ListMovie(
       tvdbId: '${json['tvdb_id']}',

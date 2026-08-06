@@ -88,6 +88,22 @@ class FavoriteMoviesController extends Notifier<FavoriteMoviesState> {
     }
   }
 
+  /// See FavoriteSeriesController.add()'s own comment, identical reasoning
+  Future<void> add(ListMovie movie) async {
+    final token = ref.read(authProvider).token;
+    if (token == null) return;
+    if (state.items.any((m) => m.tvdbId == movie.tvdbId)) return;
+    state = state.copyWith(items: [movie, ...state.items]);
+    try {
+      await _api.addMovie(movie.tvdbId, token: token);
+      ref.read(favoritesSummaryProvider.notifier).load();
+    } catch (_) {
+      state = state.copyWith(
+        items: state.items.where((m) => m.tvdbId != movie.tvdbId).toList(),
+      );
+    }
+  }
+
   /// Optimistic - same "remove locally, roll back on failure" pattern as
   /// ListsController.deleteList()
   Future<void> remove(String tvdbId) async {

@@ -54,7 +54,16 @@ class _FavoriteMoviesScreenState extends ConsumerState<FavoriteMoviesScreen> {
     final state = ref.watch(favoriteMoviesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.favoriteMoviesRow)),
+      appBar: AppBar(
+        title: Text(l10n.favoriteMoviesRow),
+        actions: [
+          IconButton(
+            icon: const Icon(Symbols.add),
+            tooltip: l10n.addFavoriteTitle,
+            onPressed: () => context.push('/favorites/movies/add'),
+          ),
+        ],
+      ),
       body: SafeArea(child: _buildBody(context, l10n, state)),
     );
   }

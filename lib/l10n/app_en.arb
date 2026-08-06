@@ -153,6 +153,7 @@
   "deleteListConfirmBody": "This can't be undone.",
   "deleteListConfirmButton": "Delete it",
   "addSeriesTooltip": "Add to list",
+  "addFavoriteTitle": "Add to favorites",
   "listDetailEmpty": "This list doesn't have any series yet",
   "removeFromListAction": "Remove from list",
   "addToListsTitle": "Add to a list",

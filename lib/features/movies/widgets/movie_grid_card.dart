@@ -45,7 +45,10 @@ class MovieGridCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SeriesPoster(imageUrl: movie.imageUrl, watchProgress: movie.watchProgress),
+          // no watchProgress here, unlike a series' own poster - a movie is
+          // binary (watched or not), and a full-width bar for "watched"
+          // reads as visual noise rather than useful progress information
+          SeriesPoster(imageUrl: movie.imageUrl),
           const SizedBox(height: 6),
           Text(
             movie.name,

@@ -12,6 +12,8 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/placeholder_mark.dart';
 import '../../../widgets/series_poster.dart';
 import '../../../widgets/status_tag.dart';
+import '../../favorites/providers/favorite_movies_provider.dart';
+import '../../favorites/providers/favorite_series_provider.dart';
 import '../../import/data/pending_entry.dart';
 import '../../import/providers/pending_resolution_provider.dart';
 import '../../lists/providers/list_detail_provider.dart';
@@ -19,7 +21,12 @@ import '../data/search_result.dart';
 import '../providers/search_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key, this.addToListId, this.resolveEntry});
+  const SearchScreen({
+    super.key,
+    this.addToListId,
+    this.resolveEntry,
+    this.favoritesPickerIsMovie,
+  });
 
   /// Non-null when pushed as an "add to this list" picker (see
   /// ListDetailScreen's "+" button) instead of the bottom-tab Search
@@ -27,6 +34,15 @@ class SearchScreen extends ConsumerStatefulWidget {
   /// currently-loaded list (as a series or a movie, whichever the result
   /// is) instead of navigating to detail.
   final int? addToListId;
+
+  /// Non-null when pushed as an "add a favorite" picker (see
+  /// FavoriteSeriesScreen/FavoriteMoviesScreen's own "+" button) - false
+  /// when launched from the series screen, true from the movies one.
+  /// Unlike addToListId above (a list can hold both kinds, so that picker
+  /// mixes them), each favorites screen only ever shows one kind, so this
+  /// one filters results down to just the matching type and tapping one
+  /// favorites it directly (no navigating to detail first).
+  final bool? favoritesPickerIsMovie;
 
   /// Non-null when pushed as a "find the right match by hand" picker for
   /// one specific PendingResolutionScreen entry (its own MovieMatcher/
@@ -58,6 +74,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _queryController.addListener(_onQueryTextChanged);
+    final favoritesPickerIsMovie = widget.favoritesPickerIsMovie;
+    if (favoritesPickerIsMovie != null) {
+      // just the matching provider - results are filtered to this one type
+      // (see favoritesPickerIsMovie's own docblock), so that's the only
+      // "already favorited" state the badge below needs
+      Future.microtask(() {
+        if (favoritesPickerIsMovie) {
+          ref.read(favoriteMoviesProvider.notifier).load();
+        } else {
+          ref.read(favoriteSeriesProvider.notifier).load();
+        }
+      });
+    }
     // pre-fill and immediately search with the pending entry's own title -
     // the user already typed this once (it's TV Time's own name for it),
     // no reason to make them type it again
@@ -106,7 +135,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ? AppBar(title: Text(l10n.addSeriesTooltip))
           : widget.resolveEntry != null
               ? AppBar(title: Text(l10n.resolveManuallyTitle))
-              : null,
+              : widget.favoritesPickerIsMovie != null
+                  ? AppBar(title: Text(l10n.addFavoriteTitle))
+                  : null,
       body: SafeArea(
         child: Stack(
           children: [
@@ -172,7 +203,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     // import guessed - see PendingResolutionController.resolveWithResult()'s
     // own docblock
     final resolveEntry = widget.resolveEntry;
-    final results = state.results;
+    final favoritesPickerIsMovie = widget.favoritesPickerIsMovie;
+    final results = favoritesPickerIsMovie == null
+        ? state.results
+        : state.results
+              .where(
+                (r) => (r.type == SearchResultType.movie) == favoritesPickerIsMovie,
+              )
+              .toList();
 
     if (results.isEmpty) {
       return Center(child: Text(l10n.searchNoResults(state.query)));
@@ -210,6 +248,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         : s.items.any((i) => i.tvdbId == result.tvdbId),
                   ),
                 );
+            // results are already filtered to just this type when in
+            // favorites-picker mode, so isMovie here always agrees with
+            // favoritesPickerIsMovie - only watching the one matching
+            // provider (see initState's own comment)
+            final isFavorite = favoritesPickerIsMovie == null
+                ? false
+                : isMovie
+                    ? ref.watch(
+                        favoriteMoviesProvider.select(
+                          (s) => s.items.any((m) => m.tvdbId == result.tvdbId),
+                        ),
+                      )
+                    : ref.watch(
+                        favoriteSeriesProvider.select(
+                          (s) => s.items.any((i) => i.tvdbId == result.tvdbId),
+                        ),
+                      );
             return GestureDetector(
               onTap: () {
                 if (resolveEntry != null) {
@@ -223,6 +278,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       .read(pendingResolutionProvider.notifier)
                       .setManualPick(resolveEntry.key, result);
                   context.pop();
+                  return;
+                }
+                if (favoritesPickerIsMovie != null) {
+                  if (isMovie) {
+                    final notifier = ref.read(favoriteMoviesProvider.notifier);
+                    if (isFavorite) {
+                      notifier.remove(result.tvdbId);
+                    } else {
+                      notifier.add(movieFromSearchResult(result));
+                    }
+                  } else {
+                    final notifier = ref.read(favoriteSeriesProvider.notifier);
+                    if (isFavorite) {
+                      notifier.remove(result.tvdbId);
+                    } else {
+                      notifier.add(seriesFromSearchResult(result));
+                    }
+                  }
                   return;
                 }
                 if (addToListId == null) {
@@ -266,11 +339,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         left: 4,
                         child: _TypeBadge(isMovie: isMovie),
                       ),
-                      if (inList)
+                      if (inList || isFavorite)
                         const Positioned(
                           top: 4,
                           right: 4,
-                          child: _InListBadge(),
+                          child: _AddedBadge(),
                         ),
                     ],
                   ),
@@ -381,8 +454,8 @@ class _TypeBadge extends StatelessWidget {
   }
 }
 
-class _InListBadge extends StatelessWidget {
-  const _InListBadge();
+class _AddedBadge extends StatelessWidget {
+  const _AddedBadge();
 
   @override
   Widget build(BuildContext context) {

@@ -58,7 +58,16 @@ class _FavoriteSeriesScreenState extends ConsumerState<FavoriteSeriesScreen> {
     final state = ref.watch(favoriteSeriesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.favoriteSeriesRow)),
+      appBar: AppBar(
+        title: Text(l10n.favoriteSeriesRow),
+        actions: [
+          IconButton(
+            icon: const Icon(Symbols.add),
+            tooltip: l10n.addFavoriteTitle,
+            onPressed: () => context.push('/favorites/series/add'),
+          ),
+        ],
+      ),
       body: SafeArea(child: _buildBody(context, l10n, state)),
     );
   }

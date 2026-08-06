@@ -88,6 +88,27 @@ class FavoriteSeriesController extends Notifier<FavoriteSeriesState> {
     }
   }
 
+  /// Used by SearchScreen's own favorites-picker mode - [series] is already
+  /// fully built (see seriesFromSearchResult()) so the new card can appear
+  /// at the top of this list immediately, same optimistic-then-roll-back
+  /// pattern as remove() below. A no-op both locally and server-side if
+  /// [series] is already favorited (state.items is keyed by tvdbId, and the
+  /// backend's own add() is an INSERT IGNORE)
+  Future<void> add(Series series) async {
+    final token = ref.read(authProvider).token;
+    if (token == null) return;
+    if (state.items.any((s) => s.tvdbId == series.tvdbId)) return;
+    state = state.copyWith(items: [series, ...state.items]);
+    try {
+      await _api.addSerie(series.tvdbId, token: token);
+      ref.read(favoritesSummaryProvider.notifier).load();
+    } catch (_) {
+      state = state.copyWith(
+        items: state.items.where((s) => s.tvdbId != series.tvdbId).toList(),
+      );
+    }
+  }
+
   /// Optimistic - same "remove locally, roll back on failure" pattern as
   /// ListsController.deleteList()
   Future<void> remove(String tvdbId) async {
