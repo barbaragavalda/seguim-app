@@ -8,7 +8,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
-import '../../../widgets/series_poster.dart';
+import '../../../widgets/poster_preview_row.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/user_list.dart';
 import '../providers/lists_provider.dart';
@@ -286,7 +286,7 @@ class _ListRow extends ConsumerWidget {
                 ),
               if (list.preview.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
-                _ListPreviewRow(items: list.preview),
+                PosterPreviewRow(items: list.preview),
               ],
             ],
           ),
@@ -378,35 +378,3 @@ class _ListRow extends ConsumerWidget {
   }
 }
 
-/// A static (non-draggable, non-tappable) strip of the list's own first
-/// few posters - just a preview of what's inside, not another place to
-/// reorder from (that stays ListDetailScreen's own job, via its already
-/// draggable poster grid). Always lays out _maxSlots equal-width slots
-/// (mirrors Lists\Index's own PREVIEW_LIMIT) regardless of how many posters
-/// actually came back, filling the extra ones with an invisible spacer -
-/// so a poster's own width is always a fixed fraction of the row (1/5 each
-/// at the full 5, 1/5 still each at fewer - so 4 posters read as 80% of the
-/// row, 3 as 60%, ...), never resized to fill whatever's missing
-class _ListPreviewRow extends StatelessWidget {
-  const _ListPreviewRow({required this.items});
-
-  final List<ListPreviewItem> items;
-
-  static const _maxSlots = 5;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < _maxSlots; i++) ...[
-          if (i > 0) const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: i < items.length
-                ? SeriesPoster(imageUrl: items[i].imageUrl)
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ],
-    );
-  }
-}

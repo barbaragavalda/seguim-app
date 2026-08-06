@@ -18,6 +18,7 @@ class SeriesDetailResult {
     required this.inWatchlist,
     required this.archived,
     required this.removed,
+    required this.isFavorite,
   });
 
   final SeriesDetail series;
@@ -25,6 +26,9 @@ class SeriesDetailResult {
   final bool inWatchlist;
   final bool archived;
   final bool removed;
+  // independent of inWatchlist - see Api\Controller\Favorites\AddSerie's
+  // own docblock on why favoriting doesn't require tracking first
+  final bool isFavorite;
 }
 
 class SeriesDetailApi {
@@ -51,7 +55,20 @@ class SeriesDetailApi {
       inWatchlist: data['in_watchlist'] as bool? ?? false,
       archived: data['archived'] as bool? ?? false,
       removed: data['removed'] as bool? ?? false,
+      isFavorite: data['is_favorite'] as bool? ?? false,
     );
+  }
+
+  Future<void> setFavorite(
+    String tvdbId,
+    bool favorite, {
+    required String token,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/favorites/series/$tvdbId');
+    final response = favorite
+        ? await _client.post(uri, headers: apiHeaders(token))
+        : await _client.delete(uri, headers: apiHeaders(token));
+    _decode(response);
   }
 
   Future<void> addToWatchlist(String tvdbId, {required String token}) async {

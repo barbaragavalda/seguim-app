@@ -15,10 +15,13 @@ import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
 import '../../../widgets/password_field.dart';
+import '../../../widgets/poster_preview_row.dart';
 import '../../../widgets/status_tag.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../favorites/providers/favorites_summary_provider.dart';
 import '../../import/providers/pending_count_provider.dart';
 import '../../import/providers/tvtime_import_provider.dart';
+import '../../lists/data/user_list.dart' show ListPreviewItem;
 import '../data/account_api.dart';
 import '../providers/account_provider.dart';
 
@@ -39,7 +42,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     // bottom nav Perfil tab's own badge) doesn't need loading/polling here -
     // AppShell already keeps it fresh for as long as the app is open, not
     // just while this screen happens to be the visible one.
-    Future.microtask(() => ref.read(accountProvider.notifier).load());
+    Future.microtask(() {
+      ref.read(accountProvider.notifier).load();
+      ref.read(favoritesSummaryProvider.notifier).load();
+    });
   }
 
   @override
@@ -47,9 +53,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final l10n = AppLocalizations.of(context)!;
     final isLoggedIn = ref.watch(authProvider).isLoggedIn;
 
+    // also the reliable path for favoritesSummaryProvider right after a
+    // fresh app start - authProvider restores its token from secure
+    // storage asynchronously, so it can still be null at the exact moment
+    // initState()'s own microtask ran above, same race AppShell's own
+    // resumeIfInProgress() call hit (see that fix's own comment) - unlike
+    // accountProvider, nothing else was retrying favoritesSummaryProvider
+    // once that happened, so it stayed permanently empty
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isLoggedIn && previous?.isLoggedIn != true) {
         ref.read(accountProvider.notifier).load();
+        ref.read(favoritesSummaryProvider.notifier).load();
       }
     });
 
@@ -573,17 +587,36 @@ class _AccountSection extends ConsumerWidget {
   }
 }
 
-class _FollowingSection extends StatelessWidget {
+class _FollowingSection extends ConsumerWidget {
   const _FollowingSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final favorites = ref.watch(favoritesSummaryProvider);
 
     return _Section(
       title: l10n.followingSectionTitle,
       child: _Card(
         children: [
+          _FavoriteRow(
+            label: l10n.favoriteSeriesRow,
+            count: favorites.seriesCount,
+            countLabel: favorites.seriesCount > 0
+                ? l10n.listItemCountSummarySeriesOnly(favorites.seriesCount)
+                : null,
+            preview: favorites.seriesPreview,
+            onTap: () => context.push('/favorites/series'),
+          ),
+          _FavoriteRow(
+            label: l10n.favoriteMoviesRow,
+            count: favorites.moviesCount,
+            countLabel: favorites.moviesCount > 0
+                ? l10n.listItemCountSummaryMoviesOnly(favorites.moviesCount)
+                : null,
+            preview: favorites.moviesPreview,
+            onTap: () => context.push('/favorites/movies'),
+          ),
           _ActiveRow(
             icon: Symbols.tv,
             fill: 0,
@@ -988,6 +1021,77 @@ class _AccountRow extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
             ],
             Icon(Symbols.chevron_right, size: 18, color: textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Sèries favorites"/"Pel·lícules favorites" - pinned above the plain
+/// _ActiveRow entries in the same card, same content shape as a real
+/// list's own row on ListsScreen (name, count, poster preview) since these
+/// read like lists even though they aren't real Api\Model\UserList rows
+/// (see Api\Model\SerieFavorite's own docblock) - just without that row's
+/// rename/reorder affordances, which don't apply here.
+class _FavoriteRow extends StatelessWidget {
+  const _FavoriteRow({
+    required this.label,
+    required this.count,
+    required this.countLabel,
+    required this.preview,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final String? countLabel;
+  final List<ListPreviewItem> preview;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final dividerColor = Theme.of(context).dividerColor;
+    final textSecondary = Theme.of(context).textTheme.bodySmall?.color;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 13,
+        ),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: dividerColor)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Icon(Symbols.chevron_right, size: 18, color: textSecondary),
+              ],
+            ),
+            if (countLabel != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                countLabel!,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            if (preview.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              PosterPreviewRow(items: preview),
+            ],
           ],
         ),
       ),

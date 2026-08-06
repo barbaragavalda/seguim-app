@@ -85,7 +85,12 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Header(series: series, l10n: l10n, watchProgress: state.watchProgress),
+          _Header(
+            series: series,
+            l10n: l10n,
+            watchProgress: state.watchProgress,
+            isFavorite: state.isFavorite,
+          ),
           Padding(
             // no bottom inset - _SeasonChips (below, outside this Padding)
             // needs to bleed edge-to-edge the same way _CastRow does on
@@ -490,11 +495,17 @@ Future<void> _handleWatchedEpisodeTap(
 }
 
 class _Header extends ConsumerWidget {
-  const _Header({required this.series, required this.l10n, this.watchProgress});
+  const _Header({
+    required this.series,
+    required this.l10n,
+    this.watchProgress,
+    required this.isFavorite,
+  });
 
   final SeriesDetail series;
   final AppLocalizations l10n;
   final double? watchProgress;
+  final bool isFavorite;
 
   // on a wide (desktop web) screen, a plain AspectRatio(16/9) grows its
   // height with the full screen width with no upper bound - capping it
@@ -545,13 +556,30 @@ class _Header extends ConsumerWidget {
             Positioned(
               top: AppSpacing.md,
               right: AppSpacing.md,
-              child: _CircleButton(
-                icon: Symbols.playlist_add,
-                onTap: () => _requireLogin(
-                  context,
-                  ref,
-                  () => _showAddToLists(context, series.tvdbId),
-                ),
+              child: Row(
+                children: [
+                  _CircleButton(
+                    icon: Symbols.favorite,
+                    fill: isFavorite ? 1 : 0,
+                    color: isFavorite ? AppColors.coral : AppColors.darkBg,
+                    onTap: () => _requireLogin(
+                      context,
+                      ref,
+                      () => ref
+                          .read(seriesDetailProvider.notifier)
+                          .setFavorite(!isFavorite),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  _CircleButton(
+                    icon: Symbols.playlist_add,
+                    onTap: () => _requireLogin(
+                      context,
+                      ref,
+                      () => _showAddToLists(context, series.tvdbId),
+                    ),
+                  ),
+                ],
               ),
             ),
             Positioned(
@@ -654,10 +682,17 @@ class _Header extends ConsumerWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.onTap});
+  const _CircleButton({
+    required this.icon,
+    required this.onTap,
+    this.fill = 0,
+    this.color = AppColors.darkBg,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final double fill;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -670,7 +705,7 @@ class _CircleButton extends StatelessWidget {
         child: SizedBox(
           width: 34,
           height: 34,
-          child: Icon(icon, size: 18, color: AppColors.darkBg),
+          child: Icon(icon, size: 18, color: color, fill: fill),
         ),
       ),
     );

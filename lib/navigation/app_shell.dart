@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../features/auth/providers/auth_provider.dart';
+import '../features/favorites/providers/favorites_summary_provider.dart';
 import '../features/import/providers/pending_count_provider.dart';
 import '../features/import/providers/tvtime_import_provider.dart';
 import '../features/lists/providers/lists_provider.dart';
@@ -113,6 +114,13 @@ class _AppShellState extends ConsumerState<AppShell> {
           }
           if (index == _profileBranchIndex) {
             ref.read(pendingCountProvider.notifier).load();
+            // same "reselecting an already-mounted tab never re-runs
+            // initState" staleness pendingCountProvider itself used to hit
+            // - a favorite toggled from a series/movie detail screen (or
+            // removed from FavoriteSeriesScreen/FavoriteMoviesScreen)
+            // wouldn't otherwise be reflected here until something else
+            // happened to trigger a reload
+            ref.read(favoritesSummaryProvider.notifier).load();
           }
           widget.navigationShell.goBranch(
             index,

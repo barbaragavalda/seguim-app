@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/api_config.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../favorites/providers/favorites_summary_provider.dart';
 import '../data/movie_detail.dart';
 import '../data/movie_detail_api.dart';
 
@@ -13,6 +14,8 @@ class MovieDetailState {
     this.watched = false,
     this.watchCount = 0,
     this.watchlistPending = false,
+    this.isFavorite = false,
+    this.favoritePending = false,
     this.errorKey,
   });
 
@@ -22,6 +25,10 @@ class MovieDetailState {
   final bool watched;
   final int watchCount;
   final bool watchlistPending;
+  // independent of inWatchlist - see MovieDetailResult.isFavorite's own
+  // comment
+  final bool isFavorite;
+  final bool favoritePending;
   final String? errorKey;
 
   MovieDetailState copyWith({
@@ -31,6 +38,8 @@ class MovieDetailState {
     bool? watched,
     int? watchCount,
     bool? watchlistPending,
+    bool? isFavorite,
+    bool? favoritePending,
     String? errorKey,
     bool clearError = false,
   }) {
@@ -41,6 +50,8 @@ class MovieDetailState {
       watched: watched ?? this.watched,
       watchCount: watchCount ?? this.watchCount,
       watchlistPending: watchlistPending ?? this.watchlistPending,
+      isFavorite: isFavorite ?? this.isFavorite,
+      favoritePending: favoritePending ?? this.favoritePending,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
     );
   }
@@ -69,6 +80,7 @@ class MovieDetailController extends Notifier<MovieDetailState> {
         inWatchlist: result.inWatchlist,
         watched: result.watched,
         watchCount: result.watchCount,
+        isFavorite: result.isFavorite,
       );
     } on MovieDetailException catch (e) {
       if (_tvdbId != tvdbId) return;
@@ -127,6 +139,25 @@ class MovieDetailController extends Notifier<MovieDetailState> {
         watchCount: previousCount,
         inWatchlist: wasInWatchlist,
       );
+    }
+  }
+
+  /// Independent of the watchlist toggle above - see MovieDetailResult.
+  /// isFavorite's own comment
+  Future<void> setFavorite(bool favorite) async {
+    final tvdbId = _tvdbId;
+    final token = ref.read(authProvider).token;
+    if (tvdbId == null || token == null || state.favoritePending) return;
+    final previous = state.isFavorite;
+    state = state.copyWith(isFavorite: favorite, favoritePending: true);
+    try {
+      await _api.setFavorite(tvdbId, favorite, token: token);
+      state = state.copyWith(favoritePending: false);
+      // see SeriesDetailController.setFavorite()'s own comment, identical
+      // reasoning
+      ref.read(favoritesSummaryProvider.notifier).load();
+    } catch (_) {
+      state = state.copyWith(isFavorite: previous, favoritePending: false);
     }
   }
 

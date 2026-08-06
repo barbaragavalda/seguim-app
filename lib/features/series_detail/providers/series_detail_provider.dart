@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/api_config.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../favorites/providers/favorites_summary_provider.dart';
 import '../data/series_detail.dart';
 import '../data/series_detail_api.dart';
 
@@ -13,11 +14,13 @@ class SeriesDetailState {
     this.inWatchlist = false,
     this.archived = false,
     this.removed = false,
+    this.isFavorite = false,
     this.selectedSeason,
     this.watchlistPending = false,
     this.archivePending = false,
     this.removedPending = false,
     this.removeFromWatchlistPending = false,
+    this.favoritePending = false,
     this.errorKey,
     this.actionErrorKey,
   });
@@ -28,11 +31,15 @@ class SeriesDetailState {
   final bool inWatchlist;
   final bool archived;
   final bool removed;
+  // independent of inWatchlist - see SeriesDetailResult.isFavorite's own
+  // comment
+  final bool isFavorite;
   final int? selectedSeason;
   final bool watchlistPending;
   final bool archivePending;
   final bool removedPending;
   final bool removeFromWatchlistPending;
+  final bool favoritePending;
   final String? errorKey;
   // set when removeFromWatchlist() fails (e.g. the backend's own
   // has_watch_history rejection - see that controller's own docblock)
@@ -90,11 +97,13 @@ class SeriesDetailState {
     bool? inWatchlist,
     bool? archived,
     bool? removed,
+    bool? isFavorite,
     int? selectedSeason,
     bool? watchlistPending,
     bool? archivePending,
     bool? removedPending,
     bool? removeFromWatchlistPending,
+    bool? favoritePending,
     String? errorKey,
     bool clearError = false,
     String? actionErrorKey,
@@ -107,12 +116,14 @@ class SeriesDetailState {
       inWatchlist: inWatchlist ?? this.inWatchlist,
       archived: archived ?? this.archived,
       removed: removed ?? this.removed,
+      isFavorite: isFavorite ?? this.isFavorite,
       selectedSeason: selectedSeason ?? this.selectedSeason,
       watchlistPending: watchlistPending ?? this.watchlistPending,
       archivePending: archivePending ?? this.archivePending,
       removedPending: removedPending ?? this.removedPending,
       removeFromWatchlistPending:
           removeFromWatchlistPending ?? this.removeFromWatchlistPending,
+      favoritePending: favoritePending ?? this.favoritePending,
       errorKey: clearError ? null : (errorKey ?? this.errorKey),
       actionErrorKey: clearActionError
           ? null
@@ -219,6 +230,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
         inWatchlist: result.inWatchlist,
         archived: result.archived,
         removed: result.removed,
+        isFavorite: result.isFavorite,
         selectedSeason: defaultSeason,
       );
     } on SeriesDetailException catch (e) {
@@ -280,6 +292,27 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
       state = state.copyWith(removedPending: false);
     } catch (_) {
       state = state.copyWith(removed: previous, removedPending: false);
+    }
+  }
+
+  /// Independent of the watchlist toggles above - see SeriesDetailResult.
+  /// isFavorite's own comment
+  Future<void> setFavorite(bool favorite) async {
+    final tvdbId = _tvdbId;
+    final token = ref.read(authProvider).token;
+    if (tvdbId == null || token == null || state.favoritePending) return;
+    final previous = state.isFavorite;
+    state = state.copyWith(isFavorite: favorite, favoritePending: true);
+    try {
+      await _api.setFavorite(tvdbId, favorite, token: token);
+      state = state.copyWith(favoritePending: false);
+      // see FavoriteSeriesController.remove()'s own comment (lib/features/
+      // favorites/providers/favorite_series_provider.dart) - same
+      // "ProfileScreen's preview row only catches up on its own if
+      // something reloads it" staleness
+      ref.read(favoritesSummaryProvider.notifier).load();
+    } catch (_) {
+      state = state.copyWith(isFavorite: previous, favoritePending: false);
     }
   }
 

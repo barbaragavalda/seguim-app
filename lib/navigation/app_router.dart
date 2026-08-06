@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
+import '../features/favorites/screens/favorite_movies_screen.dart';
+import '../features/favorites/screens/favorite_series_screen.dart';
 import '../features/import/data/pending_entry.dart';
 import '../features/import/screens/pending_resolution_screen.dart';
 import '../features/import/screens/tvtime_import_screen.dart';
@@ -60,6 +62,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/my-movies',
       builder: (context, state) => const MyMoviesScreen(),
+    ),
+    GoRoute(
+      path: '/favorites/series',
+      builder: (context, state) => const FavoriteSeriesScreen(),
+    ),
+    GoRoute(
+      path: '/favorites/movies',
+      builder: (context, state) => const FavoriteMoviesScreen(),
     ),
     GoRoute(
       path: '/lists/:id',

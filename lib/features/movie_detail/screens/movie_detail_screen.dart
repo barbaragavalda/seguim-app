@@ -72,7 +72,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Header(movie: movie, l10n: l10n),
+          _Header(movie: movie, l10n: l10n, isFavorite: state.isFavorite),
           Padding(
             // no bottom inset when there's a cast to show - _CastRow
             // (below, outside this Padding) needs to bleed edge-to-edge,
@@ -276,10 +276,15 @@ Future<void> _handleWatchedTap(
 }
 
 class _Header extends ConsumerWidget {
-  const _Header({required this.movie, required this.l10n});
+  const _Header({
+    required this.movie,
+    required this.l10n,
+    required this.isFavorite,
+  });
 
   final MovieDetail movie;
   final AppLocalizations l10n;
+  final bool isFavorite;
 
   // same reasoning as SeriesDetailScreen's own _Header._maxHeight
   static const double _maxHeight = 420;
@@ -319,13 +324,30 @@ class _Header extends ConsumerWidget {
             Positioned(
               top: AppSpacing.md,
               right: AppSpacing.md,
-              child: _CircleButton(
-                icon: Symbols.playlist_add,
-                onTap: () => _requireLogin(
-                  context,
-                  ref,
-                  () => showAddToListsSheet(context, movie.tvdbId, isMovie: true),
-                ),
+              child: Row(
+                children: [
+                  _CircleButton(
+                    icon: Symbols.favorite,
+                    fill: isFavorite ? 1 : 0,
+                    color: isFavorite ? AppColors.coral : AppColors.darkBg,
+                    onTap: () => _requireLogin(
+                      context,
+                      ref,
+                      () => ref
+                          .read(movieDetailProvider.notifier)
+                          .setFavorite(!isFavorite),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  _CircleButton(
+                    icon: Symbols.playlist_add,
+                    onTap: () => _requireLogin(
+                      context,
+                      ref,
+                      () => showAddToListsSheet(context, movie.tvdbId, isMovie: true),
+                    ),
+                  ),
+                ],
               ),
             ),
             Positioned(
@@ -422,10 +444,17 @@ class _Header extends ConsumerWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.onTap});
+  const _CircleButton({
+    required this.icon,
+    required this.onTap,
+    this.fill = 0,
+    this.color = AppColors.darkBg,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final double fill;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +467,7 @@ class _CircleButton extends StatelessWidget {
         child: SizedBox(
           width: 34,
           height: 34,
-          child: Icon(icon, size: 18, color: AppColors.darkBg),
+          child: Icon(icon, size: 18, color: color, fill: fill),
         ),
       ),
     );

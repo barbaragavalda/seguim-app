@@ -17,12 +17,16 @@ class MovieDetailResult {
     required this.inWatchlist,
     required this.watched,
     required this.watchCount,
+    required this.isFavorite,
   });
 
   final MovieDetail movie;
   final bool inWatchlist;
   final bool watched;
   final int watchCount;
+  // independent of inWatchlist - see Api\Controller\Favorites\AddMovie's
+  // own docblock on why favoriting doesn't require tracking first
+  final bool isFavorite;
 }
 
 class MovieDetailApi {
@@ -45,7 +49,20 @@ class MovieDetailApi {
       inWatchlist: data['in_watchlist'] as bool? ?? false,
       watched: data['watched'] as bool? ?? false,
       watchCount: (data['watch_count'] as num?)?.toInt() ?? 0,
+      isFavorite: data['is_favorite'] as bool? ?? false,
     );
+  }
+
+  Future<void> setFavorite(
+    String tvdbId,
+    bool favorite, {
+    required String token,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/api/favorites/movies/$tvdbId');
+    final response = favorite
+        ? await _client.post(uri, headers: apiHeaders(token))
+        : await _client.delete(uri, headers: apiHeaders(token));
+    _decode(response);
   }
 
   Future<void> addToWatchlist(String tvdbId, {required String token}) async {
