@@ -7,6 +7,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/series_poster.dart';
 import '../../../widgets/status_tag.dart';
+import '../../import/providers/tvtime_import_provider.dart';
 import '../../search/data/series.dart';
 import '../data/list_movie.dart';
 import '../providers/list_detail_provider.dart';
@@ -58,6 +59,13 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(listDetailProvider);
     final name = state.name.isEmpty ? widget.name : state.name;
+    // resolving is blocked while importing anyway (PendingResolutionScreen
+    // refuses to show its normal content then - see that screen's own
+    // docblock), so pointing the user at it from here would just lead
+    // somewhere that immediately tells them to come back later
+    final importing =
+        ref.watch(tvTimeImportProvider.select((s) => s.phase)) ==
+        TvTimeImportPhase.processing;
 
     return Scaffold(
       appBar: AppBar(
@@ -73,7 +81,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           ),
         ],
       ),
-      body: SafeArea(child: _buildBody(context, l10n, state)),
+      body: SafeArea(child: _buildBody(context, l10n, state, importing)),
     );
   }
 
@@ -81,6 +89,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     BuildContext context,
     AppLocalizations l10n,
     ListDetailState state,
+    bool importing,
   ) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -101,7 +110,8 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     return CustomScrollView(
       controller: _scrollController,
       slivers: [
-        if (state.pendingCount > 0) _PendingBanner(count: state.pendingCount, l10n: l10n),
+        if (!importing && state.pendingCount > 0)
+          _PendingBanner(count: state.pendingCount, l10n: l10n),
         if (state.items.isNotEmpty) ...[
           _SectionHeader(title: l10n.navWatchlist),
           SliverPadding(
