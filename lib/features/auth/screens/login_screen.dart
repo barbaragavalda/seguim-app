@@ -7,6 +7,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
 import '../../../widgets/password_field.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/google_button/google_sign_in_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -34,6 +35,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           password: _passwordController.text,
         );
     if (!mounted || !success) return;
+    _afterLogin();
+  }
+
+  Future<void> _handleGoogleIdToken(String idToken) async {
+    final success = await ref
+        .read(authProvider.notifier)
+        .logInWithGoogle(idToken);
+    if (!mounted || !success) return;
+    _afterLogin();
+  }
+
+  void _handleGoogleError(Object error) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.genericError)));
+  }
+
+  void _afterLogin() {
     if (context.canPop()) {
       context.pop();
     } else {
@@ -50,6 +71,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       appBar: AppBar(title: Text(l10n.logIn)),
       body: CenteredForm(
         children: [
+          GoogleSignInButton(
+            label: l10n.continueWithGoogle,
+            onIdToken: _handleGoogleIdToken,
+            onError: _handleGoogleError,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Text(
+                  l10n.orDividerLabel,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              Expanded(child: Divider(color: Theme.of(context).dividerColor)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _emailController,
             decoration: InputDecoration(labelText: l10n.email),

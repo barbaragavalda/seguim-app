@@ -7,6 +7,7 @@ import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
 import '../../../widgets/password_field.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/google_button/google_sign_in_button.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -37,6 +38,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           password: _passwordController.text,
         );
     if (!mounted || !success) return;
+    _afterRegister();
+  }
+
+  Future<void> _handleGoogleIdToken(String idToken) async {
+    final success = await ref
+        .read(authProvider.notifier)
+        .logInWithGoogle(idToken);
+    if (!mounted || !success) return;
+    _afterRegister();
+  }
+
+  void _handleGoogleError(Object error) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.genericError)));
+  }
+
+  void _afterRegister() {
     if (context.canPop()) {
       context.pop();
     } else {
@@ -53,6 +74,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       appBar: AppBar(title: Text(l10n.createAccount)),
       body: CenteredForm(
         children: [
+          GoogleSignInButton(
+            label: l10n.continueWithGoogle,
+            onIdToken: _handleGoogleIdToken,
+            onError: _handleGoogleError,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(child: Divider(color: Theme.of(context).dividerColor)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                child: Text(
+                  l10n.orDividerLabel,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              Expanded(child: Divider(color: Theme.of(context).dividerColor)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _usernameController,
             decoration: InputDecoration(labelText: l10n.username),

@@ -47,5 +47,18 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<!-- Google Sign-In: lets the OS route the sign-in redirect back into
+		     this app - reversed form of GoogleAuthConfig.iosClientId -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.896234443669-2nv573a07nf4b702pg5evmbdu4bqabe8</string>
+				</array>
+			</dict>
+		</array>
 	</dict>
 </plist>

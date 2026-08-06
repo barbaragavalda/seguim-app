@@ -51,6 +51,10 @@ class AuthController extends Notifier<AuthState> {
     return _submit(() => _api.login(email: email, password: password));
   }
 
+  Future<bool> logInWithGoogle(String idToken) {
+    return _submit(() => _api.loginWithGoogle(idToken));
+  }
+
   Future<bool> register({
     required String username,
     required String email,

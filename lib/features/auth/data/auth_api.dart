@@ -31,6 +31,10 @@ class AuthApi {
     return _authRequest('/api/login', {'email': email, 'password': password});
   }
 
+  Future<String> loginWithGoogle(String idToken) {
+    return _authRequest('/api/login/google', {'id_token': idToken});
+  }
+
   Future<void> logout(String token) async {
     await _client.post(
       Uri.parse('${ApiConfig.baseUrl}/api/logout'),

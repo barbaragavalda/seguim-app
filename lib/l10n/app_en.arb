@@ -7,6 +7,8 @@
   "navProfile": "Profile",
   "navLists": "Lists",
   "logIn": "Log in",
+  "continueWithGoogle": "Continue with Google",
+  "orDividerLabel": "or",
   "logOut": "Log out",
   "createAccount": "Create an account",
   "email": "Email",
