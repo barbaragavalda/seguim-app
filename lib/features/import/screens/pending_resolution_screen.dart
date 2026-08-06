@@ -13,6 +13,7 @@ import '../../../widgets/placeholder_mark.dart';
 import '../../search/data/search_result.dart';
 import '../data/pending_entry.dart';
 import '../providers/pending_resolution_provider.dart';
+import '../providers/tvtime_import_provider.dart';
 
 /// The three ways out of the "you have unconfirmed ticks" dialog - see
 /// _PendingResolutionScreenState._confirmExitIfNeeded()'s own docblock.
@@ -54,6 +55,20 @@ class _PendingResolutionScreenState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    // resolving/skipping while a batch is still adding new pending entries
+    // in the background is confusing (the list you're working through can
+    // change under you) and racy (a resolve could land on an entry a
+    // still-running batch is about to touch itself) - simplest fix is to
+    // not let the user in here at all while importing == true, regardless
+    // of which of this screen's several entry points they came from
+    final importing =
+        ref.watch(tvTimeImportProvider.select((s) => s.phase)) ==
+        TvTimeImportPhase.processing;
+    if (importing) {
+      return _ImportInProgressView(l10n: l10n);
+    }
+
     final state = ref.watch(pendingResolutionProvider);
 
     ref.listen(pendingResolutionProvider, (previous, next) {
@@ -707,6 +722,61 @@ class _WatchedOnBadge extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: const Icon(Icons.check, size: 13, color: AppColors.onSageLight),
+    );
+  }
+}
+
+/// Replaces the whole screen (see build()'s own `importing` check) rather
+/// than just disabling the resolve/skip buttons - there's nothing useful to
+/// show underneath anyway while an import batch might still be adding more
+/// pending entries.
+class _ImportInProgressView extends StatelessWidget {
+  const _ImportInProgressView({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.pendingMoviesTitle)),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: AppColors.coral,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.hourglass_top,
+                    size: 28,
+                    color: AppColors.onCoralLight,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  l10n.pendingResolutionBlockedTitle,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.fraunces(fontWeight: FontWeight.w700, fontSize: 17),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  l10n.pendingResolutionBlockedBody,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

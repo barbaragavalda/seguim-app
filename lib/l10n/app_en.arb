@@ -198,6 +198,8 @@
   "pendingMoviesRow": "Series and movies pending to resolve",
   "pendingMoviesTitle": "Series and movies pending",
   "pendingMoviesAllDone": "All done!",
+  "pendingResolutionBlockedTitle": "Wait for the import to finish",
+  "pendingResolutionBlockedBody": "You can't resolve pending items while a TV Time import is running.",
   "pendingMoviesNoCandidates": "No candidates found",
   "pendingMovieWatchedOn": "Watched on {date}",
   "@pendingMovieWatchedOn": {

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,63 +24,17 @@ class _AppShellState extends ConsumerState<AppShell> {
   static const _watchlistBranchIndex = 0;
   static const _moviesBranchIndex = 1;
   static const _listsBranchIndex = 3;
-
-  // AppShell is mounted for the whole logged-in/out lifetime of the tab bar,
-  // so it - not ProfileScreen - is what keeps this badge live: an import
-  // running in the background keeps adding pending titles the whole time,
-  // not just while the user happens to be looking at the Perfil tab. Own
-  // provider (pendingCountProvider), not pendingResolutionProvider - see
-  // that provider's own docblock on why: this poll must never be the one
-  // that reloads PendingResolutionScreen's full item list, or a poll firing
-  // while the user has candidates ticked there would wipe them out.
-  //
-  // Only polls while an import is genuinely running - an import is the
-  // only thing that can add new pending titles while this widget is
-  // mounted, so there's nothing to gain by polling outside that window.
-  // `importing` covers both a just-created import and one this app process
-  // discovered already in progress (TvTimeImportController.
-  // resumeIfInProgress() sets the same phase either way), so starting/
-  // stopping alongside it alone is enough - no separate "poll forever
-  // whenever something's already pending" fallback: confirmed with the
-  // user that even an occasional background heartbeat with nothing to show
-  // for it was still more than they wanted.
-  static const _pollInterval = Duration(seconds: 5);
-
-  Timer? _pendingCountPollTimer;
-  bool _isPolling = false;
+  static const _profileBranchIndex = 4;
 
   @override
   void initState() {
     super.initState();
     // web-only - see _ImportSection's own docblock on why the whole TV Time
     // import feature (the only source of pending titles) is web-only, so
-    // polling for this count elsewhere would never find anything
+    // fetching this count elsewhere would never find anything
     if (kIsWeb) {
       Future.microtask(() => ref.read(pendingCountProvider.notifier).load());
     }
-  }
-
-  void _setPolling(bool shouldPoll) {
-    if (_isPolling == shouldPoll) return;
-    final wasPolling = _isPolling;
-    _isPolling = shouldPoll;
-    _pendingCountPollTimer?.cancel();
-    if (shouldPoll) {
-      _pendingCountPollTimer = Timer.periodic(
-        _pollInterval,
-        (_) => ref.read(pendingCountProvider.notifier).load(),
-      );
-    } else if (wasPolling) {
-      // one last fetch to catch anything the import added between the
-      // previous tick and it actually finishing
-      ref.read(pendingCountProvider.notifier).load();
-    }
-  }
-
-  @override
-  void dispose() {
-    _pendingCountPollTimer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -93,10 +45,6 @@ class _AppShellState extends ConsumerState<AppShell> {
         ref.watch(tvTimeImportProvider.select((s) => s.phase)) ==
         TvTimeImportPhase.processing;
 
-    if (kIsWeb) {
-      _setPolling(importing);
-    }
-
     // AppShell is mounted once for the whole logged-in/out lifetime of the
     // tab bar - re-load when the user logs in from elsewhere (e.g. the
     // Perfil tab itself), same reasoning as WatchlistScreen/MoviesScreen's
@@ -106,6 +54,24 @@ class _AppShellState extends ConsumerState<AppShell> {
         ref.read(pendingCountProvider.notifier).load();
       }
     });
+
+    // resolving is blocked while importing (PendingResolutionScreen and the
+    // Perfil row both refuse to act on this count then - see their own
+    // docblocks), so there's nothing to gain polling while `importing` is
+    // true either: a fresh count is only useful once the user can actually
+    // do something with it. This fires exactly once, right as `importing`
+    // flips back off, to catch whatever the import's last batch added -
+    // without it the badge would stay at its pre-import value until the
+    // user happened to reselect the Perfil tab
+    ref.listen<TvTimeImportPhase>(
+      tvTimeImportProvider.select((s) => s.phase),
+      (previous, next) {
+        if (previous == TvTimeImportPhase.processing &&
+            next != TvTimeImportPhase.processing) {
+          ref.read(pendingCountProvider.notifier).load();
+        }
+      },
+    );
 
     return Scaffold(
       body: widget.navigationShell,
@@ -125,6 +91,9 @@ class _AppShellState extends ConsumerState<AppShell> {
           }
           if (index == _listsBranchIndex) {
             ref.read(listsProvider.notifier).load();
+          }
+          if (index == _profileBranchIndex) {
+            ref.read(pendingCountProvider.notifier).load();
           }
           widget.navigationShell.goBranch(
             index,
@@ -155,11 +124,14 @@ class _AppShellState extends ConsumerState<AppShell> {
           NavigationDestination(
             icon: _ProfileIcon(
               icon: Icons.person_outline,
-              badgeCount: pendingMoviesCount,
+              // 0 (not the real count) while importing - resolving is
+              // blocked then anyway, see _PendingResolutionAccountRow's own
+              // docblock
+              badgeCount: importing ? 0 : pendingMoviesCount,
             ),
             selectedIcon: _ProfileIcon(
               icon: Icons.person,
-              badgeCount: pendingMoviesCount,
+              badgeCount: importing ? 0 : pendingMoviesCount,
             ),
             label: l10n.navProfile,
           ),

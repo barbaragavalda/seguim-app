@@ -625,6 +625,7 @@ class _ImportSection extends ConsumerWidget {
     final importPhase = ref.watch(
       tvTimeImportProvider.select((s) => s.phase),
     );
+    final importing = importPhase == TvTimeImportPhase.processing;
     final importChip = switch (importPhase) {
       TvTimeImportPhase.processing => StatusTag(
         label: l10n.importInProgressChip,
@@ -649,7 +650,11 @@ class _ImportSection extends ConsumerWidget {
             onTap: () => context.push('/import/tvtime'),
           ),
           _PendingResolutionAccountRow(
-            badgeCount: ref.watch(pendingCountProvider),
+            // 0 (not the real count) while importing - see this row's own
+            // docblock on why resolving is blocked during an import; no
+            // point advertising a number the user can't act on yet
+            badgeCount: importing ? 0 : ref.watch(pendingCountProvider),
+            importing: importing,
           ),
         ],
       ),
@@ -657,10 +662,19 @@ class _ImportSection extends ConsumerWidget {
   }
 }
 
+// resolving is blocked while an import is running (PendingResolutionScreen
+// itself refuses to show its normal content then too - see that screen's
+// own docblock) - this row is disabled and greyed out to match rather than
+// letting the user tap through to a screen that just tells them to come
+// back later
 class _PendingResolutionAccountRow extends StatelessWidget {
-  const _PendingResolutionAccountRow({required this.badgeCount});
+  const _PendingResolutionAccountRow({
+    required this.badgeCount,
+    required this.importing,
+  });
 
   final int badgeCount;
+  final bool importing;
 
   @override
   Widget build(BuildContext context) {
@@ -668,31 +682,34 @@ class _PendingResolutionAccountRow extends StatelessWidget {
     final textSecondary = Theme.of(context).textTheme.bodySmall?.color;
 
     return InkWell(
-      onTap: () => context.push('/import/pending'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: 13,
-        ),
-        child: Row(
-          children: [
-            _RowIcon(icon: Icons.question_mark),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                l10n.pendingMoviesRow,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w600,
+      onTap: importing ? null : () => context.push('/import/pending'),
+      child: Opacity(
+        opacity: importing ? 0.5 : 1,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: 13,
+          ),
+          child: Row(
+            children: [
+              _RowIcon(icon: Icons.question_mark),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  l10n.pendingMoviesRow,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            if (badgeCount > 0) ...[
-              _CountBadge(count: badgeCount),
-              const SizedBox(width: AppSpacing.sm),
+              if (badgeCount > 0) ...[
+                _CountBadge(count: badgeCount),
+                const SizedBox(width: AppSpacing.sm),
+              ],
+              Icon(Icons.chevron_right, size: 18, color: textSecondary),
             ],
-            Icon(Icons.chevron_right, size: 18, color: textSecondary),
-          ],
+          ),
         ),
       ),
     );

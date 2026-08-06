@@ -198,6 +198,8 @@
   "pendingMoviesRow": "Series y películas pendientes de resolver",
   "pendingMoviesTitle": "Series y películas pendientes",
   "pendingMoviesAllDone": "¡Todo resuelto!",
+  "pendingResolutionBlockedTitle": "Espera a que termine la importación",
+  "pendingResolutionBlockedBody": "No puedes resolver pendientes mientras una importación de TV Time está en curso.",
   "pendingMoviesNoCandidates": "No se ha encontrado ningún candidato",
   "pendingMovieWatchedOn": "Vista el {date}",
   "@pendingMovieWatchedOn": {
