@@ -129,6 +129,21 @@
   "importSectionTitle": "Importació",
   "listsLoginPrompt": "Inicia sessió per veure les teves llistes",
   "listsEmpty": "Encara no tens cap llista",
+  "listItemCountSummaryBoth": "{series, plural, one{1 sèrie} other{{series} sèries}} i {movies, plural, one{1 pel·lícula} other{{movies} pel·lícules}}",
+  "@listItemCountSummaryBoth": {
+    "placeholders": {
+      "series": { "type": "int" },
+      "movies": { "type": "int" }
+    }
+  },
+  "listItemCountSummarySeriesOnly": "{series, plural, one{1 sèrie} other{{series} sèries}}",
+  "@listItemCountSummarySeriesOnly": {
+    "placeholders": { "series": { "type": "int" } }
+  },
+  "listItemCountSummaryMoviesOnly": "{movies, plural, one{1 pel·lícula} other{{movies} pel·lícules}}",
+  "@listItemCountSummaryMoviesOnly": {
+    "placeholders": { "movies": { "type": "int" } }
+  },
   "createListTitle": "Nova llista",
   "listNameLabel": "Nom",
   "renameListTitle": "Canvia el nom de la llista",
@@ -183,7 +198,7 @@
   "uploadingFile": "Pujant el fitxer…",
   "processingTitle": "Sincronitzant amb TheTVDB…",
   "processingSub": "Això pot trigar una estona",
-  "importBackgroundNote": "Pots tancar l'app — la importació continua en segon pla i la trobaràs aquí quan tornis.",
+  "importBackgroundNote": "Pots fer altres coses sense perdre res — trobaràs la importació on era quan tornis a aquesta pantalla.",
   "showsStatLabel": "sèries",
   "episodesWatchedStatLabel": "episodis vistos",
   "importDoneTitle": "Importació completa",

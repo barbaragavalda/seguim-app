@@ -129,6 +129,21 @@
   "importSectionTitle": "Import",
   "listsLoginPrompt": "Log in to see your lists",
   "listsEmpty": "You don't have any lists yet",
+  "listItemCountSummaryBoth": "{series, plural, one{1 series} other{{series} series}} and {movies, plural, one{1 movie} other{{movies} movies}}",
+  "@listItemCountSummaryBoth": {
+    "placeholders": {
+      "series": { "type": "int" },
+      "movies": { "type": "int" }
+    }
+  },
+  "listItemCountSummarySeriesOnly": "{series, plural, one{1 series} other{{series} series}}",
+  "@listItemCountSummarySeriesOnly": {
+    "placeholders": { "series": { "type": "int" } }
+  },
+  "listItemCountSummaryMoviesOnly": "{movies, plural, one{1 movie} other{{movies} movies}}",
+  "@listItemCountSummaryMoviesOnly": {
+    "placeholders": { "movies": { "type": "int" } }
+  },
   "createListTitle": "New list",
   "listNameLabel": "Name",
   "renameListTitle": "Rename list",
@@ -183,7 +198,7 @@
   "uploadingFile": "Uploading file…",
   "processingTitle": "Syncing with TheTVDB…",
   "processingSub": "This can take a while",
-  "importBackgroundNote": "You can close the app — the import keeps going in the background and you'll find it here when you come back.",
+  "importBackgroundNote": "You can go do other things without losing anything — you'll find the import right where it was when you come back to this screen.",
   "showsStatLabel": "shows",
   "episodesWatchedStatLabel": "episodes watched",
   "importDoneTitle": "Import complete",

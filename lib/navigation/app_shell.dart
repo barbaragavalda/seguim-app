@@ -33,7 +33,15 @@ class _AppShellState extends ConsumerState<AppShell> {
     // import feature (the only source of pending titles) is web-only, so
     // fetching this count elsewhere would never find anything
     if (kIsWeb) {
-      Future.microtask(() => ref.read(pendingCountProvider.notifier).load());
+      Future.microtask(() {
+        ref.read(pendingCountProvider.notifier).load();
+        // covers the case where authProvider is *already* restored by the
+        // time this runs (see the ref.listen in build() for the more
+        // common case, where it's still mid-restore right now) -
+        // resumeIfInProgress() itself is a no-op without a token, so this
+        // is harmless if it isn't ready yet
+        ref.read(tvTimeImportProvider.notifier).resumeIfInProgress();
+      });
     }
   }
 
@@ -48,10 +56,20 @@ class _AppShellState extends ConsumerState<AppShell> {
     // AppShell is mounted once for the whole logged-in/out lifetime of the
     // tab bar - re-load when the user logs in from elsewhere (e.g. the
     // Perfil tab itself), same reasoning as WatchlistScreen/MoviesScreen's
-    // own auth listeners
+    // own auth listeners. Also the *reliable* path for resumeIfInProgress()
+    // right after a fresh app start/restart: authProvider restores its
+    // token from secure storage asynchronously (AuthController.
+    // _restoreSession()), so it's still null at the exact moment
+    // initState()'s own microtask runs above - that call is a harmless
+    // no-op then, and this transition (previous token null -> now present)
+    // is what actually catches it once the restore finishes. Confirmed
+    // happening for real: a job stuck at 'processing' only resumed once the
+    // user happened to revisit the import screen, whose own initState
+    // re-tries the same check - by then the restore had long since finished
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isLoggedIn && previous?.isLoggedIn != true) {
         ref.read(pendingCountProvider.notifier).load();
+        ref.read(tvTimeImportProvider.notifier).resumeIfInProgress();
       }
     });
 
