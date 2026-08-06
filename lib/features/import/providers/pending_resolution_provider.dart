@@ -7,6 +7,7 @@ import '../../series_detail/data/series_detail_api.dart';
 import '../data/pending_entry.dart';
 import '../data/pending_movies_api.dart';
 import '../data/pending_series_api.dart';
+import 'pending_count_provider.dart';
 
 class PendingResolutionState {
   const PendingResolutionState({
@@ -449,6 +450,13 @@ class PendingResolutionController extends Notifier<PendingResolutionState> {
       pendingSelected: {...state.pendingSelected}..remove(key),
       manualPicks: {...state.manualPicks}..remove(key),
     );
+    // keeps the Perfil badge/row (and the nav bar's own copy of the same
+    // count) in sync in real time - without this it only caught up once
+    // pendingCountProvider.notifier.load() happened to run again on its
+    // own (login, selecting the Perfil tab, ...), which popping straight
+    // back from this screen to an already-mounted ProfileScreen underneath
+    // never triggers on its own
+    ref.read(pendingCountProvider.notifier).decrement();
   }
 
   // PendingSeriesException/PendingMoviesException carry the backend's own

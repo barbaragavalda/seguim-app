@@ -33,6 +33,15 @@ class PendingCountController extends Notifier<int> {
       // rather than flashing it to 0
     }
   }
+
+  /// Called by PendingResolutionController right as it resolves/skips one
+  /// entry - a local decrement instead of a fresh load() so the badge
+  /// updates the instant the action succeeds, without an extra round trip
+  /// for every single item resolved (confirmAll() in particular can resolve
+  /// dozens in a row)
+  void decrement() {
+    if (state > 0) state--;
+  }
 }
 
 final pendingCountProvider = NotifierProvider<PendingCountController, int>(
