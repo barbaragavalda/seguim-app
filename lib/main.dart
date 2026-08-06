@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'core/locale/locale_provider.dart';
 import 'core/network/api_response_parser.dart';
@@ -10,6 +11,15 @@ import 'navigation/app_router.dart';
 import 'theme/app_theme.dart';
 
 void main() {
+  // Fraunces/Manrope are bundled locally under assets/fonts/google_fonts/
+  // (see pubspec.yaml) instead of relying on google_fonts' default
+  // runtime-fetch-from-fonts.gstatic.com behavior - that CDN call kept
+  // failing in the wild (blocked by ad/privacy blockers, or plain network
+  // hiccups), silently breaking the app's typography. Disallowing runtime
+  // fetching makes a missing bundled variant a loud, obvious error instead
+  // of an intermittent network-dependent one.
+  GoogleFonts.config.allowRuntimeFetching = false;
+
   // A plain ProviderContainer (rather than just ProviderScope) so
   // decodeApiResponse - a top-level function outside the widget tree, called
   // from every *_api.dart file - can still reach authProvider when any

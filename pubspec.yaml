@@ -97,6 +97,7 @@ flutter:
     - assets/icon/icon.png
     - assets/attribution/thetvdb_logo.png
     - assets/attribution/thetvdb_logo_dark.png
+    - assets/fonts/google_fonts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
