@@ -5,6 +5,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_intro.dart';
 import '../../../widgets/section_header.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/movies_provider.dart';
@@ -67,7 +68,9 @@ class _MoviesScreenState extends ConsumerState<MoviesScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(l10n.watchlistLoginPrompt, textAlign: TextAlign.center),
+                  const AppIntro(),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(l10n.moviesLoginPrompt, textAlign: TextAlign.center),
                   const SizedBox(height: AppSpacing.md),
                   FilledButton(
                     onPressed: () => context.push('/login'),

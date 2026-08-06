@@ -7,6 +7,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/app_intro.dart';
 import '../../../widgets/centered_form.dart';
 import '../../../widgets/poster_preview_row.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -65,6 +66,8 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
         body: SafeArea(
           child: CenteredForm(
             children: [
+              const AppIntro(),
+              const SizedBox(height: AppSpacing.lg),
               Text(l10n.listsLoginPrompt, textAlign: TextAlign.center),
               const SizedBox(height: AppSpacing.md),
               FilledButton(

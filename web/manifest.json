@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#182F41",
     "theme_color": "#182F41",
-    "description": "A new Flutter project.",
+    "description": "Fes un seguiment de les sèries i pel·lícules que mires: marca capítols vistos, desa els teus favorits i no perdis mai el fil de què t'has de veure.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
