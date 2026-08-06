@@ -116,6 +116,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _DraggableSeriesCard(
                   series: state.items[index],
+                  index: index,
                   l10n: l10n,
                 ),
                 childCount: state.items.length,
@@ -149,6 +150,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _DraggableMovieCard(
                   movie: state.movieItems[index],
+                  index: index,
                   l10n: l10n,
                 ),
                 childCount: state.movieItems.length,
@@ -230,14 +232,22 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   }
 }
 
-/// Drop-onto-me-to-insert-after-me: wraps each poster in a DragTarget so
+/// Drop-onto-me-to-insert-before-me: wraps each poster in a DragTarget so
 /// dropping another card here calls reorderSerie(dragged, afterTvdbId:
-/// this card's own tvdbId) - matches the backend's neighbor-based
-/// reordering exactly, no separate "full order" submission needed.
+/// this card's own predecessor's tvdbId) - i.e. the dragged card lands in
+/// this card's own current slot, pushing this one (and everything after)
+/// one place later, rather than landing right after it. Still matches the
+/// backend's neighbor-based reordering exactly, just resolving to the
+/// neighbor one earlier than the card that was actually dropped onto.
 class _DraggableSeriesCard extends ConsumerWidget {
-  const _DraggableSeriesCard({required this.series, required this.l10n});
+  const _DraggableSeriesCard({
+    required this.series,
+    required this.index,
+    required this.l10n,
+  });
 
   final Series series;
+  final int index;
   final AppLocalizations l10n;
 
   @override
@@ -247,9 +257,11 @@ class _DraggableSeriesCard extends ConsumerWidget {
     return DragTarget<Series>(
       onWillAcceptWithDetails: (details) => details.data.tvdbId != series.tvdbId,
       onAcceptWithDetails: (details) {
+        final items = ref.read(listDetailProvider).items;
+        final beforeTvdbId = index == 0 ? null : items[index - 1].tvdbId;
         ref
             .read(listDetailProvider.notifier)
-            .reorderSerie(details.data.tvdbId, afterTvdbId: series.tvdbId);
+            .reorderSerie(details.data.tvdbId, afterTvdbId: beforeTvdbId);
       },
       builder: (context, candidateData, rejectedData) {
         return Opacity(
@@ -458,11 +470,17 @@ class _SectionHeader extends StatelessWidget {
 
 /// Mirrors _DraggableSeriesCard exactly, for this list's own movies -
 /// dropping onto me calls reorderMovie(dragged, afterTvdbId: my own
-/// tvdbId), same neighbor-based reordering as the series grid.
+/// predecessor's tvdbId), same drop-onto-me-to-insert-before-me reasoning
+/// as the series grid.
 class _DraggableMovieCard extends ConsumerWidget {
-  const _DraggableMovieCard({required this.movie, required this.l10n});
+  const _DraggableMovieCard({
+    required this.movie,
+    required this.index,
+    required this.l10n,
+  });
 
   final ListMovie movie;
+  final int index;
   final AppLocalizations l10n;
 
   @override
@@ -472,9 +490,11 @@ class _DraggableMovieCard extends ConsumerWidget {
     return DragTarget<ListMovie>(
       onWillAcceptWithDetails: (details) => details.data.tvdbId != movie.tvdbId,
       onAcceptWithDetails: (details) {
+        final items = ref.read(listDetailProvider).movieItems;
+        final beforeTvdbId = index == 0 ? null : items[index - 1].tvdbId;
         ref
             .read(listDetailProvider.notifier)
-            .reorderMovie(details.data.tvdbId, afterTvdbId: movie.tvdbId);
+            .reorderMovie(details.data.tvdbId, afterTvdbId: beforeTvdbId);
       },
       builder: (context, candidateData, rejectedData) {
         return Opacity(
