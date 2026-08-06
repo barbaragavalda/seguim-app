@@ -112,7 +112,7 @@
       "count": { "type": "int" }
     }
   },
-  "welcomeGreeting": "Hi, {username}",
+  "welcomeGreeting": "Hi {username}!",
   "@welcomeGreeting": {
     "placeholders": { "username": { "type": "String" } }
   },

@@ -1,3 +1,5 @@
+import 'dart:math' show Random;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -23,6 +25,7 @@ import '../../import/providers/pending_count_provider.dart';
 import '../../import/providers/tvtime_import_provider.dart';
 import '../../lists/data/user_list.dart' show ListPreviewItem;
 import '../data/account_api.dart';
+import '../data/profile_quotes.dart';
 import '../providers/account_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -33,6 +36,16 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  // picked once per State instance, not once per build - re-randomizing it
+  // on every rebuild (e.g. an account field changing) would be distracting;
+  // this only reshuffles when the widget itself gets recreated (an app
+  // restart, since AppShell's IndexedStack keeps this tab's state alive
+  // across tab switches). Every language's list in profileQuotesByLanguage
+  // must stay the same length for this index to always land on a real quote.
+  late final int _quoteIndex = Random().nextInt(
+    profileQuotesByLanguage['en']!.length,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -108,6 +121,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final quotes =
+        profileQuotesByLanguage[languageCode] ?? profileQuotesByLanguage['en']!;
+    final quote = quotes[_quoteIndex % quotes.length];
+
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -115,6 +133,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _WelcomeSection(
               username: account.username ?? '',
               email: account.email ?? '',
+              quote: quote,
             ),
             if (account.stats != null) _StatsSection(stats: account.stats!),
             _AccountSection(account: account),
@@ -129,63 +148,113 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 }
 
 class _WelcomeSection extends StatelessWidget {
-  const _WelcomeSection({required this.username, required this.email});
+  const _WelcomeSection({
+    required this.username,
+    required this.email,
+    required this.quote,
+  });
 
   final String username;
   final String email;
+  final ProfileQuote quote;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        gradient: RadialGradient(
-          center: const Alignment(-0.7, -1.4),
-          radius: 1.6,
-          colors: [
-            AppColors.coral.withValues(alpha: 0.24),
-            AppColors.coral.withValues(alpha: 0),
-          ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: const BoxDecoration(
-              color: AppColors.coral,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              initial,
-              style: GoogleFonts.fraunces(
-                fontWeight: FontWeight.w900,
-                fontSize: 22,
-                color: AppColors.onCoralLight,
+    return Stack(
+      children: [
+        // RadialGradient's own falloff never reliably reaches alpha 0 by
+        // the bottom of a box this short - it just gets clipped there,
+        // leaving a visible hard edge where the next section's flat
+        // background starts. This ShaderMask forces it to actually fade
+        // out over the container's last stretch, regardless of exact
+        // content height (username/email wrapping to 2 lines, etc.)
+        Positioned.fill(
+          child: ShaderMask(
+            shaderCallback: (rect) => const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white, Colors.transparent],
+              stops: [0.5, 1],
+            ).createShader(rect),
+            blendMode: BlendMode.dstIn,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(-0.7, -1.4),
+                  radius: 1.6,
+                  colors: [
+                    AppColors.coral.withValues(alpha: 0.24),
+                    AppColors.coral.withValues(alpha: 0),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            l10n.welcomeGreeting(username),
-            style: GoogleFonts.fraunces(fontWeight: FontWeight.w900, fontSize: 23),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.md,
           ),
-          const SizedBox(height: 3),
-          Text(email, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: const BoxDecoration(
+                    color: AppColors.coral,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initial,
+                    style: GoogleFonts.fraunces(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
+                      color: AppColors.onCoralLight,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  l10n.welcomeGreeting(username),
+                  style: GoogleFonts.fraunces(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 23,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '"${quote.text}"',
+                  style: GoogleFonts.fraunces(
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                    color: AppColors.coral,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  '— ${quote.source}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.coral.withValues(alpha: 0.75),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(email, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
