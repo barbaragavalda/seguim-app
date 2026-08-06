@@ -20,12 +20,32 @@ class ListsScreen extends ConsumerStatefulWidget {
 }
 
 class _ListsScreenState extends ConsumerState<ListsScreen> {
+  static const _loadMoreThreshold = 300;
+
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     // same "modify provider outside build" reasoning as the other tab
     // screens' initState (WatchlistScreen, ProfileScreen, ...)
     Future.microtask(() => ref.read(listsProvider.notifier).load());
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      ref.read(listsProvider.notifier).loadMore();
+    }
   }
 
   @override
@@ -93,15 +113,28 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
       return Center(child: Text(l10n.listsEmpty));
     }
 
-    return ReorderableListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      itemCount: state.items.length,
-      buildDefaultDragHandles: false,
-      onReorder: (oldIndex, newIndex) => _onReorder(state.items, oldIndex, newIndex),
-      itemBuilder: (context, index) {
-        final list = state.items[index];
-        return _ListRow(key: ValueKey(list.id), index: index, list: list, l10n: l10n);
-      },
+    return Column(
+      children: [
+        Expanded(
+          child: ReorderableListView.builder(
+            scrollController: _scrollController,
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            itemCount: state.items.length,
+            buildDefaultDragHandles: false,
+            onReorder: (oldIndex, newIndex) =>
+                _onReorder(state.items, oldIndex, newIndex),
+            itemBuilder: (context, index) {
+              final list = state.items[index];
+              return _ListRow(key: ValueKey(list.id), index: index, list: list, l10n: l10n);
+            },
+          ),
+        ),
+        if (state.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+      ],
     );
   }
 
