@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
@@ -230,7 +231,7 @@ class _PendingResolutionScreenState
               ),
               alignment: Alignment.center,
               child: const Icon(
-                Icons.check,
+                Symbols.check,
                 size: 28,
                 color: AppColors.onSageLight,
               ),
@@ -337,8 +338,9 @@ class _PendingEntryCard extends ConsumerWidget {
             children: [
               Icon(
                 entry.kind == PendingEntryKind.series
-                    ? Icons.tv
-                    : Icons.videocam,
+                    ? Symbols.tv
+                    : Symbols.local_activity,
+                fill: entry.kind == PendingEntryKind.series ? 0 : 1,
                 size: 16,
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),
@@ -699,7 +701,7 @@ class _WatchlistBadge extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: const Icon(
-        Icons.schedule,
+        Symbols.schedule,
         size: 13,
         color: AppColors.onCoralLight,
       ),
@@ -721,7 +723,7 @@ class _WatchedOnBadge extends StatelessWidget {
         color: AppColors.sage,
         shape: BoxShape.circle,
       ),
-      child: const Icon(Icons.check, size: 13, color: AppColors.onSageLight),
+      child: const Icon(Symbols.check, size: 13, color: AppColors.onSageLight),
     );
   }
 }
@@ -755,7 +757,7 @@ class _ImportInProgressView extends StatelessWidget {
                   ),
                   alignment: Alignment.center,
                   child: const Icon(
-                    Icons.hourglass_top,
+                    Symbols.hourglass_top,
                     size: 28,
                     color: AppColors.onCoralLight,
                   ),

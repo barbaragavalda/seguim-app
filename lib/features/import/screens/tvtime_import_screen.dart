@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
@@ -131,7 +132,7 @@ class _PendingMoviesBanner extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.fact_check_outlined, color: AppColors.coral, size: 20),
+              const Icon(Symbols.extension, color: AppColors.coral, size: 20),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -196,7 +197,7 @@ class _IdleView extends ConsumerWidget {
                 ),
                 alignment: Alignment.center,
                 child: const Icon(
-                  Icons.file_download_outlined,
+                  Symbols.file_download,
                   color: AppColors.coral,
                 ),
               ),
@@ -262,7 +263,7 @@ class _SelectedView extends ConsumerWidget {
                 ),
                 alignment: Alignment.center,
                 child: const Icon(
-                  Icons.folder_zip_outlined,
+                  Symbols.folder_zip,
                   size: 18,
                   color: AppColors.coral,
                 ),
@@ -289,7 +290,7 @@ class _SelectedView extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, size: 18),
+                icon: const Icon(Symbols.close, size: 18),
                 onPressed: () =>
                     ref.read(tvTimeImportProvider.notifier).clearFile(),
               ),
@@ -417,7 +418,7 @@ class _ProcessingView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                Icons.access_time,
+                Symbols.access_time,
                 size: 14,
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),
@@ -456,7 +457,7 @@ class _DoneView extends ConsumerWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const Icon(Icons.check, color: AppColors.onSageLight),
+          child: const Icon(Symbols.check, color: AppColors.onSageLight),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
@@ -522,7 +523,7 @@ class _DoneView extends ConsumerWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline, size: 14, color: AppColors.coral),
+                const Icon(Symbols.info, size: 14, color: AppColors.coral),
                 const SizedBox(width: AppSpacing.xs),
                 Expanded(
                   child: Text(
@@ -571,7 +572,7 @@ class _FailedView extends ConsumerWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const Icon(Icons.close, color: AppColors.onCoralLight),
+          child: const Icon(Symbols.close, color: AppColors.onCoralLight),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(

@@ -4,6 +4,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -269,25 +270,25 @@ class _AccountSection extends ConsumerWidget {
       child: _Card(
         children: [
           _AccountRow(
-            icon: Icons.badge_outlined,
+            icon: Symbols.badge,
             label: l10n.username,
             value: account.username ?? '',
             onTap: () => _editUsername(context, ref),
           ),
           _AccountRow(
-            icon: Icons.mail_outline,
+            icon: Symbols.mail_outline,
             label: l10n.email,
             value: account.email ?? '',
             onTap: () => _editEmail(context, ref),
           ),
           _AccountRow(
-            icon: Icons.lock_outline,
+            icon: Symbols.lock_outline,
             label: l10n.password,
             value: l10n.changePasswordValue,
             onTap: () => _changePassword(context, ref),
           ),
           _AccountRow(
-            icon: Icons.language,
+            icon: Symbols.language,
             label: l10n.languageRow,
             value:
                 languageNativeNames[Localizations.localeOf(context)
@@ -318,7 +319,7 @@ class _AccountSection extends ConsumerWidget {
                     child: Text(languageNativeNames[culture] ?? culture),
                   ),
                   if (culture == current)
-                    const Icon(Icons.check, size: 18, color: AppColors.coral),
+                    const Icon(Symbols.check, size: 18, color: AppColors.coral),
                 ],
               ),
             ),
@@ -584,12 +585,14 @@ class _FollowingSection extends StatelessWidget {
       child: _Card(
         children: [
           _ActiveRow(
-            icon: Icons.tv,
+            icon: Symbols.tv,
+            fill: 0,
             label: l10n.mySeriesRow,
             onTap: () => context.push('/my-series'),
           ),
           _ActiveRow(
-            icon: Icons.videocam,
+            icon: Symbols.local_activity,
+            fill: 1,
             label: l10n.myMoviesRow,
             onTap: () => context.push('/my-movies'),
           ),
@@ -643,7 +646,7 @@ class _ImportSection extends ConsumerWidget {
       child: _Card(
         children: [
           _AccountRow(
-            icon: Icons.folder_zip_outlined,
+            icon: Symbols.folder_zip,
             label: l10n.importFromTvTime,
             value: '',
             trailing: importChip,
@@ -692,7 +695,7 @@ class _PendingResolutionAccountRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _RowIcon(icon: Icons.question_mark),
+              _RowIcon(icon: Symbols.extension),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
@@ -707,7 +710,7 @@ class _PendingResolutionAccountRow extends StatelessWidget {
                 _CountBadge(count: badgeCount),
                 const SizedBox(width: AppSpacing.sm),
               ],
-              Icon(Icons.chevron_right, size: 18, color: textSecondary),
+              Icon(Symbols.chevron_right, size: 18, color: textSecondary),
             ],
           ),
         ),
@@ -779,17 +782,17 @@ class _FooterSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _PlainActionRow(
-            icon: Icons.image_not_supported_outlined,
+            icon: Symbols.reset_image,
             label: l10n.clearImageCache,
             onTap: () => _clearImageCache(context, l10n),
           ),
           _PlainActionRow(
-            icon: Icons.logout,
+            icon: Symbols.exit_to_app,
             label: l10n.logOut,
             onTap: () => ref.read(authProvider.notifier).logOut(),
           ),
           _PlainActionRow(
-            icon: Icons.warning_amber_outlined,
+            icon: Symbols.person_off,
             label: l10n.deleteAccountRow,
             color: AppColors.coral,
             onTap: () => _deleteAccount(context, ref, l10n),
@@ -984,7 +987,7 @@ class _AccountRow extends StatelessWidget {
               trailing!,
               const SizedBox(width: AppSpacing.sm),
             ],
-            Icon(Icons.chevron_right, size: 18, color: textSecondary),
+            Icon(Symbols.chevron_right, size: 18, color: textSecondary),
           ],
         ),
       ),
@@ -995,11 +998,13 @@ class _AccountRow extends StatelessWidget {
 class _ActiveRow extends StatelessWidget {
   const _ActiveRow({
     required this.icon,
+    this.fill,
     required this.label,
     required this.onTap,
   });
 
   final IconData icon;
+  final double? fill;
   final String label;
   final VoidCallback onTap;
 
@@ -1020,7 +1025,7 @@ class _ActiveRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _RowIcon(icon: icon),
+            _RowIcon(icon: icon, fill: fill),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
@@ -1031,7 +1036,7 @@ class _ActiveRow extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.chevron_right, size: 18, color: textSecondary),
+            Icon(Symbols.chevron_right, size: 18, color: textSecondary),
           ],
         ),
       ),
@@ -1104,9 +1109,14 @@ class _CountBadge extends StatelessWidget {
 }
 
 class _RowIcon extends StatelessWidget {
-  const _RowIcon({required this.icon});
+  const _RowIcon({required this.icon, this.fill});
 
   final IconData icon;
+
+  /// Material Symbols' own fill axis - null for every icon that isn't part
+  /// of the series/movies fill-consistency rule (see _FollowingSection's
+  /// own use of this), same as leaving Icon.fill unset
+  final double? fill;
 
   @override
   Widget build(BuildContext context) {
@@ -1116,6 +1126,7 @@ class _RowIcon extends StatelessWidget {
       alignment: Alignment.center,
       child: Icon(
         icon,
+        fill: fill,
         size: 22,
         color: Theme.of(context).textTheme.bodySmall?.color,
       ),

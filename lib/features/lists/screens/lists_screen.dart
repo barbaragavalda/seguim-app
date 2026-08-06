@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
@@ -83,7 +84,7 @@ class _ListsScreenState extends ConsumerState<ListsScreen> {
         title: Text(l10n.navLists),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Symbols.add),
             onPressed: () => _createList(context, ref),
           ),
         ],
@@ -265,7 +266,7 @@ class _ListRow extends ConsumerWidget {
                     index: index,
                     child: const Padding(
                       padding: EdgeInsets.only(left: 4),
-                      child: Icon(Icons.drag_handle),
+                      child: Icon(Symbols.drag_handle),
                     ),
                   ),
                 ],

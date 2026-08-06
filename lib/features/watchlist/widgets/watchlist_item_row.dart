@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
@@ -267,7 +268,7 @@ class _MarkWatchedButtonState extends State<_MarkWatchedButton>
             shape: BoxShape.circle,
             border: Border.all(color: widget.dividerColor, width: 1.5),
           ),
-          child: Icon(Icons.check, size: 14, color: widget.dividerColor),
+          child: Icon(Symbols.check, size: 14, color: widget.dividerColor),
         ),
       ),
     );

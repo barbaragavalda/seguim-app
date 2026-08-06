@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_radius.dart';
@@ -84,7 +85,7 @@ class _MySeriesScreenState extends ConsumerState<MySeriesScreen> {
                         isDense: true,
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
-                        prefixIcon: const Icon(Icons.search, size: 20),
+                        prefixIcon: const Icon(Symbols.search, size: 20),
                         hintText: l10n.mySeriesSearchPlaceholder,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -242,7 +243,7 @@ class _StatusSelector extends ConsumerWidget {
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.arrow_drop_down, size: 18),
+            const Icon(Symbols.arrow_drop_down, size: 18),
           ],
         ),
       ),

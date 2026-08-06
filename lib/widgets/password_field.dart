@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../l10n/generated/app_localizations.dart';
 
@@ -40,7 +41,7 @@ class _PasswordFieldState extends State<PasswordField> {
         errorText: widget.errorText,
         suffixIcon: IconButton(
           icon: Icon(
-            _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            _obscureText ? Symbols.visibility : Symbols.visibility_off,
           ),
           tooltip: _obscureText ? l10n.showPassword : l10n.hidePassword,
           onPressed: () => setState(() => _obscureText = !_obscureText),

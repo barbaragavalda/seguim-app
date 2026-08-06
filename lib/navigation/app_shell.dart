@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../features/auth/providers/auth_provider.dart';
 import '../features/import/providers/pending_count_provider.dart';
@@ -118,37 +119,45 @@ class _AppShellState extends ConsumerState<AppShell> {
             initialLocation: index == widget.navigationShell.currentIndex,
           );
         },
+        // Material Symbols (see the `material_symbols_icons` package),
+        // not the classic Icons class - fill is a real variable-font axis
+        // here (native to Flutter's own Icon widget, this package only
+        // supplies the font + name constants), so unselected/selected is
+        // just fill: 0 vs fill: 1 of the *same* icon, unlike Icons' old
+        // separate "_outlined" vs plain name pairs - and unlike some of
+        // those old pairs (list_alt in particular), the fill difference is
+        // actually visible here for every one of these
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.tv_outlined),
-            selectedIcon: const Icon(Icons.tv),
+            icon: const Icon(Symbols.tv, fill: 0),
+            selectedIcon: const Icon(Symbols.tv, fill: 1),
             label: l10n.navWatchlist,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.videocam_outlined),
-            selectedIcon: const Icon(Icons.videocam),
+            icon: const Icon(Symbols.local_activity, fill: 0),
+            selectedIcon: const Icon(Symbols.local_activity, fill: 1),
             label: l10n.navMovies,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.search_outlined),
-            selectedIcon: const Icon(Icons.search),
+            icon: const Icon(Symbols.pageview, fill: 0),
+            selectedIcon: const Icon(Symbols.pageview, fill: 1),
             label: l10n.navSearch,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.list_outlined),
-            selectedIcon: const Icon(Icons.list),
+            icon: const Icon(Symbols.list_alt, fill: 0),
+            selectedIcon: const Icon(Symbols.list_alt, fill: 1),
             label: l10n.navLists,
           ),
           NavigationDestination(
             icon: _ProfileIcon(
-              icon: Icons.person_outline,
+              fill: 0,
               // 0 (not the real count) while importing - resolving is
               // blocked then anyway, see _PendingResolutionAccountRow's own
               // docblock
               badgeCount: importing ? 0 : pendingMoviesCount,
             ),
             selectedIcon: _ProfileIcon(
-              icon: Icons.person,
+              fill: 1,
               badgeCount: importing ? 0 : pendingMoviesCount,
             ),
             label: l10n.navProfile,
@@ -165,9 +174,9 @@ class _AppShellState extends ConsumerState<AppShell> {
 /// generically enough to fold in other "needs attention" counts later if
 /// any show up.
 class _ProfileIcon extends StatelessWidget {
-  const _ProfileIcon({required this.icon, required this.badgeCount});
+  const _ProfileIcon({required this.fill, required this.badgeCount});
 
-  final IconData icon;
+  final double fill;
   final int badgeCount;
 
   @override
@@ -175,7 +184,7 @@ class _ProfileIcon extends StatelessWidget {
     return Badge(
       label: Text('$badgeCount'),
       isLabelVisible: badgeCount > 0,
-      child: Icon(icon),
+      child: Icon(Symbols.person, fill: fill),
     );
   }
 }

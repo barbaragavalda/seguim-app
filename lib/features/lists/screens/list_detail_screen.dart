@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
@@ -75,7 +76,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Symbols.add),
             tooltip: l10n.addSeriesTooltip,
             onPressed: () => context.push('/lists/${widget.listId}/add'),
           ),
@@ -381,7 +382,7 @@ class _RemoveButton extends StatelessWidget {
           color: Colors.black.withValues(alpha: 0.55),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.close, size: 14, color: Colors.white),
+        child: const Icon(Symbols.close, size: 14, color: Colors.white),
       ),
     );
   }
@@ -425,7 +426,7 @@ class _PendingBanner extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    Icons.question_mark,
+                    Symbols.extension,
                     size: 18,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -437,7 +438,7 @@ class _PendingBanner extends StatelessWidget {
                     ),
                   ),
                   Icon(
-                    Icons.chevron_right,
+                    Symbols.chevron_right,
                     size: 18,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

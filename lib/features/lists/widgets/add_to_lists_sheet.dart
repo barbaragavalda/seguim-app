@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
@@ -74,7 +75,7 @@ class _AddToListsSheetState extends ConsumerState<_AddToListsSheet> {
               const SizedBox(height: AppSpacing.sm),
               Flexible(child: _buildBody(context, l10n, state)),
               ListTile(
-                leading: const Icon(Icons.add),
+                leading: const Icon(Symbols.add),
                 title: Text(l10n.createListTitle),
                 onTap: () => _createAndAdd(context, l10n),
               ),

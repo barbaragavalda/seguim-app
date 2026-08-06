@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
@@ -122,11 +123,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
-                  prefixIcon: const Icon(Icons.search),
+                  prefixIcon: const Icon(Symbols.search),
                   suffixIcon: _queryController.text.isEmpty
                       ? null
                       : IconButton(
-                          icon: const Icon(Icons.close),
+                          icon: const Icon(Symbols.close),
                           onPressed: _clearQuery,
                         ),
                   hintText: l10n.searchPlaceholder,
@@ -353,7 +354,9 @@ class _MoviePoster extends StatelessWidget {
 
 /// Bottom-left badge over the poster telling a movie result apart from a
 /// series one at a glance - same icon vocabulary as the bottom nav bar
-/// (Icons.tv for series, Icons.videocam for movies).
+/// (Symbols.local_activity for movies, Symbols.tv for series). Movies
+/// filled, series unfilled everywhere outside the nav bar's own selected
+/// state - see AppShell's own destinations for that one exception.
 class _TypeBadge extends StatelessWidget {
   const _TypeBadge({required this.isMovie});
 
@@ -369,7 +372,8 @@ class _TypeBadge extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: Icon(
-        isMovie ? Icons.videocam : Icons.tv,
+        isMovie ? Symbols.local_activity : Symbols.tv,
+        fill: isMovie ? 1 : 0,
         size: 13,
         color: Colors.white,
       ),
@@ -389,7 +393,7 @@ class _InListBadge extends StatelessWidget {
         color: AppColors.sage,
         shape: BoxShape.circle,
       ),
-      child: const Icon(Icons.check, size: 14, color: AppColors.onSageLight),
+      child: const Icon(Symbols.check, size: 14, color: AppColors.onSageLight),
     );
   }
 }

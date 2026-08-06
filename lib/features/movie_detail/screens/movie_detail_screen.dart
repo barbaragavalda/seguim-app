@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -98,7 +99,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                         ref,
                         () => _handleWatchedTap(context, ref, state),
                       ),
-                      icon: const Icon(Icons.check_circle_outline),
+                      icon: const Icon(Symbols.check_circle_outline),
                       label: Text(
                         state.watchCount > 1
                             ? l10n.watchedTimesLabel(state.watchCount)
@@ -117,7 +118,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                         ref,
                         () => ref.read(movieDetailProvider.notifier).toggleWatched(),
                       ),
-                      icon: const Icon(Icons.check),
+                      icon: const Icon(Symbols.check),
                       label: Text(l10n.markWatchedAction),
                     ),
                   ),
@@ -131,7 +132,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                         ref,
                         () => ref.read(movieDetailProvider.notifier).addToWatchlist(),
                       ),
-                      icon: const Icon(Icons.add),
+                      icon: const Icon(Symbols.add),
                       label: Text(l10n.addToWatchlist),
                     ),
                   ),
@@ -311,7 +312,7 @@ class _Header extends ConsumerWidget {
               top: AppSpacing.md,
               left: AppSpacing.md,
               child: _CircleButton(
-                icon: Icons.arrow_back,
+                icon: Symbols.arrow_back,
                 onTap: () => context.pop(),
               ),
             ),
@@ -319,7 +320,7 @@ class _Header extends ConsumerWidget {
               top: AppSpacing.md,
               right: AppSpacing.md,
               child: _CircleButton(
-                icon: Icons.playlist_add,
+                icon: Symbols.playlist_add,
                 onTap: () => _requireLogin(
                   context,
                   ref,
@@ -561,7 +562,7 @@ class _TrailerButton extends StatelessWidget {
           Uri.parse(trailer.url),
           mode: LaunchMode.externalApplication,
         ),
-        icon: const Icon(Icons.play_circle_outline),
+        icon: const Icon(Symbols.play_circle),
         label: Text(l10n.watchTrailerAction),
       ),
     );
