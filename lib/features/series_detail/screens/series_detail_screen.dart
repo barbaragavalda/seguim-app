@@ -120,23 +120,30 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: _ToggleButton(
-                          active: state.removed,
-                          activeIcon: Symbols.visibility,
-                          inactiveIcon: Symbols.visibility_off,
-                          activeLabel: l10n.restoreAction,
-                          inactiveLabel: l10n.markRemovedAction,
-                          onPressed: () => _requireLogin(
-                            context,
-                            ref,
-                            () => ref
-                                .read(seriesDetailProvider.notifier)
-                                .setRemoved(!state.removed),
+                      // "stop watching" only makes sense once there's
+                      // actually something being watched - with nothing
+                      // watched yet, the delete button below is the only
+                      // relevant action (mutually exclusive with this one,
+                      // same hasAnyWatchedEpisode check)
+                      if (state.hasAnyWatchedEpisode) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: _ToggleButton(
+                            active: state.removed,
+                            activeIcon: Symbols.visibility,
+                            inactiveIcon: Symbols.visibility_off,
+                            activeLabel: l10n.restoreAction,
+                            inactiveLabel: l10n.markRemovedAction,
+                            onPressed: () => _requireLogin(
+                              context,
+                              ref,
+                              () => ref
+                                  .read(seriesDetailProvider.notifier)
+                                  .setRemoved(!state.removed),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   // only offered once there's nothing watched to lose - see
@@ -622,18 +629,24 @@ class _Header extends ConsumerWidget {
     if (series.imageUrl == null) {
       return const PlaceholderMark(fontSize: 40);
     }
-    return ImageFiltered(
-      imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-      child: ColorFiltered(
-        colorFilter: ColorFilter.mode(
-          const Color(0x59000000),
-          BlendMode.darken,
-        ),
-        child: CachedNetworkImage(
-          imageUrl: series.imageUrl!,
-          fit: BoxFit.cover,
-          errorWidget: (context, url, error) =>
-              const PlaceholderMark(fontSize: 40),
+    // ImageFiltered's blur paints beyond its own layout bounds unless
+    // explicitly clipped - Stack's own clipBehavior isn't enough to contain
+    // it, confirmed visually leaking past the header's own edges without
+    // this
+    return ClipRect(
+      child: ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            const Color(0x59000000),
+            BlendMode.darken,
+          ),
+          child: CachedNetworkImage(
+            imageUrl: series.imageUrl!,
+            fit: BoxFit.cover,
+            errorWidget: (context, url, error) =>
+                const PlaceholderMark(fontSize: 40),
+          ),
         ),
       ),
     );
@@ -997,11 +1010,17 @@ class _EpisodeRow extends ConsumerWidget {
             ),
           ),
           GestureDetector(
-            onTap: () => _requireLogin(
-              context,
-              ref,
-              () => _handleEpisodeTap(context, ref, episode),
-            ),
+            // a future episode can't have been watched - no tap handler at
+            // all rather than a handler that just no-ops, so there's no
+            // accidental login prompt for an action that was never going
+            // to do anything anyway
+            onTap: !episode.hasAired
+                ? null
+                : () => _requireLogin(
+                    context,
+                    ref,
+                    () => _handleEpisodeTap(context, ref, episode),
+                  ),
             child: Container(
               width: 26,
               height: 26,
@@ -1011,7 +1030,12 @@ class _EpisodeRow extends ConsumerWidget {
                 color: episode.watched ? AppColors.sage : Colors.transparent,
                 border: episode.watched
                     ? null
-                    : Border.all(color: dividerColor, width: 1.5),
+                    : Border.all(
+                        color: episode.hasAired
+                            ? dividerColor
+                            : dividerColor.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
               ),
               child: !episode.watched
                   ? null

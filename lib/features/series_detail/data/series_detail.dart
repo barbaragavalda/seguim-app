@@ -96,6 +96,16 @@ class Episode {
   // rewatchEpisode()); user_episode_watched is one row per watch event
   final int watchCount;
 
+  /// Whether this episode has actually aired yet - null or a still-future
+  /// date both count as "not yet" (mirrors SeriesDetailState.watchProgress's
+  /// own aired-so-far check) - an episode that hasn't aired can't have been
+  /// watched
+  bool get hasAired {
+    if (aired == null) return false;
+    final date = DateTime.tryParse(aired!);
+    return date != null && !date.isAfter(DateTime.now());
+  }
+
   Episode copyWith({bool? watched, int? watchCount}) {
     return Episode(
       tvdbId: tvdbId,
