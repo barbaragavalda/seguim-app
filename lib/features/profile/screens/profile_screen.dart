@@ -928,14 +928,22 @@ class _AttributionFooter extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     // served by tv-tracker-local's own "Web" sub-project now (Twig, real
     // gettext translations), not a static page bundled with this web
-    // build - see Web\Controller\Privacy. Falls back to 'ca' for any
-    // locale beyond the app's three supported ones, same convention as
+    // build - see Web\Controller\Privacy. The slug itself is translated
+    // per language too (Web\Controller\Privacy's own docblock - msgid
+    // "privacitat" -> "privacidad"/"privacy" via locale/*/LC_MESSAGES/
+    // messenges.po), so it has to be spelled out here per language rather
+    // than reused as a literal - there's no reverse-routing from this side
+    // to ask the backend for it. Falls back to 'ca' for any locale beyond
+    // the app's three supported ones, same convention as
     // profileQuotesByLanguage.
-    final privacyLang = const {
-      'ca',
-      'es',
-      'en',
-    }.contains(Localizations.localeOf(context).languageCode)
+    const privacySlugs = {
+      'ca': 'privacitat',
+      'es': 'privacidad',
+      'en': 'privacy',
+    };
+    final privacyLang = privacySlugs.containsKey(
+      Localizations.localeOf(context).languageCode,
+    )
         ? Localizations.localeOf(context).languageCode
         : 'ca';
 
@@ -945,7 +953,7 @@ class _AttributionFooter extends StatelessWidget {
           child: GestureDetector(
             onTap: () => launchUrl(
               Uri.parse(
-                'https://api-seguim.cuinadeprofit.cat/$privacyLang/privacitat',
+                'https://api-seguim.cuinadeprofit.cat/$privacyLang/${privacySlugs[privacyLang]}',
               ),
             ),
             child: Text(
