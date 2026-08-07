@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +8,6 @@ import '../features/auth/providers/auth_provider.dart';
 import '../features/favorites/providers/favorites_summary_provider.dart';
 import '../features/import/providers/pending_count_provider.dart';
 import '../features/import/providers/tvtime_import_provider.dart';
-import '../features/install_hint/install_hint_dialog.dart';
 import '../features/lists/providers/lists_provider.dart';
 import '../features/movies/providers/movies_provider.dart';
 import '../features/watchlist/providers/watchlist_provider.dart';
@@ -75,7 +72,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       if (next.isLoggedIn && previous?.isLoggedIn != true) {
         ref.read(pendingCountProvider.notifier).load();
         ref.read(tvTimeImportProvider.notifier).resumeIfInProgress();
-        unawaited(InstallHintDialog.maybeShow(context));
       }
     });
 

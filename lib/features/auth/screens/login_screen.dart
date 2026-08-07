@@ -6,6 +6,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
 import '../../../widgets/password_field.dart';
+import '../../install_hint/install_hint_dialog.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/google_button/google_sign_in_button.dart';
 
@@ -54,7 +55,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ).showSnackBar(SnackBar(content: Text(l10n.genericError)));
   }
 
-  void _afterLogin() {
+  // shows the "add to home screen" tip right after a genuine login action
+  // (this screen's form, or Google) - deliberately not hooked into
+  // authProvider's own state stream (like AppShell's other post-login
+  // side effects are): that stream also fires on a silent session restore
+  // on every app/page reload, which would show this on every refresh
+  // instead of once per real login
+  Future<void> _afterLogin() async {
+    await InstallHintDialog.maybeShow(context);
+    if (!mounted) return;
     if (context.canPop()) {
       context.pop();
     } else {

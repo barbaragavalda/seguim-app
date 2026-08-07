@@ -6,6 +6,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
 import '../../../widgets/centered_form.dart';
 import '../../../widgets/password_field.dart';
+import '../../install_hint/install_hint_dialog.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/google_button/google_sign_in_button.dart';
 
@@ -57,7 +58,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     ).showSnackBar(SnackBar(content: Text(l10n.genericError)));
   }
 
-  void _afterRegister() {
+  // see LoginScreen._afterLogin()'s own docblock on why this is triggered
+  // from here rather than from authProvider's own state stream
+  Future<void> _afterRegister() async {
+    await InstallHintDialog.maybeShow(context);
+    if (!mounted) return;
     if (context.canPop()) {
       context.pop();
     } else {
