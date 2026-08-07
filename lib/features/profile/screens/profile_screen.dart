@@ -926,10 +926,11 @@ class _AttributionFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    // static privacy-*.html pages deployed alongside the web build itself
-    // (web/legal/) rather than served by the API - see those files' own
-    // header comment. Falls back to 'ca' for any locale beyond the app's
-    // three supported ones, same convention as profileQuotesByLanguage.
+    // served by tv-tracker-local's own "Web" sub-project now (Twig, real
+    // gettext translations), not a static page bundled with this web
+    // build - see Web\Controller\Privacy. Falls back to 'ca' for any
+    // locale beyond the app's three supported ones, same convention as
+    // profileQuotesByLanguage.
     final privacyLang = const {
       'ca',
       'es',
@@ -944,7 +945,7 @@ class _AttributionFooter extends StatelessWidget {
           child: GestureDetector(
             onTap: () => launchUrl(
               Uri.parse(
-                'https://seguim.cuinadeprofit.cat/legal/privacy-$privacyLang.html',
+                'https://api-seguim.cuinadeprofit.cat/$privacyLang/privacitat',
               ),
             ),
             child: Text(
