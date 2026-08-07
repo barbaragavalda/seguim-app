@@ -441,7 +441,7 @@ class _TypeBadge extends StatelessWidget {
       width: 22,
       height: 22,
       decoration: const BoxDecoration(
-        color: AppColors.darkBg,
+        color: AppColors.navy,
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -466,7 +466,7 @@ class _AddedBadge extends StatelessWidget {
         color: AppColors.sage,
         shape: BoxShape.circle,
       ),
-      child: const Icon(Symbols.check, size: 14, color: AppColors.onSageLight),
+      child: const Icon(Symbols.check, size: 14, color: AppColors.navy),
     );
   }
 }

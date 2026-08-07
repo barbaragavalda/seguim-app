@@ -561,7 +561,7 @@ class _Header extends ConsumerWidget {
                   _CircleButton(
                     icon: Symbols.favorite,
                     fill: isFavorite ? 1 : 0,
-                    color: isFavorite ? AppColors.coral : AppColors.darkBg,
+                    color: isFavorite ? AppColors.coral : AppColors.navy,
                     onTap: () => _requireLogin(
                       context,
                       ref,
@@ -686,7 +686,7 @@ class _CircleButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.fill = 0,
-    this.color = AppColors.darkBg,
+    this.color = AppColors.navy,
   });
 
   final IconData icon;
@@ -943,12 +943,12 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.darkBg
+                            ? AppColors.navy
                             : Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
                         border: Border.all(
                           color: selected
-                              ? AppColors.darkBg
+                              ? AppColors.navy
                               : Theme.of(context).dividerColor,
                         ),
                       ),
@@ -1080,13 +1080,13 @@ class _EpisodeRow extends ConsumerWidget {
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.onSageLight,
+                        color: AppColors.navy,
                       ),
                     )
                   : const Icon(
                       Symbols.check,
                       size: 14,
-                      color: AppColors.onSageLight,
+                      color: AppColors.navy,
                     ),
             ),
           ),

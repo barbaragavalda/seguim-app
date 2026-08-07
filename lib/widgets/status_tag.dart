@@ -24,9 +24,9 @@ Color seriesStatusColor(String status) {
     case 'Ended':
       return AppColors.coral;
     case 'Upcoming':
-      return AppColors.darkBg;
+      return AppColors.navy;
     default:
-      return AppColors.lightTextSecondary;
+      return AppColors.grayDark;
   }
 }
 
@@ -35,13 +35,13 @@ Color seriesStatusColor(String status) {
 Color seriesStatusOnColor(String status) {
   switch (status) {
     case 'Continuing':
-      return AppColors.onSageLight;
+      return AppColors.navy;
     case 'Ended':
-      return AppColors.onCoralLight;
+      return AppColors.navy;
     case 'Upcoming':
-      return Colors.white;
+      return AppColors.white;
     default:
-      return AppColors.lightTextPrimary;
+      return AppColors.navy;
   }
 }
 
@@ -68,11 +68,11 @@ Color movieStatusColor(String status) {
       return AppColors.sage;
     case 'In Production':
     case 'Planned':
-      return AppColors.darkBg;
+      return AppColors.navy;
     case 'Canceled':
       return AppColors.coral;
     default:
-      return AppColors.lightTextSecondary;
+      return AppColors.grayDark;
   }
 }
 
@@ -82,14 +82,14 @@ Color movieStatusColor(String status) {
 Color movieStatusOnColor(String status) {
   switch (status) {
     case 'Released':
-      return AppColors.onSageLight;
+      return AppColors.navy;
     case 'In Production':
     case 'Planned':
-      return Colors.white;
+      return AppColors.white;
     case 'Canceled':
-      return AppColors.onCoralLight;
+      return AppColors.navy;
     default:
-      return AppColors.lightTextPrimary;
+      return AppColors.navy;
   }
 }
 

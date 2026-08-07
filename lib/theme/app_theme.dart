@@ -14,22 +14,24 @@ class AppTheme {
           brightness: Brightness.light,
         ).copyWith(
           primary: AppColors.coral,
-          onPrimary: AppColors.onCoralLight,
+          onPrimary: AppColors.navy,
           secondary: AppColors.sage,
-          onSecondary: AppColors.onSageLight,
-          surface: AppColors.lightSurface,
-          onSurface: AppColors.lightTextPrimary,
+          onSecondary: AppColors.navy,
+          surface: AppColors.white,
+          onSurface: AppColors.navy,
           // no separate red "error" accent - reuses the same coral as
           // primary, so destructive/error UI stays inside the app's own
           // palette instead of Material's default red
           error: AppColors.coral,
-          onError: AppColors.onCoralLight,
+          onError: AppColors.navy,
         ),
-        scaffoldBackground: AppColors.lightBg,
-        cardColor: AppColors.lightSurface,
-        textPrimary: AppColors.lightTextPrimary,
-        textSecondary: AppColors.lightTextSecondary,
-        divider: AppColors.lightDivider,
+        scaffoldBackground: AppColors.offWhite,
+        cardColor: AppColors.white,
+        textPrimary: AppColors.navy,
+        textSecondary: AppColors.grayDark,
+        // navy at low opacity rather than a dedicated named color - see
+        // AppColors' own docblock
+        divider: AppColors.navy.withValues(alpha: 0.08),
       );
 
   static ThemeData get dark => _build(
@@ -39,19 +41,24 @@ class AppTheme {
           brightness: Brightness.dark,
         ).copyWith(
           primary: AppColors.coral,
-          onPrimary: AppColors.onCoralDark,
+          onPrimary: AppColors.navy,
           secondary: AppColors.sage,
-          onSecondary: AppColors.onSageDark,
-          surface: AppColors.darkBg,
-          onSurface: AppColors.darkTextPrimary,
+          onSecondary: AppColors.navy,
+          // navyLight, not navy - Material 3's colorScheme.surface is what
+          // most components actually paint (WatchlistItemRow and friends
+          // use it directly, not cardColor) - leaving it equal to the
+          // scaffold background made every "card" blend invisibly into the
+          // page instead of standing out from it
+          surface: AppColors.navyLight,
+          onSurface: AppColors.white,
           error: AppColors.coral,
-          onError: AppColors.onCoralDark,
+          onError: AppColors.navy,
         ),
-        scaffoldBackground: AppColors.darkBg,
-        cardColor: AppColors.darkSurface,
-        textPrimary: AppColors.darkTextPrimary,
-        textSecondary: AppColors.darkTextSecondary,
-        divider: AppColors.darkDivider,
+        scaffoldBackground: AppColors.navy,
+        cardColor: AppColors.navyLight,
+        textPrimary: AppColors.white,
+        textSecondary: AppColors.grayLight,
+        divider: AppColors.grayLight.withValues(alpha: 0.16),
       );
 
   static ThemeData _build({

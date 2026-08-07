@@ -457,7 +457,7 @@ class _DoneView extends ConsumerWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const Icon(Symbols.check, color: AppColors.onSageLight),
+          child: const Icon(Symbols.check, color: AppColors.navy),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
@@ -572,7 +572,7 @@ class _FailedView extends ConsumerWidget {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const Icon(Symbols.close, color: AppColors.onCoralLight),
+          child: const Icon(Symbols.close, color: AppColors.navy),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(

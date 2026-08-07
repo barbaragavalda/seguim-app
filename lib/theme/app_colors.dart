@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
 
+/// The app's entire color system - 3 brand colors, white (two tones, for
+/// contrast against each other), and 2 grays (one per direction: readable
+/// on light backgrounds, readable on dark backgrounds). Everything else
+/// (dividers, placeholders, "text on X") is derived from these via opacity
+/// or reused directly - never a new named hex value.
+///
+/// Text-on-brand-color contrast, checked against WCAG (relative luminance
+/// formula) rather than assumed:
+/// - navy on coral: 6.02:1 (AA requires 4.5:1)
+/// - navy on sage: 7.24:1 (clears AAA's 7:1)
+/// - white on navy: 13.04:1
+/// - grayLight on navy / navyLight: 6.58:1 / 5.70:1
+/// navy alone clears every brand-color background comfortably, so there's
+/// no need for separate per-color "on-coral"/"on-sage" text tones.
 class AppColors {
   AppColors._();
 
+  // the 3 corporate colors
   static const coral = Color(0xFFF19372);
-  static const onCoralLight = Color(0xFF7A3A22);
-  static const onCoralDark = Color(0xFF4A210F);
-
   static const sage = Color(0xFF96C5BD);
-  static const onSageLight = Color(0xFF1F4A42);
-  static const onSageDark = Color(0xFF123028);
+  static const navy = Color(0xFF182F41);
 
-  static const darkBg = Color(0xFF182F41);
-  static const darkSurface = Color(0xFF21394D);
-  static const darkTextPrimary = Color(0xFFF3F7F6);
-  static const darkTextSecondary = Color(0xFF9FB7C2);
-  static const darkDivider = Color(0xFF2C4B62);
+  // white, two tones - offWhite is the page canvas, white is a card/surface
+  // sitting on top of it, kept pure so it actually reads as "raised"
+  // instead of blending in
+  static const offWhite = Color(0xFFF6F9F9);
+  static const white = Color(0xFFFFFFFF);
 
-  static const lightBg = Color(0xFFF6F9F9);
-  static const lightSurface = Color(0xFFFFFFFF);
-  static const lightTextPrimary = Color(0xFF14232E);
-  static const lightTextSecondary = Color(0xFF5B7482);
-  static const lightDivider = Color(0xFFE6EAEA);
+  // navy's own "raised surface" counterpart for dark mode - same relationship
+  // to navy as white has to offWhite, just a much smaller step (a night-mode
+  // card shouldn't glow)
+  static const navyLight = Color(0xFF21394D);
 
-  static const placeholderBackground = Color(0xFFE4E4E4);
+  // secondary/muted text - grayDark reads on light backgrounds (offWhite/
+  // white), grayLight reads on dark ones (navy/navyLight). A single gray
+  // can't do both: grayDark on navy only reaches 2.8:1, well under AA.
+  static const grayDark = Color(0xFF5B7482);
+  static const grayLight = Color(0xFF9FB7C2);
 }

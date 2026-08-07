@@ -16,8 +16,13 @@ class PlaceholderMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: AppColors.placeholderBackground,
+      // derived from the 2 grays rather than its own named color - see
+      // AppColors' own docblock
+      color: isDark
+          ? AppColors.grayLight.withValues(alpha: 0.15)
+          : AppColors.grayDark.withValues(alpha: 0.12),
       child: Center(
         child: Text(
           _mark,

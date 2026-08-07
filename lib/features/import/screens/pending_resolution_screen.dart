@@ -233,7 +233,7 @@ class _PendingResolutionScreenState
               child: const Icon(
                 Symbols.check,
                 size: 28,
-                color: AppColors.onSageLight,
+                color: AppColors.navy,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -703,7 +703,7 @@ class _WatchlistBadge extends StatelessWidget {
       child: const Icon(
         Symbols.schedule,
         size: 13,
-        color: AppColors.onCoralLight,
+        color: AppColors.navy,
       ),
     );
   }
@@ -723,7 +723,7 @@ class _WatchedOnBadge extends StatelessWidget {
         color: AppColors.sage,
         shape: BoxShape.circle,
       ),
-      child: const Icon(Symbols.check, size: 13, color: AppColors.onSageLight),
+      child: const Icon(Symbols.check, size: 13, color: AppColors.navy),
     );
   }
 }
@@ -759,7 +759,7 @@ class _ImportInProgressView extends StatelessWidget {
                   child: const Icon(
                     Symbols.hourglass_top,
                     size: 28,
-                    color: AppColors.onCoralLight,
+                    color: AppColors.navy,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),

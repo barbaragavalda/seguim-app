@@ -226,7 +226,7 @@ class _WelcomeSection extends StatelessWidget {
                     style: GoogleFonts.fraunces(
                       fontWeight: FontWeight.w900,
                       fontSize: 22,
-                      color: AppColors.onCoralLight,
+                      color: AppColors.navy,
                     ),
                   ),
                 ),

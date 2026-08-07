@@ -329,7 +329,7 @@ class _Header extends ConsumerWidget {
                   _CircleButton(
                     icon: Symbols.favorite,
                     fill: isFavorite ? 1 : 0,
-                    color: isFavorite ? AppColors.coral : AppColors.darkBg,
+                    color: isFavorite ? AppColors.coral : AppColors.navy,
                     onTap: () => _requireLogin(
                       context,
                       ref,
@@ -448,7 +448,7 @@ class _CircleButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.fill = 0,
-    this.color = AppColors.darkBg,
+    this.color = AppColors.navy,
   });
 
   final IconData icon;

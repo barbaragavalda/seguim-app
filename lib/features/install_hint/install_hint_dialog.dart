@@ -23,12 +23,12 @@ class InstallHintDialog {
       builder: (dialogContext) => AlertDialog(
         // a lighter, fully opaque tint of sage - not a transparent sage
         // (which would show the dialog's own dim scrim bleeding through)
-        backgroundColor: Color.lerp(AppColors.sage, Colors.white, 0.7),
+        backgroundColor: Color.lerp(AppColors.sage, AppColors.white, 0.7),
         icon: const Icon(Symbols.install_mobile, color: AppColors.coral),
         title: Text(
           l10n.installHintTitle,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.onSageLight),
+          style: const TextStyle(color: AppColors.navy),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -85,7 +85,7 @@ class _Step extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(color: AppColors.onSageLight),
+            style: const TextStyle(color: AppColors.navy),
           ),
         ),
       ],
