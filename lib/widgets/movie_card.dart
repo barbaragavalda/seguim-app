@@ -8,8 +8,7 @@ import 'remove_button.dart';
 import 'series_poster.dart';
 import 'status_tag.dart';
 
-/// Poster-grid card used by both ListDetailScreen and FavoriteMoviesScreen -
-/// mirrors SeriesCard exactly, own docblock has the full reasoning.
+/// Mirrors SeriesCard exactly (see its docblock).
 class MovieCard extends StatelessWidget {
   const MovieCard({
     super.key,

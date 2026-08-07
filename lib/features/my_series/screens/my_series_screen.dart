@@ -41,8 +41,7 @@ class _MySeriesScreenState extends ConsumerState<MySeriesScreen> {
   @override
   void initState() {
     super.initState();
-    // same "modify provider outside build" reasoning as WatchlistScreen/
-    // ProfileScreen's initState
+    // Riverpod forbids modifying a provider during build/initState.
     Future.microtask(() => ref.read(mySeriesProvider.notifier).load());
     _scrollController.addListener(_onScroll);
   }

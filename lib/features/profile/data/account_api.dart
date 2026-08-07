@@ -78,10 +78,9 @@ class AccountApi {
     return data['username'] as String;
   }
 
-  /// Only *requests* the change - it doesn't take effect until confirmed
-  /// with the code this sends to the new address (see confirmEmailChange
-  /// below), so a stolen/shared-device session token can't silently
-  /// hijack the account (see Api\Controller\Account\UpdateEmail).
+  /// Only requests the change - it takes effect once confirmed with the
+  /// code sent to the new address, so a stolen token can't silently
+  /// hijack the account.
   Future<void> requestEmailChange(String email, {required String token}) {
     return _request(
       'POST',
@@ -111,10 +110,8 @@ class AccountApi {
     return data['language'] as String;
   }
 
-  /// Returns the freshly-issued token for this session - the backend
-  /// revokes every device's token on a password change (see
-  /// Webservice\Controller\ChangePassword), so the caller must swap its
-  /// stored token for this one or the current session goes stale.
+  /// Password changes revoke every device's token server-side, so the
+  /// caller must persist the returned token or the session goes stale.
   Future<String> changePassword({
     required String currentPassword,
     required String newPassword,

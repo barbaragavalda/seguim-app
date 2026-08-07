@@ -31,8 +31,7 @@ class ListDetailState {
   final List<ListMovie> movieItems;
   final bool movieHasMore;
   final int moviePage;
-  // how many of this list's own series/movies are still waiting on a
-  // pending row - see ListsApi.getListDetail()'s own docblock
+  // how many of this list's series/movies are still waiting on a pending row
   final int pendingCount;
   final String? errorKey;
 
@@ -68,13 +67,9 @@ class ListDetailState {
   }
 }
 
-/// Same "no FamilyNotifier in Riverpod 3.3.2" shape as SeriesDetailController/
-/// MySeriesController - a plain Notifier with an explicit load(id) rather
-/// than a family provider. Series and movies are fetched together (one
-/// GET /lists/{id} call - see Api\Controller\Lists\Show's own docblock) but
-/// paginated/reordered fully independently of each other from here on,
-/// mirroring the backend's own separate user_list_serie/user_list_movie
-/// tables.
+/// Series and movies are fetched together (one GET /lists/{id} call) but
+/// paginated/reordered independently from here on, mirroring the backend's
+/// separate user_list_serie/user_list_movie tables.
 class ListDetailController extends Notifier<ListDetailState> {
   late final ListsApi _api;
   int? _listId;
@@ -129,10 +124,8 @@ class ListDetailController extends Notifier<ListDetailState> {
       );
       if (_listId != listId) return;
       state = state.copyWith(
-        // a series added optimistically (addSerie) since the last load
-        // lands at the end on both sides (local: appended; server: highest
-        // ordering) - if that push landed it inside this next page's
-        // range, the fetch would otherwise return it a second time
+        // a series added optimistically since the last load can land inside
+        // this next page's range and get fetched a second time
         items: _dedupe([...state.items, ...result.series]),
         isLoadingMore: false,
         hasMore: result.seriesHasMore,

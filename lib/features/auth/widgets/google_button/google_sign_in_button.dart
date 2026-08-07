@@ -6,14 +6,12 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../data/google_auth_service.dart';
 import 'google_render_button.dart' as web_button;
 
-/// "Continue with Google". On platforms that support
-/// GoogleSignIn.authenticate() directly (iOS/Android), a normal button
-/// triggers it. On web, authenticate() isn't supported - Google's own GIS
-/// SDK only allows signing in through its own rendered button (see
-/// google_sign_in_web's docs), so [onIdToken] instead fires from a
-/// subscription to authenticationEvents. Either way, [onIdToken] fires
-/// once with a verified Google ID token, ready to hand to the backend
-/// (Api\Controller\Login\Google).
+/// "Continue with Google". On iOS/Android, a normal button triggers
+/// GoogleSignIn.authenticate() directly. On web, authenticate() isn't
+/// supported - Google's GIS SDK only allows signing in through its own
+/// rendered button, so [onIdToken] fires from an authenticationEvents
+/// subscription instead. Either way, [onIdToken] fires once with a
+/// verified Google ID token.
 class GoogleSignInButton extends StatefulWidget {
   const GoogleSignInButton({
     super.key,
@@ -92,13 +90,8 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
         if (snapshot.connectionState != ConnectionState.done) {
           return const SizedBox(height: 44);
         }
-        // GoogleSignIn.instance.initialize() failed - most likely cause: the
-        // platform-specific plugin (e.g. google_sign_in_web) never
-        // registered itself, so every GoogleSignIn.instance.* call below
-        // would throw UnimplementedError from the platform interface's own
-        // placeholder implementation. Hiding the button beats crashing the
-        // whole screen (Flutter's default release-mode error widget is a
-        // blank grey box) over a feature that's optional to begin with.
+        // init failed (e.g. platform plugin never registered) - hide the
+        // button rather than crash the screen over an optional feature
         if (snapshot.hasError) {
           return const SizedBox.shrink();
         }
@@ -125,10 +118,7 @@ class _GoogleSignInButtonState extends State<GoogleSignInButton> {
   }
 }
 
-/// A minimal approximation of Google's "G" mark using plain text, since this
-/// app doesn't otherwise bundle brand logo assets - good enough to signal
-/// "this is Google" next to the label; can be swapped for Google's official
-/// button asset later if the plain style doesn't look right in practice.
+/// Plain-text approximation of Google's "G" mark - no bundled logo asset.
 class _GoogleLogo extends StatelessWidget {
   const _GoogleLogo();
 

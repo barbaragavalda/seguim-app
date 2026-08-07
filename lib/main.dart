@@ -11,21 +11,16 @@ import 'navigation/app_router.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  // Fraunces/Manrope are bundled locally under assets/fonts/google_fonts/
-  // (see pubspec.yaml) instead of relying on google_fonts' default
-  // runtime-fetch-from-fonts.gstatic.com behavior - that CDN call kept
-  // failing in the wild (blocked by ad/privacy blockers, or plain network
-  // hiccups), silently breaking the app's typography. Disallowing runtime
-  // fetching makes a missing bundled variant a loud, obvious error instead
-  // of an intermittent network-dependent one.
+  // Fonts are bundled locally rather than fetched at runtime from
+  // fonts.gstatic.com - that CDN call was failing in the wild (ad/privacy
+  // blockers, network hiccups), silently breaking typography. This makes a
+  // missing bundled variant a loud error instead.
   GoogleFonts.config.allowRuntimeFetching = false;
 
   // A plain ProviderContainer (rather than just ProviderScope) so
-  // decodeApiResponse - a top-level function outside the widget tree, called
-  // from every *_api.dart file - can still reach authProvider when any
-  // request comes back 401 (deleted/invalidated user - see checkToken()'s
-  // own docblock on the backend). UncontrolledProviderScope makes the widget
-  // tree use this same container instead of creating its own.
+  // decodeApiResponse - a top-level function outside the widget tree - can
+  // still reach authProvider to log out on a 401. UncontrolledProviderScope
+  // makes the widget tree use this same container instead of its own.
   final container = ProviderContainer();
   onAuthExpired = () => container.read(authProvider.notifier).logOut();
   runApp(

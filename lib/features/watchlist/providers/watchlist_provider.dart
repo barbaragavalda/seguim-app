@@ -102,21 +102,16 @@ class WatchlistController extends Notifier<WatchlistState> {
     }
   }
 
-  /// Marks one specific episode watched right from a watchlist row (see
-  /// WatchlistItemRow's own docblock on why it's an action, not a
-  /// toggleable status). No optimistic per-row update - which section an
-  /// item belongs to (or whether it's still in either list at all) can
-  /// change in ways only the server actually knows (a not-started show
-  /// moving to "watching", a show finishing its run entirely) - a plain
-  /// reload() keeps both lists correct rather than half-guessing here.
+  /// No optimistic per-row update - which section an item belongs to (or
+  /// whether it's still in either list) can change in ways only the server
+  /// knows, so a plain reload() keeps both lists correct.
   Future<void> markEpisodeWatched(String episodeTvdbId) async {
     final token = ref.read(authProvider).token;
     if (token == null) return;
     try {
       await _detailApi.markEpisodeWatched(episodeTvdbId, token: token);
     } catch (_) {
-      // swallow - nothing was optimistically changed to revert, and the
-      // row's own toggle simply stays tappable again
+      // swallow - nothing was optimistically changed to revert
     }
     await load();
   }

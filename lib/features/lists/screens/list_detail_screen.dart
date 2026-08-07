@@ -61,10 +61,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(listDetailProvider);
     final name = state.name.isEmpty ? widget.name : state.name;
-    // resolving is blocked while importing anyway (PendingResolutionScreen
-    // refuses to show its normal content then - see that screen's own
-    // docblock), so pointing the user at it from here would just lead
-    // somewhere that immediately tells them to come back later
+    // resolving is blocked while importing anyway, so don't point there
     final importing =
         ref.watch(tvTimeImportProvider.select((s) => s.phase)) ==
         TvTimeImportPhase.processing;
@@ -209,11 +206,8 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                 ),
               ),
               FilledButton(
-                // guards against Navigator.pop() firing twice (e.g. a
-                // double-tap): the dialog element stays mounted for the
-                // whole exit animation after the first pop, so a second
-                // in-flight save could otherwise pop something else once
-                // it resolves - see go_router "popped the last page" crash
+                // guards against a double-tap firing Navigator.pop() twice
+                // and popping something else once the second save resolves
                 onPressed: isSaving
                     ? null
                     : () async {
@@ -244,13 +238,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   }
 }
 
-/// Drop-onto-me-to-insert-before-me: wraps each poster in a DragTarget so
-/// dropping another card here calls reorderSerie(dragged, afterTvdbId:
-/// this card's own predecessor's tvdbId) - i.e. the dragged card lands in
-/// this card's own current slot, pushing this one (and everything after)
-/// one place later, rather than landing right after it. Still matches the
-/// backend's neighbor-based reordering exactly, just resolving to the
-/// neighbor one earlier than the card that was actually dropped onto.
+/// Drop-onto-me-to-insert-before-me: dropping here reorders after this
+/// card's predecessor, so the dragged card lands in this card's slot
+/// instead of right after it.
 class _DraggableSeriesCard extends ConsumerWidget {
   const _DraggableSeriesCard({
     required this.series,
@@ -301,14 +291,8 @@ class _DraggableSeriesCard extends ConsumerWidget {
   }
 }
 
-/// Shown when TvTimeImport::Processor couldn't confidently resolve one or
-/// more of this list's own series/movies (a dead/renumbered tvdb_id with no
-/// name match, or several same-titled TheTVDB candidates) - see
-/// user_serie_list_pending/user_movie_list_pending's own docblocks in
-/// db.sql. Tapping it opens the same pending-resolution screen every other
-/// unresolved import item already goes through - it isn't scoped to just
-/// this list's own items, but resolving any of them updates this count on
-/// the next visit either way.
+/// Tapping opens the shared pending-resolution screen, not scoped to just
+/// this list's items, but resolving any of them updates this count.
 class _PendingBanner extends StatelessWidget {
   const _PendingBanner({required this.count, required this.l10n});
 
@@ -365,9 +349,7 @@ class _PendingBanner extends StatelessWidget {
   }
 }
 
-/// A list's series and movies are two separate grids (own independent
-/// ordering/pagination - see ListDetailController's own docblock), each
-/// under its own small heading rather than mixed into one grid.
+/// Series and movies are two separate grids, each under its own heading.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -392,10 +374,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Mirrors _DraggableSeriesCard exactly, for this list's own movies -
-/// dropping onto me calls reorderMovie(dragged, afterTvdbId: my own
-/// predecessor's tvdbId), same drop-onto-me-to-insert-before-me reasoning
-/// as the series grid.
+/// Mirrors _DraggableSeriesCard, for movies.
 class _DraggableMovieCard extends ConsumerWidget {
   const _DraggableMovieCard({
     required this.movie,

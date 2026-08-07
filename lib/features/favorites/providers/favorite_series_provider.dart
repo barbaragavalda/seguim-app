@@ -88,12 +88,10 @@ class FavoriteSeriesController extends Notifier<FavoriteSeriesState> {
     }
   }
 
-  /// Used by SearchScreen's own favorites-picker mode - [series] is already
-  /// fully built (see seriesFromSearchResult()) so the new card can appear
-  /// at the top of this list immediately, same optimistic-then-roll-back
-  /// pattern as remove() below. A no-op both locally and server-side if
-  /// [series] is already favorited (state.items is keyed by tvdbId, and the
-  /// backend's own add() is an INSERT IGNORE)
+  /// [series] is already fully built (see seriesFromSearchResult()), so it
+  /// can be shown immediately - optimistic, same rollback pattern as
+  /// remove(). No-op if already favorited (keyed by tvdbId; backend add()
+  /// is INSERT IGNORE).
   Future<void> add(Series series) async {
     final token = ref.read(authProvider).token;
     if (token == null) return;
@@ -120,12 +118,10 @@ class FavoriteSeriesController extends Notifier<FavoriteSeriesState> {
     );
     try {
       await _api.removeSerie(tvdbId, token: token);
-      // ProfileScreen's own preview row otherwise only catches up once
-      // something else happens to reload it (selecting the Perfil tab
-      // again) - popping straight back here from a push never does, same
-      // staleness pendingCountProvider used to hit. A fresh load() rather
-      // than a local decrement since the preview itself (not just the
-      // count) needs the real next-in-line poster, not just one fewer slot
+      // Fresh load(), not a local decrement: the preview needs the real
+      // next-in-line poster, not just one fewer slot - and popping back
+      // here from a push wouldn't otherwise refresh ProfileScreen's row
+      // (same staleness pendingCountProvider used to hit).
       ref.read(favoritesSummaryProvider.notifier).load();
     } catch (_) {
       state = state.copyWith(items: previous);

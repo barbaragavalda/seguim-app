@@ -37,12 +37,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  // picked once per State instance, not once per build - re-randomizing it
-  // on every rebuild (e.g. an account field changing) would be distracting;
-  // this only reshuffles when the widget itself gets recreated (an app
-  // restart, since AppShell's IndexedStack keeps this tab's state alive
-  // across tab switches). Every language's list in profileQuotesByLanguage
-  // must stay the same length for this index to always land on a real quote.
+  // once per State instance, not per build, so it doesn't reshuffle on every
+  // rebuild; every language's list must stay the same length for this index
   late final int _quoteIndex = Random().nextInt(
     profileQuotesByLanguage['en']!.length,
   );
@@ -50,12 +46,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // same "modify provider outside build" reasoning as SeriesDetailScreen/
-    // WatchlistScreen's initState. pendingCountProvider itself (the
-    // "Sèries i pel·lícules pendents de resoldre" row's badge, and the
-    // bottom nav Perfil tab's own badge) doesn't need loading/polling here -
-    // AppShell already keeps it fresh for as long as the app is open, not
-    // just while this screen happens to be the visible one.
+    // pendingCountProvider isn't loaded here - AppShell keeps it fresh
+    // for the app's whole lifetime, not just while this screen is visible
     Future.microtask(() {
       ref.read(accountProvider.notifier).load();
       ref.read(favoritesSummaryProvider.notifier).load();
@@ -67,13 +59,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final l10n = AppLocalizations.of(context)!;
     final isLoggedIn = ref.watch(authProvider).isLoggedIn;
 
-    // also the reliable path for favoritesSummaryProvider right after a
-    // fresh app start - authProvider restores its token from secure
-    // storage asynchronously, so it can still be null at the exact moment
-    // initState()'s own microtask ran above, same race AppShell's own
-    // resumeIfInProgress() call hit (see that fix's own comment) - unlike
-    // accountProvider, nothing else was retrying favoritesSummaryProvider
-    // once that happened, so it stayed permanently empty
+    // catches the case where authProvider's token restore (async, from
+    // secure storage) finishes after initState()'s microtask already ran
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isLoggedIn && previous?.isLoggedIn != true) {
         ref.read(accountProvider.notifier).load();
@@ -168,12 +155,8 @@ class _WelcomeSection extends StatelessWidget {
 
     return Stack(
       children: [
-        // RadialGradient's own falloff never reliably reaches alpha 0 by
-        // the bottom of a box this short - it just gets clipped there,
-        // leaving a visible hard edge where the next section's flat
-        // background starts. This ShaderMask forces it to actually fade
-        // out over the container's last stretch, regardless of exact
-        // content height (username/email wrapping to 2 lines, etc.)
+        // forces the gradient to fade to alpha 0 by the box's bottom edge,
+        // since RadialGradient's own falloff just gets clipped there
         Positioned.fill(
           child: ShaderMask(
             shaderCallback: (rect) => const LinearGradient(
@@ -184,10 +167,8 @@ class _WelcomeSection extends StatelessWidget {
             ).createShader(rect),
             blendMode: BlendMode.dstIn,
             child: DecoratedBox(
-              // same sage-to-coral, top-to-bottom gradient as the app icon's
-              // own "S!" wordmark (assets/icon/icon.png), just at a much
-              // lower alpha so it reads as a background wash behind text
-              // rather than a bold logo fill
+              // same gradient as the app icon's "S!" wordmark, at low alpha
+              // so it reads as a background wash, not a logo fill
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -266,10 +247,8 @@ class _WelcomeSection extends StatelessWidget {
   }
 }
 
-/// Same visual language as SeriesDetailScreen/MovieDetailScreen's own
-/// _StatsRow (bordered card, bold tabular-figure value + small label per
-/// cell) - just a 2x2 grid instead of one row, since 4 stats in a single
-/// row got cramped.
+/// Same visual language as _StatsRow elsewhere, but a 2x2 grid since 4
+/// stats in one row got cramped.
 class _StatsSection extends StatelessWidget {
   const _StatsSection({required this.stats});
 
@@ -436,9 +415,8 @@ class _AccountSection extends ConsumerWidget {
     );
   }
 
-  /// Two steps, unlike _showEditFieldDialog's single-field flow: request
-  /// the change, then confirm it with the code sent to the new address -
-  /// see AccountController.requestEmailChange()'s docblock for why.
+  /// Two steps: request the change, then confirm with the code sent to the
+  /// new address.
   Future<void> _editEmail(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final emailController = TextEditingController(text: account.email ?? '');
@@ -723,17 +701,9 @@ class _ImportSection extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    // reflects this app session's own tvTimeImportProvider state, not a
-    // fresh server check - free (no request, so no risk of nudging the
-    // TvTimeCurrent endpoint into doing a real processing batch just to
-    // render a chip), and already covers the realistic case: the user
-    // started an import and switched to this tab while it's still running.
-    // Only misses an import left running from a previous, since-restarted
-    // app session that hasn't reopened the import screen yet (which is what
-    // actually resumes/rehydrates this state - see resumeIfInProgress()).
-    // "done" only lasts until the user dismisses TvTimeImportScreen's own
-    // _DoneView with its "Fet" button (which resets this state to idle) -
-    // a transient just-finished signal, not a permanent status.
+    // reflects this session's local provider state, not a fresh server
+    // check - misses only an import left running from a since-restarted
+    // session that hasn't reopened the import screen (resumeIfInProgress())
     final importPhase = ref.watch(
       tvTimeImportProvider.select((s) => s.phase),
     );
@@ -762,9 +732,7 @@ class _ImportSection extends ConsumerWidget {
             onTap: () => context.push('/import/tvtime'),
           ),
           _PendingResolutionAccountRow(
-            // 0 (not the real count) while importing - see this row's own
-            // docblock on why resolving is blocked during an import; no
-            // point advertising a number the user can't act on yet
+            // 0 while importing - resolving is blocked, no point advertising it
             badgeCount: importing ? 0 : ref.watch(pendingCountProvider),
             importing: importing,
           ),
@@ -774,11 +742,8 @@ class _ImportSection extends ConsumerWidget {
   }
 }
 
-// resolving is blocked while an import is running (PendingResolutionScreen
-// itself refuses to show its normal content then too - see that screen's
-// own docblock) - this row is disabled and greyed out to match rather than
-// letting the user tap through to a screen that just tells them to come
-// back later
+// disabled/greyed out while importing, matching PendingResolutionScreen's
+// own refusal to show its normal content then
 class _PendingResolutionAccountRow extends StatelessWidget {
   const _PendingResolutionAccountRow({
     required this.badgeCount,
@@ -916,26 +881,17 @@ class _FooterSection extends ConsumerWidget {
   }
 }
 
-/// TheTVDB attribution + app version - shown regardless of login state
-/// (see ProfileScreen.build()'s two branches), unlike the rest of
-/// _FooterSection's rows which need a real session (log out, delete
-/// account, ...).
+/// TheTVDB attribution + app version - shown regardless of login state,
+/// unlike _FooterSection's other rows which need a real session.
 class _AttributionFooter extends StatelessWidget {
   const _AttributionFooter();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    // served by tv-tracker-local's own "Web" sub-project now (Twig, real
-    // gettext translations), not a static page bundled with this web
-    // build - see Web\Controller\Privacy. The slug itself is translated
-    // per language too (Web\Controller\Privacy's own docblock - msgid
-    // "privacitat" -> "privacidad"/"privacy" via locale/*/LC_MESSAGES/
-    // messenges.po), so it has to be spelled out here per language rather
-    // than reused as a literal - there's no reverse-routing from this side
-    // to ask the backend for it. Falls back to 'ca' for any locale beyond
-    // the app's three supported ones, same convention as
-    // profileQuotesByLanguage.
+    // the slug is translated per language server-side with no
+    // reverse-routing to ask for it, so it's spelled out here; falls back
+    // to 'ca' beyond the app's three supported locales
     const privacySlugs = {
       'ca': 'privacitat',
       'es': 'privacidad',
@@ -967,20 +923,13 @@ class _AttributionFooter extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         Center(
           child: GestureDetector(
-            // TheTVDB's API terms require attribution with a direct
-            // link to TheTVDB.com, visible to end users viewing their
-            // metadata - this app's only real source of series/movie
-            // data
+            // TheTVDB's API terms require attribution linking to TheTVDB.com
             onTap: () => launchUrl(Uri.parse('https://thetvdb.com')),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
-                  // the default logo's "db" half is dark navy text,
-                  // unreadable against a dark theme's own background -
-                  // TheTVDB also publishes a white-text variant meant
-                  // exactly for that (thetvdb.com/images/attribution/
-                  // logo1.png), bundled here as a second asset
+                  // white-text variant for dark theme; default is unreadable there
                   Theme.of(context).brightness == Brightness.dark
                       ? 'assets/attribution/thetvdb_logo_dark.png'
                       : 'assets/attribution/thetvdb_logo.png',
@@ -1082,9 +1031,7 @@ class _AccountRow extends StatelessWidget {
   final String label;
   final String value;
   final VoidCallback onTap;
-  // e.g. the TV Time import row's "En procés" chip - shown between the
-  // label and the chevron, independent of value (which this row leaves
-  // empty)
+  // shown between label and chevron, independent of value
   final Widget? trailing;
 
   @override
@@ -1115,9 +1062,7 @@ class _AccountRow extends StatelessWidget {
                 ),
               ),
             ),
-            // an empty value (e.g. the TV Time import row, which has none)
-            // shouldn't still claim half the row for nothing - that's what
-            // was pushing "Importa des de TV Time" onto two lines
+            // an empty value shouldn't still claim half the row
             if (value.isNotEmpty)
               Expanded(
                 child: Text(
@@ -1140,12 +1085,9 @@ class _AccountRow extends StatelessWidget {
   }
 }
 
-/// "Sèries favorites"/"Pel·lícules favorites" - pinned above the plain
-/// _ActiveRow entries in the same card, same content shape as a real
-/// list's own row on ListsScreen (name, count, poster preview) since these
-/// read like lists even though they aren't real Api\Model\UserList rows
-/// (see Api\Model\SerieFavorite's own docblock) - just without that row's
-/// rename/reorder affordances, which don't apply here.
+/// Pinned above the plain _ActiveRow entries; same content shape as a real
+/// ListsScreen row (name, count, poster preview) but without
+/// rename/reorder, since favorites aren't real UserList rows.
 class _FavoriteRow extends StatelessWidget {
   const _FavoriteRow({
     required this.label,
@@ -1329,9 +1271,7 @@ class _RowIcon extends StatelessWidget {
 
   final IconData icon;
 
-  /// Material Symbols' own fill axis - null for every icon that isn't part
-  /// of the series/movies fill-consistency rule (see _FollowingSection's
-  /// own use of this), same as leaving Icon.fill unset
+  /// Material Symbols fill axis; null leaves Icon.fill unset.
   final double? fill;
 
   @override

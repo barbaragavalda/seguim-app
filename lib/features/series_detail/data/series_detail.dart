@@ -28,9 +28,8 @@ class SeriesDetail {
   final String? status;
   final int? seasonCount;
   final int? averageRuntime;
-  // MovieGenre/MovieTrailer, not series-only classes - both are shared
-  // shapes with movies (TheTVDB's genre taxonomy, and a flat per-language
-  // trailer list), same as localizedGenre()
+  // MovieGenre/MovieTrailer: genres and trailers share the same shape
+  // between series and movies in TheTVDB's data.
   final List<MovieGenre> genres;
   final MovieTrailer? trailer;
 
@@ -91,15 +90,10 @@ class Episode {
   final String? imageUrl;
   final int? runtime;
   final bool watched;
-  // how many times this episode has been watched - 0 when unwatched, 1 for
-  // a plain watch, 2+ once rewatched (see SeriesDetailController.
-  // rewatchEpisode()); user_episode_watched is one row per watch event
+  // 0 when unwatched, 1 for a plain watch, 2+ once rewatched
   final int watchCount;
 
-  /// Whether this episode has actually aired yet - null or a still-future
-  /// date both count as "not yet" (mirrors SeriesDetailState.watchProgress's
-  /// own aired-so-far check) - an episode that hasn't aired can't have been
-  /// watched
+  /// null or a still-future date both count as "not yet aired".
   bool get hasAired {
     if (aired == null) return false;
     final date = DateTime.tryParse(aired!);

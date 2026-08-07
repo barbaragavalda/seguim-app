@@ -27,8 +27,7 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
   void initState() {
     super.initState();
     // Riverpod forbids modifying provider state synchronously during a
-    // widget lifecycle method - defer to the next microtask (see the
-    // equivalent comment on SeriesDetailScreen.initState).
+    // widget lifecycle method - defer to the next microtask.
     Future.microtask(() => ref.read(watchlistProvider.notifier).load());
     _scrollController.addListener(_onScroll);
   }
@@ -52,9 +51,8 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
     final l10n = AppLocalizations.of(context)!;
     final isLoggedIn = ref.watch(authProvider).isLoggedIn;
 
-    // reload once the user logs in from elsewhere while this tab stays
-    // mounted (StatefulShellRoute keeps every tab alive) - initState only
-    // ever fires once, so it can't catch a later login on its own
+    // reload on login from elsewhere while this tab stays mounted
+    // (StatefulShellRoute keeps every tab alive, so initState won't refire)
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isLoggedIn && previous?.isLoggedIn != true) {
         ref.read(watchlistProvider.notifier).load();
@@ -89,12 +87,9 @@ class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
     final state = ref.watch(watchlistProvider);
     final hasData = state.watching.isNotEmpty || state.notStarted.isNotEmpty;
 
-    // only the very first load (nothing to show yet) blocks the screen with
-    // a spinner - a later reload (WatchlistItemRow's own onReturned after
-    // coming back from a series/movie detail screen, or a manual pull-to-
-    // refresh) keeps the existing CustomScrollView on screen instead of
-    // tearing it down and rebuilding it, which would otherwise reset its
-    // own scroll position back to the top every time
+    // only the very first load blocks the screen with a spinner - a later
+    // reload keeps the CustomScrollView mounted instead of resetting its
+    // scroll position back to the top
     if (state.isLoading && !hasData) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

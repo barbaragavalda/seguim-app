@@ -25,22 +25,15 @@ class TvTimeImportSummary {
 
   final int showsSynced;
   final int showsFailed;
-  // shows whose tv_show_id no longer resolved on TheTVDB at all and whose
-  // name search (Api\Model\TvTimeImport\SeriesMatcher) couldn't confidently
-  // resolve one either - waiting in Api\Model\SeriesImportPending for the
-  // user to pick the right one by hand (see PendingResolutionScreen)
+  // waiting for the user to resolve by hand (see PendingResolutionScreen)
   final int showsPending;
   final int episodesWatched;
   final int listsCreated;
   final int moviesSynced;
-  // titles Api\Model\TvTimeImport\MovieMatcher couldn't confidently resolve
-  // on its own - waiting in Api\Model\MovieImportPending for the user to
-  // pick the right one by hand (see PendingResolutionScreen)
+  // waiting for the user to resolve by hand (see PendingResolutionScreen)
   final int moviesPending;
-  // the export's fixed totals (from the backend re-parsing the same zip
-  // every batch - same numbers every time), not accumulated like the rest
-  // of this class - lets ProcessingView show a real progress fraction
-  // instead of a plain spinner
+  // export's fixed totals, not accumulated like the rest of this class -
+  // lets ProcessingView show a real progress fraction instead of a spinner
   final int showsTotal;
   final int moviesTotal;
 
@@ -121,10 +114,8 @@ class TvTimeImportApi {
     return TvTimeImportStatus.fromJson(_decode(response));
   }
 
-  /// Finds and advances this user's own latest not-yet-finished job, if
-  /// any - lets a fresh app process (with no remembered job id at all)
-  /// recover an import it doesn't know is still running. Null means there's
-  /// nothing to resume.
+  /// Finds this user's latest not-yet-finished job, letting a fresh app
+  /// process recover an import it has no memory of. Null if none to resume.
   Future<TvTimeImportStatus?> getCurrent({required String token}) async {
     final response = await _client.get(
       Uri.parse('${ApiConfig.baseUrl}/api/import/tvtime/current'),

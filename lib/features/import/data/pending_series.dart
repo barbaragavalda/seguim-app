@@ -1,10 +1,8 @@
 import 'pending_movie.dart' show PendingMovieCandidate;
 
-/// A show from a TV Time import whose tv_show_id no longer resolves on
-/// TheTVDB at all (see backend Api\Model\TvTimeImport\SeriesMatcher) - up to
-/// 5 TheTVDB candidates are shown so the user can pick the right one, or
-/// dismiss it if none are correct. Reuses PendingMovieCandidate - the
-/// candidate shape (tvdb_id/name/year/image) is identical for both.
+/// A show whose tv_show_id no longer resolves on TheTVDB; up to 5
+/// candidates let the user pick or dismiss. Reuses PendingMovieCandidate
+/// since the candidate shape is identical for both.
 class PendingSeries {
   const PendingSeries({
     required this.id,

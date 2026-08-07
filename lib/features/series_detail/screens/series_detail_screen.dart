@@ -40,10 +40,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Riverpod forbids modifying provider state synchronously during a
-    // widget lifecycle method (initState runs as part of the widget tree
-    // building) - defer to the next microtask so load()'s first `state =`
-    // assignment happens after building has finished.
+    // defer: can't modify provider state during build
     Future.microtask(
       () => ref.read(seriesDetailProvider.notifier).load(widget.tvdbId),
     );
@@ -93,9 +90,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
             isFavorite: state.isFavorite,
           ),
           Padding(
-            // no bottom inset - _SeasonChips (below, outside this Padding)
-            // needs to bleed edge-to-edge the same way _CastRow does on
-            // MovieDetailScreen, not be boxed in by this page margin
+            // no bottom inset - _SeasonChips (below) needs to bleed edge-to-edge
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
               AppSpacing.md,
@@ -126,11 +121,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
                           ),
                         ),
                       ),
-                      // "stop watching" only makes sense once there's
-                      // actually something being watched - with nothing
-                      // watched yet, the delete button below is the only
-                      // relevant action (mutually exclusive with this one,
-                      // same hasAnyWatchedEpisode check)
+                      // only relevant once something's actually watched
                       if (state.hasAnyWatchedEpisode) ...[
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
@@ -152,8 +143,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
                       ],
                     ],
                   ),
-                  // only offered once there's nothing watched to lose - see
-                  // SeriesDetailController.removeFromWatchlist()'s docblock
+                  // only offered once there's nothing watched to lose
                   if (!state.hasAnyWatchedEpisode) ...[
                     const SizedBox(height: AppSpacing.sm),
                     SizedBox(
@@ -220,11 +210,8 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
             ),
           ],
           Padding(
-            // top: sm recreates the gap the old single Padding gave for
-            // free between the season chips (or, with none, the "Episodis"
-            // title above) and the episode list; bottom: md closes out the
-            // page's own bottom margin that this Padding's top-half (above)
-            // deliberately dropped
+            // top: sm is the gap to the season chips (or title, if none);
+            // bottom: md is the page's usual bottom margin
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
               AppSpacing.sm,
@@ -282,9 +269,7 @@ class _SeriesDetailScreenState extends ConsumerState<SeriesDetailScreen> {
 }
 
 /// The archive/mark-removed toggles on a series already in the watchlist -
-/// both are reversible flags (unlike the plain hard-delete "remove
-/// entirely" action, which stays out of this screen - see
-/// SeriesDetailController.addToWatchlist()'s docblock).
+/// both reversible, unlike the hard-delete "remove entirely" action.
 class _ToggleButton extends StatelessWidget {
   const _ToggleButton({
     required this.active,
@@ -304,17 +289,12 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // same pill shape regardless of state, overriding the theme's default
-    // AppRadius.sm (both FilledButtonTheme and OutlinedButtonTheme) - the
-    // two states of this one toggle deliberately look more rounded than
-    // buttons elsewhere in the app
+    // overrides the theme's default AppRadius.sm - deliberately more rounded
+    // than other buttons
     final shape = const RoundedRectangleBorder(
       borderRadius: BorderRadius.all(Radius.circular(AppRadius.pill)),
     );
 
-    // same two-state look as the old "+ Watchlist"/"A la watchlist" toggle:
-    // filled (solid background) for the inactive/default action, outlined
-    // (border only) once it's active
     if (active) {
       return OutlinedButton.icon(
         onPressed: onPressed,
@@ -341,9 +321,7 @@ String _actionErrorMessage(AppLocalizations l10n, String errorKey) {
   }
 }
 
-/// Watchlist and "mark watched" both need a real logged-in user; viewing
-/// the series itself does not. Redirect to login instead of silently
-/// no-op-ing when a signed-out visitor taps either action.
+/// Redirects to login instead of silently no-op-ing for signed-out visitors.
 void _requireLogin(BuildContext context, WidgetRef ref, VoidCallback action) {
   if (ref.read(authProvider).isLoggedIn) {
     action();
@@ -352,15 +330,12 @@ void _requireLogin(BuildContext context, WidgetRef ref, VoidCallback action) {
   }
 }
 
-/// See lib/features/lists/widgets/add_to_lists_sheet.dart's own docblock -
-/// shared with MovieDetailScreen.
 void _showAddToLists(BuildContext context, String tvdbId) {
   showAddToListsSheet(context, tvdbId);
 }
 
-/// Tapping to mark an episode watched, when earlier episodes in the same
-/// season are still unwatched, asks whether to mark those too rather than
-/// silently leaving a gap.
+/// If earlier episodes in the season are still unwatched, asks whether to
+/// mark those too rather than silently leaving a gap.
 Future<void> _handleEpisodeTap(
   BuildContext context,
   WidgetRef ref,
@@ -406,8 +381,7 @@ Future<void> _handleEpisodeTap(
   }
 }
 
-/// Confirms before the hard-delete action - unlike setArchived/setRemoved,
-/// this one can't be undone from within the app.
+/// Confirms first - unlike setArchived/setRemoved, this can't be undone.
 Future<void> _handleRemoveFromWatchlist(
   BuildContext context,
   WidgetRef ref,
@@ -441,11 +415,8 @@ Future<void> _handleRemoveFromWatchlist(
 enum _WatchedEpisodeAction { delete, watchOnce, rewatch }
 
 /// Tapping an already-watched episode is ambiguous now that rewatching is
-/// its own action - asks which one was meant instead of always deleting
-/// the watch history outright (toggleEpisodeWatched's old, sole behavior).
-/// The "watch it only once" choice (undo any rewatches, keep watchCount at
-/// 1) only makes sense - and only shows up - once it's actually been
-/// rewatched.
+/// its own action - asks which one was meant rather than always deleting
+/// history. The "watch it only once" choice only shows up once rewatched.
 Future<void> _handleWatchedEpisodeTap(
   BuildContext context,
   WidgetRef ref,
@@ -508,11 +479,7 @@ class _Header extends ConsumerWidget {
   final double? watchProgress;
   final bool isFavorite;
 
-  // on a wide (desktop web) screen, a plain AspectRatio(16/9) grows its
-  // height with the full screen width with no upper bound - capping it
-  // here keeps AspectRatio's normal behavior on mobile (width/16*9 stays
-  // well under this) while turning the header into a shorter, wider crop
-  // (still BoxFit.cover, so no distortion) past this point
+  // caps unbounded growth of AspectRatio(16/9) on wide/desktop screens
   static const double _maxHeight = 420;
 
   @override
@@ -658,10 +625,8 @@ class _Header extends ConsumerWidget {
     if (series.imageUrl == null) {
       return const PlaceholderMark(fontSize: 40);
     }
-    // ImageFiltered's blur paints beyond its own layout bounds unless
-    // explicitly clipped - Stack's own clipBehavior isn't enough to contain
-    // it, confirmed visually leaking past the header's own edges without
-    // this
+    // ImageFiltered's blur paints beyond its layout bounds - Stack's own
+    // clipBehavior isn't enough to contain it
     return ClipRect(
       child: ImageFiltered(
         imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
@@ -784,21 +749,16 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
   // same chip across rebuilds regardless of list content changes
   final Map<int, GlobalKey> _chipKeys = {};
 
-  // owned directly (rather than relying on the static Scrollable.ensureVisible
-  // helper) so _scrollToSelected can call ensureVisible on *this* scroll
-  // position alone - the static helper walks every ancestor Scrollable of
-  // alternating axes it can find, which here means the page's own outer
-  // vertical SingleChildScrollView too, visibly jumping the whole page
-  // just to bring a horizontal chip into view
+  // owned directly rather than static Scrollable.ensureVisible, which walks
+  // every ancestor Scrollable - including the page's own outer
+  // SingleChildScrollView - and would jump the whole page to show one chip
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    // the season list/selection isn't known until after first layout, and
-    // ensureVisible needs the chip's own context to already have a size -
-    // defer to the next frame, same reasoning as the various providers'
-    // "modify state outside build" comments elsewhere in this app
+    // defer to next frame: ensureVisible needs the chip to already have a
+    // laid-out size
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
   }
 
@@ -835,18 +795,9 @@ class _SeasonChipsState extends ConsumerState<_SeasonChips> {
       child: SingleChildScrollView(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        // built eagerly (not ListView.builder/.separated's lazy,
-        // viewport-only building) so ensureVisible always has a real
-        // context to scroll to, even for a season chip that starts out
-        // off-screen - season counts are small enough that this never
-        // costs anything in practice
-        //
-        // unlike _CastRow, this row sits right under a plain text title
-        // ("Episodis") that itself has the page's usual AppSpacing.md
-        // margin - no fade gradient, but the same horizontal inset here so
-        // the first/last chip lines up with that title (and with
-        // everything else on the page) at rest, rather than starting flush
-        // against the screen edge like a photo gallery would
+        // built eagerly, not lazily, so ensureVisible always has a real
+        // context to scroll to, even for an off-screen chip - season counts
+        // are small enough this costs nothing
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         child: Row(
           children: [
@@ -919,10 +870,8 @@ class _EpisodeRow extends ConsumerWidget {
         border: Border(bottom: BorderSide(color: dividerColor)),
       ),
       child: Row(
-        // matches _WatchlistItemRow's own fix: without this, the row's
-        // default center alignment vertically centers the thumb within
-        // whatever height the (now-unwrapped, since removing the title's
-        // ellipsis) title/subtitle column ends up needing
+        // without this, default center alignment centers the thumb against
+        // whatever height the title/subtitle column ends up needing
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
@@ -948,10 +897,7 @@ class _EpisodeRow extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  // "0x03" would just be noise inside the Especials tab -
-                  // there's only ever one season 0, so the episode number
-                  // alone (still zero-padded, same as every other episode
-                  // code) already fully identifies it
+                  // "0x03" is noise in the Especials tab - only one season 0 exists
                   '${episode.seasonNumber == 0 ? 'E' : '${episode.seasonNumber}x'}'
                   '${episode.episodeNumber.toString().padLeft(2, '0')}'
                   '${episode.name != null ? ' · ${episode.name}' : ''}',
@@ -971,10 +917,8 @@ class _EpisodeRow extends ConsumerWidget {
             ),
           ),
           GestureDetector(
-            // a future episode can't have been watched - no tap handler at
-            // all rather than a handler that just no-ops, so there's no
-            // accidental login prompt for an action that was never going
-            // to do anything anyway
+            // no handler at all (not one that no-ops) for episodes that
+            // haven't aired, so there's no accidental login prompt
             onTap: !episode.hasAired
                 ? null
                 : () => _requireLogin(

@@ -6,11 +6,8 @@ import '../data/tvtime_import_api.dart';
 
 enum TvTimeImportPhase { idle, selected, uploading, processing, done, failed }
 
-// TvTimeImportStatus.errorMessage (the backend's own error string, e.g. a
-// PHP stack trace) is deliberately never carried into this state - it's a
-// server-side implementation detail (already recorded in user_import.error
-// for debugging), not something a user could act on. TvTimeImportPhase.
-// failed alone is enough for _FailedView's generic "try again" message.
+// the backend's errorMessage is never carried into this state - it's a
+// server-side debugging detail, not something a user could act on
 class TvTimeImportState {
   const TvTimeImportState({
     this.phase = TvTimeImportPhase.idle,
@@ -44,13 +41,9 @@ class TvTimeImportState {
 }
 
 class TvTimeImportController extends Notifier<TvTimeImportState> {
-  // The delay *between* polls, not a fixed tick - each call to the status
-  // endpoint also advances the job itself by one time-boxed batch server-
-  // side (see Api\Controller\Import\TvTimeStatus's own docblock), which can
-  // take up to ~45 real seconds when there's work to do. A plain
-  // Timer.periodic would keep firing every 3s regardless, piling up many
-  // overlapping in-flight requests against the same job - _poll() instead
-  // waits for each response before scheduling the next one.
+  // delay *between* polls, not a fixed tick - each status call also
+  // advances the job server-side (up to ~45s), so _poll() waits for each
+  // response before scheduling the next rather than firing on a plain timer
   static const _pollInterval = Duration(seconds: 3);
 
   late final TvTimeImportApi _api;
@@ -101,14 +94,9 @@ class TvTimeImportController extends Notifier<TvTimeImportState> {
     }
   }
 
-  /// Called once when TvTimeImportScreen opens - this in-memory state
-  /// doesn't survive the app process restarting (e.g. the phone killing a
-  /// backgrounded app mid-import), so on a genuinely fresh state (idle,
-  /// nothing already polling) it asks the server whether this user has an
-  /// import it forgot about, and if so resumes right where the server
-  /// left off. A no-op if the app already knows what's going on - either a
-  /// real idle state (nothing to resume) or an import already being
-  /// tracked from earlier this same session.
+  /// Called when TvTimeImportScreen opens - this in-memory state doesn't
+  /// survive a process restart, so on a genuinely fresh state it asks the
+  /// server whether an import was left running and resumes it if so.
   Future<void> resumeIfInProgress() async {
     if (state.phase != TvTimeImportPhase.idle || _polling) return;
     final token = ref.read(authProvider).token;
@@ -137,15 +125,9 @@ class TvTimeImportController extends Notifier<TvTimeImportState> {
     }
   }
 
-  /// [id]'s token is re-read fresh from authProvider on every tick, rather
-  /// than captured once by the caller - a session that ends for any reason
-  /// while this loop is running (logs out, token gets revoked) would
-  /// otherwise keep being polled forever with the same now-dead token,
-  /// each tick's 401 re-triggering decodeApiResponse's onAuthExpired ->
-  /// logOut() again - a self-sustaining loop that logs the user right back
-  /// out moments after any fresh login, since this same zombie poll never
-  /// stopped running in the background. Confirmed empirically: exactly this
-  /// happened live, hundreds of consecutive 401s against one job.
+  /// Token re-read fresh on every tick, not captured once - otherwise a
+  /// dead token from a logout keeps re-triggering onAuthExpired's logOut()
+  /// in a self-sustaining loop (confirmed live: hundreds of 401s on one job).
   Future<void> _poll(int id) async {
     _polling = true;
     while (_polling) {

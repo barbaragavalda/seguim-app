@@ -41,19 +41,11 @@ class SeriesDetailState {
   final bool removeFromWatchlistPending;
   final bool favoritePending;
   final String? errorKey;
-  // set when removeFromWatchlist() fails (e.g. the backend's own
-  // has_watch_history rejection - see that controller's own docblock)
-  // rather than the whole detail failing to load - kept separate from
-  // errorKey above, which replaces the entire screen with a full-screen
-  // error message. The screen consumes this via a SnackBar and clears it
-  // right after, same pattern as PendingResolutionState.actionErrorKey
+  // single-action failure (e.g. removeFromWatchlist's has_watch_history
+  // rejection), separate from errorKey; consumed via SnackBar and cleared
   final String? actionErrorKey;
 
-  /// TheTVDB's season 0 is "Especials" - extras/behind-the-scenes/holiday
-  /// episodes that don't belong to a numbered season - included here (kept
-  /// out of watchProgress/_defaultSeasonFor below, same as the backend's
-  /// own season_count/remainingEpisodes), sorted after every real season
-  /// rather than first, matching where 0 would otherwise land numerically.
+  /// Season 0 ("Especials") sorted after every real season, not first.
   List<int> get seasonNumbers {
     final numbers = episodes.map((e) => e.seasonNumber).toSet().toList()
       ..sort(_bySeasonWithSpecialsLast);
@@ -68,16 +60,11 @@ class SeriesDetailState {
     return filtered;
   }
 
-  /// Whether removeFromWatchlist() below is even offered - the backend
-  /// rejects a hard delete once anything's been watched (see that
-  /// controller's own docblock on why), so there's no point showing the
-  /// action at all once that's true.
+  /// The backend rejects a hard delete once anything's been watched.
   bool get hasAnyWatchedEpisode => episodes.any((e) => e.watched);
 
-  /// null when there's nothing to show a progress bar for (no aired
-  /// regular episodes at all) - same "season > 0, already aired" counting
-  /// as the backend's own watchProgressForSeries() (Api\Model\Episode),
-  /// computed here instead since the full episode list is already loaded.
+  /// Null when there are no aired regular (season > 0) episodes to show
+  /// progress for.
   double? get watchProgress {
     final counted = episodes.where((e) {
       if (e.seasonNumber <= 0) return false;
@@ -140,21 +127,12 @@ int _bySeasonWithSpecialsLast(int a, int b) {
   return a.compareTo(b);
 }
 
-/// Which season the detail screen lands on by default - anchored on the
-/// season of the user's own furthest-watched episode (by season/episode
-/// number, same "how far along" definition Watchlist::hasWatchedLastEpisode()
-/// uses server-side for "finished"), not on the first season with any gap
-/// at all. That distinction matters in practice: an earlier, never-filled-in
-/// gap (a genuinely skipped episode, or one the TV Time import couldn't
-/// recover - see Api\Model\TvTimeImport\Parser's own docblock on why that
-/// isn't always 100%) used to pull the default all the way back to that old
-/// season instead of showing where the user actually left off. Finishing
-/// the furthest-watched season moves the default on to the next one (same
-/// "an unaired episode never blocks a season from counting as done" rule as
-/// before, so "estic al dia" still lands on the next season even before it
-/// airs) rather than re-showing the one just finished. Nothing watched at
-/// all yet falls back to the first season with anything left to watch, same
-/// as always.
+/// Which season the detail screen lands on by default: the season of the
+/// furthest-watched episode, not the first season with any gap (an old
+/// skipped/unrecovered episode shouldn't pull the default back there). Moves
+/// to the next season once the furthest-watched one is done (an unaired
+/// episode doesn't block "done"). Falls back to the first season with
+/// anything left to watch if nothing's been watched yet.
 int? _defaultSeasonFor(List<int> seasons, List<Episode> episodes) {
   if (seasons.isEmpty) return null;
   final now = DateTime.now();
@@ -212,9 +190,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     try {
       final result = await _api.getDetail(tvdbId, token: token);
       if (_tvdbId != tvdbId) return;
-      // season 0 ("Especials") deliberately excluded here, unlike
-      // SeriesDetailState.seasonNumbers - it should never become the
-      // screen's default-selected season
+      // season 0 excluded - unlike seasonNumbers, it should never be the default
       final seasons =
           result.episodes
               .map((e) => e.seasonNumber)
@@ -249,11 +225,8 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     state = state.copyWith(selectedSeason: season);
   }
 
-  /// Adds the series to the watchlist - once there, it stays there;
-  /// see setArchived()/setRemoved() for the two reversible ways to hide it
-  /// again without losing watched-episode history (the plain "remove
-  /// entirely" action deliberately isn't exposed here, only from
-  /// MySeriesScreen - see the profile "Sèries" section's own reasoning).
+  /// Once added, stays added; setArchived()/setRemoved() are the reversible
+  /// ways to hide it without losing watch history.
   Future<void> addToWatchlist() async {
     final tvdbId = _tvdbId;
     final token = ref.read(authProvider).token;
@@ -306,20 +279,15 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     try {
       await _api.setFavorite(tvdbId, favorite, token: token);
       state = state.copyWith(favoritePending: false);
-      // see FavoriteSeriesController.remove()'s own comment (lib/features/
-      // favorites/providers/favorite_series_provider.dart) - same
-      // "ProfileScreen's preview row only catches up on its own if
-      // something reloads it" staleness
+      // ProfileScreen's preview row won't catch up unless we reload it
       ref.read(favoritesSummaryProvider.notifier).load();
     } catch (_) {
       state = state.copyWith(isFavorite: previous, favoritePending: false);
     }
   }
 
-  /// Hard delete - only offered by the UI when hasAnyWatchedEpisode is
-  /// false, but the backend enforces that too (has_watch_history), so a
-  /// stale/race-y state still surfaces as an actionErrorKey instead of
-  /// silently losing watch history.
+  /// Hard delete. The backend also enforces hasAnyWatchedEpisode, so a
+  /// stale/racy state surfaces as actionErrorKey instead of losing history.
   Future<void> removeFromWatchlist() async {
     final tvdbId = _tvdbId;
     final token = ref.read(authProvider).token;
@@ -355,23 +323,16 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     state = state.copyWith(clearActionError: true);
   }
 
-  /// Toggles between fully unwatched (watchCount 0) and watched-once
-  /// (watchCount 1) - only reachable for a currently-unwatched episode, or
-  /// as the "delete" choice from the already-watched dialog (see
-  /// _handleWatchedEpisodeTap), which resets watchCount to 0 same as the
-  /// backend's full-reset DELETE. rewatchEpisode below is the only way to
+  /// Toggles between watchCount 0 and 1; rewatchEpisode is the only way to
   /// reach watchCount > 1.
   Future<void> toggleEpisodeWatched(Episode episode) async {
     final token = ref.read(authProvider).token;
     if (token == null) return;
     final wasWatched = episode.watched;
     final previousCount = episode.watchCount;
-    // marking an episode watched implies following the series - see
-    // Api\Controller\Episode\Watch's matching backend-side add(). Marking
-    // one watched also clears `archived` there ("veure més tard" is the
-    // opposite of actually watching something from the series) - mirrored
-    // here so the toggle button updates immediately instead of waiting for
-    // a reload; unwatching (wasWatched true) doesn't touch it either way.
+    // marking watched implies following the series and clears `archived`
+    // ("veure més tard" is the opposite of actually watching); mirrored here
+    // so the toggle updates immediately instead of waiting for a reload
     final wasInWatchlist = state.inWatchlist;
     final wasArchived = state.archived;
     state = state.copyWith(
@@ -406,9 +367,8 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     }
   }
 
-  /// Records another watch event - [episode.watched] is already true (this
-  /// is only reachable from the "already watched, what do you want to do"
-  /// dialog, see series_detail_screen.dart), so only watchCount changes.
+  /// Records another watch event; [episode.watched] is already true, so
+  /// only watchCount changes.
   Future<void> rewatchEpisode(Episode episode) async {
     final token = ref.read(authProvider).token;
     if (token == null) return;
@@ -442,9 +402,7 @@ class SeriesDetailController extends Notifier<SeriesDetailState> {
     }
   }
 
-  /// The inverse of rewatchEpisode - collapses watchCount back down to 1
-  /// (still watched, just not "rewatched" anymore). Only reachable from
-  /// the already-watched dialog when watchCount > 1.
+  /// Inverse of rewatchEpisode: collapses watchCount back to 1.
   Future<void> undoRewatch(Episode episode) async {
     final token = ref.read(authProvider).token;
     if (token == null) return;

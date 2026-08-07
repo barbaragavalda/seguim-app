@@ -4,10 +4,9 @@ import '../theme/app_colors.dart';
 
 /// A thin bar, as wide as its parent, showing what fraction of a series'
 /// episodes have been watched - coral while in progress, sage once it
-/// reaches 100% (matches the sage "watched" mark used elsewhere, e.g. the
-/// episode-watched circle on series detail's own episode rows). Meant to
-/// sit at the very bottom of a poster or backdrop image via a Positioned
-/// inside the same Stack.
+/// reaches 100% (matches the sage "watched" mark used elsewhere). Meant to
+/// sit at the bottom of a poster/backdrop via a Positioned in the same
+/// Stack.
 class WatchProgressBar extends StatelessWidget {
   const WatchProgressBar({super.key, required this.progress});
 

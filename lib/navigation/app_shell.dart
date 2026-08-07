@@ -31,17 +31,12 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   void initState() {
     super.initState();
-    // web-only - see _ImportSection's own docblock on why the whole TV Time
-    // import feature (the only source of pending titles) is web-only, so
-    // fetching this count elsewhere would never find anything
+    // TV Time import (the only source of pending titles) is web-only
     if (kIsWeb) {
       Future.microtask(() {
         ref.read(pendingCountProvider.notifier).load();
-        // covers the case where authProvider is *already* restored by the
-        // time this runs (see the ref.listen in build() for the more
-        // common case, where it's still mid-restore right now) -
-        // resumeIfInProgress() itself is a no-op without a token, so this
-        // is harmless if it isn't ready yet
+        // covers the case where authProvider is already restored by now;
+        // otherwise a no-op, and build()'s ref.listen catches the restore
         ref.read(tvTimeImportProvider.notifier).resumeIfInProgress();
       });
     }
@@ -55,19 +50,11 @@ class _AppShellState extends ConsumerState<AppShell> {
         ref.watch(tvTimeImportProvider.select((s) => s.phase)) ==
         TvTimeImportPhase.processing;
 
-    // AppShell is mounted once for the whole logged-in/out lifetime of the
-    // tab bar - re-load when the user logs in from elsewhere (e.g. the
-    // Perfil tab itself), same reasoning as WatchlistScreen/MoviesScreen's
-    // own auth listeners. Also the *reliable* path for resumeIfInProgress()
-    // right after a fresh app start/restart: authProvider restores its
-    // token from secure storage asynchronously (AuthController.
-    // _restoreSession()), so it's still null at the exact moment
-    // initState()'s own microtask runs above - that call is a harmless
-    // no-op then, and this transition (previous token null -> now present)
-    // is what actually catches it once the restore finishes. Confirmed
-    // happening for real: a job stuck at 'processing' only resumed once the
-    // user happened to revisit the import screen, whose own initState
-    // re-tries the same check - by then the restore had long since finished
+    // AppShell is mounted once for the whole tab-bar lifetime, so re-load on
+    // login from elsewhere. Also the reliable path for resumeIfInProgress():
+    // authProvider restores its token from secure storage asynchronously, so
+    // it's still null when initState()'s microtask runs above; this
+    // login-transition catches it once the restore actually finishes.
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isLoggedIn && previous?.isLoggedIn != true) {
         ref.read(pendingCountProvider.notifier).load();
@@ -75,14 +62,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       }
     });
 
-    // resolving is blocked while importing (PendingResolutionScreen and the
-    // Perfil row both refuse to act on this count then - see their own
-    // docblocks), so there's nothing to gain polling while `importing` is
-    // true either: a fresh count is only useful once the user can actually
-    // do something with it. This fires exactly once, right as `importing`
-    // flips back off, to catch whatever the import's last batch added -
-    // without it the badge would stay at its pre-import value until the
-    // user happened to reselect the Perfil tab
+    // resolving is blocked while importing, so refresh the count exactly
+    // once import finishes rather than poll while it's pointless
     ref.listen<TvTimeImportPhase>(
       tvTimeImportProvider.select((s) => s.phase),
       (previous, next) {
@@ -98,11 +79,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: widget.navigationShell.currentIndex,
         onDestinationSelected: (index) {
-          // each tab's screen stays alive in the IndexedStack once visited,
-          // so its own initState never re-fires - refresh here instead
-          // whenever the user switches back to it (e.g. after renaming a
-          // list from its detail screen, or adding to the watchlist from a
-          // search result)
+          // each tab stays alive in the IndexedStack, so initState never
+          // re-fires - refresh explicitly on switching back to it
           if (index == _watchlistBranchIndex) {
             ref.read(watchlistProvider.notifier).load();
           }
@@ -114,12 +92,6 @@ class _AppShellState extends ConsumerState<AppShell> {
           }
           if (index == _profileBranchIndex) {
             ref.read(pendingCountProvider.notifier).load();
-            // same "reselecting an already-mounted tab never re-runs
-            // initState" staleness pendingCountProvider itself used to hit
-            // - a favorite toggled from a series/movie detail screen (or
-            // removed from FavoriteSeriesScreen/FavoriteMoviesScreen)
-            // wouldn't otherwise be reflected here until something else
-            // happened to trigger a reload
             ref.read(favoritesSummaryProvider.notifier).load();
           }
           widget.navigationShell.goBranch(
@@ -127,14 +99,8 @@ class _AppShellState extends ConsumerState<AppShell> {
             initialLocation: index == widget.navigationShell.currentIndex,
           );
         },
-        // Material Symbols (see the `material_symbols_icons` package),
-        // not the classic Icons class - fill is a real variable-font axis
-        // here (native to Flutter's own Icon widget, this package only
-        // supplies the font + name constants), so unselected/selected is
-        // just fill: 0 vs fill: 1 of the *same* icon, unlike Icons' old
-        // separate "_outlined" vs plain name pairs - and unlike some of
-        // those old pairs (list_alt in particular), the fill difference is
-        // actually visible here for every one of these
+        // Material Symbols' fill is a variable-font axis, so selected state
+        // is just fill: 0 vs 1 of the same icon, not separate icon names
         destinations: [
           NavigationDestination(
             icon: const Icon(Symbols.tv, fill: 0),
@@ -159,9 +125,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           NavigationDestination(
             icon: _ProfileIcon(
               fill: 0,
-              // 0 (not the real count) while importing - resolving is
-              // blocked then anyway, see _PendingResolutionAccountRow's own
-              // docblock
+              // 0 while importing - resolving is blocked then anyway
               badgeCount: importing ? 0 : pendingMoviesCount,
             ),
             selectedIcon: _ProfileIcon(
@@ -176,11 +140,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 }
 
-/// The "Perfil" tab's icon, with a small badge when there's something
-/// waiting for the user there - currently pending series/movie titles to
-/// resolve (Api\Model\SeriesImportPending/MovieImportPending), but written
-/// generically enough to fold in other "needs attention" counts later if
-/// any show up.
+/// The "Perfil" tab's icon with a badge for pending titles to resolve.
 class _ProfileIcon extends StatelessWidget {
   const _ProfileIcon({required this.fill, required this.badgeCount});
 

@@ -7,15 +7,9 @@ import '../../../widgets/series_poster.dart';
 import '../../../widgets/status_tag.dart';
 import '../../lists/data/list_movie.dart';
 
-/// Poster-grid tile for a movie - shared by MyMoviesScreen and MoviesScreen
-/// (the "Pel·lícules" tab, which used to be a landscape row list like
-/// WatchlistItemRow before the user asked for it to match MyMoviesScreen's
-/// own poster grid instead). [onReturned] is only ever passed by
-/// MoviesScreen, which needs to refresh once a movie's watched status
-/// might have changed on the detail screen (a movie marked watched there
-/// should disappear from this always-"not watched" list) - MyMoviesScreen
-/// has no equivalent need, since its own status filter already covers
-/// watched movies too.
+/// Poster-grid tile shared by MyMoviesScreen and MoviesScreen. [onReturned]
+/// is only passed by MoviesScreen, to refresh when a movie marked watched
+/// on the detail screen should disappear from its always-"not watched" list.
 class MovieGridCard extends StatelessWidget {
   const MovieGridCard({
     super.key,
@@ -45,9 +39,7 @@ class MovieGridCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // no watchProgress here, unlike a series' own poster - a movie is
-          // binary (watched or not), and a full-width bar for "watched"
-          // reads as visual noise rather than useful progress information
+          // no watchProgress - a movie is binary (watched or not)
           SeriesPoster(imageUrl: movie.imageUrl),
           const SizedBox(height: 6),
           Text(

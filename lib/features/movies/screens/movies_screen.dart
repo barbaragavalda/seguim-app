@@ -111,12 +111,10 @@ class _MoviesScreenState extends ConsumerState<MoviesScreen> {
             slivers: [
               SliverStickyHeader(
                 header: SectionHeader(title: l10n.sectionNotWatchedYet),
-                // same poster-grid delegate as MyMoviesScreen's own grid -
-                // the year+status (movie's own release status, e.g.
-                // "Estrenada"/"Pròximament" - useful here since a not-yet-
-                // released movie can already sit in the watchlist) shown
-                // under each poster isn't lost, just moved off the row
-                // layout this replaced
+                // same poster-grid delegate as MyMoviesScreen's own grid;
+                // status label (e.g. "Estrenada"/"Pròximament") still shows
+                // under each poster - useful since a not-yet-released movie
+                // can already sit in the watchlist.
                 sliver: SliverPadding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md,

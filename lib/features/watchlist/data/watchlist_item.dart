@@ -21,7 +21,7 @@ class WatchlistItem {
   final String? nextEpisodeTvdbId;
   final int remainingEpisodes;
   // only ever set when nextEpisodeCode is null (a not-started series with
-  // nothing aired yet) - see Api\Model\Watchlist::finalizeRows()'s docblock
+  // nothing aired yet)
   final int? premiereInDays;
 
   /// [nextEpisodeCode] reformatted to match the "1x03" style used elsewhere
@@ -39,8 +39,7 @@ class WatchlistItem {
     return WatchlistItem(
       tvdbId: '${json['tvdb_id']}',
       name: json['name'] as String? ?? '',
-      // this landscape row always wants the fanart, not the poster - see
-      // Api\Model\Watchlist::finalizeRows()'s own comment (backend)
+      // this landscape row always wants the fanart, not the poster
       imageUrl: json['background'] as String?,
       nextEpisodeCode: json['next_episode'] as String?,
       nextEpisodeName: json['next_episode_name'] as String?,

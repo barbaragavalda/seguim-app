@@ -7,9 +7,9 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 
 /// "Add Seguim! to your home screen from Chrome" tutorial - web-only
-/// (native builds are already "installed" by definition), shown after
-/// every login (see AppShell's own `ref.listen` on `authProvider`, the
-/// same spot every other "just logged in" side effect in this app lives).
+/// (native builds are already "installed" by definition). Triggered
+/// directly by LoginScreen/RegisterScreen after a real login succeeds,
+/// not via AppShell's authProvider listener (see LoginScreen._afterLogin).
 class InstallHintDialog {
   InstallHintDialog._();
 

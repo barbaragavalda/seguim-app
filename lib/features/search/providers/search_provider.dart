@@ -140,9 +140,7 @@ final searchProvider = NotifierProvider<SearchController, SearchState>(
   SearchController.new,
 );
 
-/// Converts a unified [SearchResult] into the series-only model the lists
-/// feature expects (see search/data/series.dart) - only ever called for a
-/// [SearchResult] with type == series.
+/// Only ever called for a [SearchResult] with type == series.
 series_model.Series seriesFromSearchResult(SearchResult result) {
   return series_model.Series(
     tvdbId: result.tvdbId,
@@ -155,8 +153,7 @@ series_model.Series seriesFromSearchResult(SearchResult result) {
   );
 }
 
-/// Same as seriesFromSearchResult above, for a [SearchResult] with
-/// type == movie.
+/// Only ever called for a [SearchResult] with type == movie.
 ListMovie movieFromSearchResult(SearchResult result) {
   return ListMovie(
     tvdbId: result.tvdbId,

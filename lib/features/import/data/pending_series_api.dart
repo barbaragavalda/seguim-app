@@ -11,12 +11,8 @@ class PendingSeriesException implements Exception {
   final String message;
 }
 
-/// Mirrors PendingMoviesApi - see its own docblock. The only real
-/// difference is the resolve() request has no reason to ever carry more
-/// than one tvdb_id in practice (a series doesn't have movies' "watched
-/// under one ambiguous entry" scenario), but the backend still accepts an
-/// array for consistency, so this keeps the same shape rather than special-
-/// casing a single id.
+/// Mirrors PendingMoviesApi. resolve() never needs more than one tvdb_id in
+/// practice, but keeps the array shape the backend accepts for consistency.
 class PendingSeriesApi {
   PendingSeriesApi({http.Client? client}) : _client = client ?? http.Client();
 

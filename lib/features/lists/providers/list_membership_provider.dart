@@ -29,12 +29,9 @@ class ListMembershipState {
   }
 }
 
-/// Backs the "add to a list" picker on both the series and movie detail
-/// screens - same "no FamilyNotifier in Riverpod 3.3.2" shape as
-/// ListDetailController, with an explicit load(tvdbId, isMovie) instead of
-/// a family provider. [isMovie] picks which of ListsApi's series/movie
-/// method pairs toggle()/createAndAdd() call - set once by load(), same as
-/// SearchState.seriesOnly's own "set once before any real work" shape.
+/// Backs the "add to a list" picker on both detail screens. [isMovie] picks
+/// which of ListsApi's series/movie method pairs toggle()/createAndAdd()
+/// call; set once by load().
 class ListMembershipController extends Notifier<ListMembershipState> {
   late final ListsApi _api;
   String? _tvdbId;

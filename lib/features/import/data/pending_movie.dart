@@ -21,10 +21,8 @@ class PendingMovieCandidate {
   }
 }
 
-/// A movie title from a TV Time import that couldn't be confidently matched
-/// on its own (see backend Api\Model\TvTimeImport\MovieMatcher) - up to 5
-/// TheTVDB candidates are shown so the user can pick the right one, or
-/// dismiss it if none are correct.
+/// A movie title from a TV Time import that couldn't be confidently
+/// matched; up to 5 TheTVDB candidates let the user pick or dismiss.
 class PendingMovie {
   const PendingMovie({
     required this.id,

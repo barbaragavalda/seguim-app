@@ -21,9 +21,8 @@ class ListsPage {
   final bool hasMore;
 }
 
-/// A list's series and movies come back from the same GET /lists/{id} call
-/// (see Api\Controller\Lists\Show's own docblock) - each paginated
-/// independently, so this carries both pages' worth of state at once.
+/// Series and movies come back from the same GET /lists/{id} call but
+/// paginate independently, so this carries both pages' state at once.
 class ListDetailPage {
   const ListDetailPage({
     required this.series,
@@ -37,9 +36,7 @@ class ListDetailPage {
   final bool seriesHasMore;
   final List<ListMovie> movies;
   final bool moviesHasMore;
-  // how many of this list's own series/movies are still waiting on a
-  // user_serie_pending/user_movie_pending row - see
-  // Api\Controller\Lists\Show's own docblock (backend)
+  // how many of this list's series/movies are still waiting on a pending row
   final int pendingCount;
 }
 
@@ -77,9 +74,8 @@ class ListsApi {
     return _delete('/api/lists/$id', token: token);
   }
 
-  /// Moves this list right after [afterId] among the user's own lists, or
-  /// to the very front if null - see UserList::moveAfter()'s own docblock
-  /// (backend) for why it's neighbor-based rather than a full reorder.
+  /// Neighbor-based reorder: moves right after [afterId], or to the front
+  /// if null.
   Future<void> reorderList(int id, {int? afterId, required String token}) {
     return _post(
       '/api/lists/$id/reorder',
@@ -152,9 +148,8 @@ class ListsApi {
     return _delete('/api/lists/$listId/movies/$tvdbId', token: token);
   }
 
-  /// Same neighbor-based reordering as reorderSerie, within this list's own
-  /// movies (a separate ordering from its series - see UserListMovie's own
-  /// docblock).
+  /// Same neighbor-based reordering as reorderSerie, but for this list's
+  /// movies (a separate ordering from its series).
   Future<void> reorderMovie(
     int listId,
     String tvdbId, {

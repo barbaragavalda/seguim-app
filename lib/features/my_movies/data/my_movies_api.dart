@@ -21,12 +21,9 @@ class MyMoviesPage {
 
 /// Same `GET /api/movies/watchlist?status=` endpoint as MoviesApi (the
 /// bottom-tab screen), but parsed into [ListMovie] instead of
-/// [MovieWatchlistItem] - this screen shows a poster grid, not a landscape
-/// row, so it needs the poster (`image`) rather than the fanart. Kept as
-/// its own class
-/// rather than adding a second parse path to MoviesApi, mirroring how
-/// MySeriesApi is already its own class alongside WatchlistApi for the
-/// exact same series-side split.
+/// [MovieWatchlistItem] - this screen needs the poster (`image`), not the
+/// fanart. Its own class rather than a second parse path on MoviesApi,
+/// mirroring MySeriesApi's split from WatchlistApi.
 class MyMoviesApi {
   MyMoviesApi({http.Client? client}) : _client = client ?? http.Client();
 

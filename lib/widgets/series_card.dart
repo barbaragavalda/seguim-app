@@ -8,9 +8,8 @@ import 'remove_button.dart';
 import 'series_poster.dart';
 import 'status_tag.dart';
 
-/// Poster-grid card used by both ListDetailScreen and FavoriteSeriesScreen -
-/// same layout, only the remove action (and whether it needs a tooltip)
-/// differs between the two.
+/// Shared poster-grid card - only the remove action (and whether it needs a
+/// tooltip) differs between its callers.
 class SeriesCard extends StatelessWidget {
   const SeriesCard({
     super.key,

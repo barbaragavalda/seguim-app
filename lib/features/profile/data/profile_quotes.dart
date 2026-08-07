@@ -1,9 +1,8 @@
-/// Small curated pool of "seguir"/"perdurar"-themed lines from well-known
-/// series and movies, shown under the profile's welcome greeting. Spoken
-/// dialogue only, never song lyrics. The ca/es text is our own adaptation,
-/// not a claim to be the official dub line - only mottos with a
-/// well-established standard translation (e.g. Game of Thrones', Toy
-/// Story's) are exact.
+/// Curated pool of "seguir"/"perdurar"-themed lines from well-known series
+/// and movies, shown under the profile's welcome greeting. Spoken dialogue
+/// only, never song lyrics. ca/es text is our own adaptation, not a claim
+/// to be the official dub, except for mottos with a well-established
+/// standard translation.
 class ProfileQuote {
   const ProfileQuote({required this.text, required this.source});
 

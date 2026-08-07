@@ -5,14 +5,10 @@ import '../l10n/generated/app_localizations.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 
-/// Logo + app name + one-line description of what Seguim! actually does -
-/// shown wherever a logged-out visitor lands (WatchlistScreen and
-/// ProfileScreen's own logged-out branches, both reachable without an
-/// account). Exists specifically because Google's OAuth verification
-/// flagged this app's public homepage for not explaining its purpose
-/// anywhere - a bare "log in" prompt with no name/logo/description wasn't
-/// enough for a reviewer (or a first-time visitor) to tell what the app
-/// even is.
+/// Logo + app name + one-line description, shown wherever a logged-out
+/// visitor lands. Exists because Google's OAuth verification flagged the
+/// app's public homepage for not explaining its purpose anywhere - a bare
+/// "log in" prompt wasn't enough for a reviewer to tell what the app is.
 class AppIntro extends StatelessWidget {
   const AppIntro({super.key});
 

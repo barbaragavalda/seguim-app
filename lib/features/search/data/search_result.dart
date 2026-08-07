@@ -1,11 +1,8 @@
 enum SearchResultType { series, movie }
 
 /// A row from the unified `/api/search` endpoint - mixes series and movies
-/// in one ranked list, each carrying its own [type] so the UI can route to
-/// the right detail screen without a second lookup. Deliberately separate
-/// from [Series] (lists/data/series.dart isn't touched by this) - that
-/// model stays series-only, used by the still-series-only "add to list"
-/// flow.
+/// in one ranked list. Deliberately separate from [Series], which stays
+/// series-only for the "add to list" flow.
 class SearchResult {
   const SearchResult({
     required this.tvdbId,
@@ -24,15 +21,11 @@ class SearchResult {
   final String? year;
   final String? imageUrl;
   final String? status;
-  // series only (movies have no per-episode progress) - both null unless
-  // the request carried a real user token AND the series is already
-  // synced locally, see Api\Controller\Search\Search::withWatchProgress()
+  // series only - both null unless the request carried a real user token
+  // and the series is already synced locally
   final int? watchedEpisodes;
   final int? totalEpisodes;
 
-  /// null when there's nothing to show a progress bar for - see the
-  /// fields' own docblock. Otherwise 0.0-1.0, same clamping as Series'
-  /// own watchProgress getter (lists/data/series.dart).
   double? get watchProgress {
     final total = totalEpisodes;
     final watched = watchedEpisodes;
@@ -40,9 +33,8 @@ class SearchResult {
     return (watched / total).clamp(0.0, 1.0);
   }
 
-  // TheTVDB returns its own generic placeholder here instead of omitting
-  // an image when a result has no real artwork - same convention as
-  // Series.fromJson's own _missingImagePath check.
+  // TheTVDB returns its own generic placeholder instead of omitting the
+  // image when a result has no real artwork.
   static const _missingImagePath = '/images/missing/series.jpg';
 
   factory SearchResult.fromJson(Map<String, dynamic> json) {

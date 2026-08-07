@@ -12,10 +12,8 @@ class UserList {
   final int seriesCount;
   final int moviesCount;
 
-  /// up to Lists\Index's own PREVIEW_LIMIT poster thumbnails for
-  /// ListsScreen's own row - series first (own manual order), topped up
-  /// with movies, never the two merged/re-sorted by date - see
-  /// Api\Model\UserListMovie::previewForList()'s own docblock on why
+  /// A handful of poster thumbnails for ListsScreen's row - series first
+  /// (manual order), topped up with movies, never re-sorted by date.
   final List<ListPreviewItem> preview;
 
   factory UserList.fromJson(Map<String, dynamic> json) {

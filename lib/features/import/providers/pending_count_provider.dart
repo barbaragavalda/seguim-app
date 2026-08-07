@@ -4,12 +4,9 @@ import '../../auth/providers/auth_provider.dart';
 import '../data/pending_movies_api.dart';
 import '../data/pending_series_api.dart';
 
-/// Just the "X pendents" badge count for ProfileScreen - deliberately its
-/// own provider rather than reading pendingResolutionProvider.items.length,
-/// so ProfileScreen's periodic poll (see its own docblock on why it polls
-/// at all) can never stomp on PendingResolutionScreen's own selections -
-/// that used to be the same shared provider, and a poll firing while the
-/// user had candidates ticked on the full screen wiped them out.
+/// Deliberately its own provider, not pendingResolutionProvider.items.length
+/// - sharing one used to let ProfileScreen's poll wipe out ticked
+/// selections on PendingResolutionScreen.
 class PendingCountController extends Notifier<int> {
   late final PendingSeriesApi _seriesApi;
   late final PendingMoviesApi _movieApi;
@@ -34,11 +31,8 @@ class PendingCountController extends Notifier<int> {
     }
   }
 
-  /// Called by PendingResolutionController right as it resolves/skips one
-  /// entry - a local decrement instead of a fresh load() so the badge
-  /// updates the instant the action succeeds, without an extra round trip
-  /// for every single item resolved (confirmAll() in particular can resolve
-  /// dozens in a row)
+  /// Local decrement instead of a fresh load(), so confirmAll() resolving
+  /// dozens of entries doesn't trigger a round trip per item.
   void decrement() {
     if (state > 0) state--;
   }

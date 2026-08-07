@@ -25,11 +25,8 @@ class PendingMoviesApi {
   }
 
   /// [watchedTvdbIds]/[pendingTvdbIds] together can have more than one
-  /// entry - TV Time's own single entry sometimes represents more than one
-  /// real movie it couldn't tell apart (e.g. "Mulan" 1998 and 2020) - a
-  /// candidate goes in whichever list matches what the user actually knows
-  /// happened to it (watched, vs. just added to the watchlist) - see the
-  /// backend's own Api\Model\MovieImportPending::resolve() docblock
+  /// entry - a single TV Time entry can represent more than one real movie
+  /// it couldn't tell apart (e.g. "Mulan" 1998 and 2020).
   Future<void> resolve(
     int id, {
     List<int> watchedTvdbIds = const [],

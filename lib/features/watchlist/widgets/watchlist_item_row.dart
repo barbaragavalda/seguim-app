@@ -12,17 +12,12 @@ import '../../../widgets/placeholder_mark.dart';
 import '../../../widgets/status_tag.dart';
 import '../data/watchlist_item.dart';
 
-/// The landscape-box series row shared by WatchlistScreen and
-/// MySeriesScreen - same visual design ("igual que el watchlist"), just
-/// with a different [onReturned] hook so each screen can refresh its own
-/// provider after the series detail screen may have changed watched/
-/// watchlist state.
+/// Shared by WatchlistScreen and MySeriesScreen; [onReturned] lets each
+/// refresh its own provider after the detail screen may have changed state.
 ///
-/// [onToggleWatched], when given, adds a third column to the row - a small
-/// circle marking [item.nextEpisodeTvdbId] watched right from the list,
-/// without opening the series detail screen. Only WatchlistScreen passes
-/// it today; hidden entirely once there's nothing left to mark (item's own
-/// nextEpisodeTvdbId null, e.g. a not-yet-aired series).
+/// [onToggleWatched], when given, adds a circle marking
+/// [item.nextEpisodeTvdbId] watched without opening the detail screen;
+/// hidden once there's nothing left to mark.
 class WatchlistItemRow extends StatelessWidget {
   const WatchlistItemRow({
     super.key,
@@ -99,14 +94,8 @@ class WatchlistItemRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  // AnimatedSwitcher cross-fades the whole block (next
-                  // episode + remaining count together, not each text
-                  // separately) whenever any of them changes - keyed on
-                  // their own values so marking an episode watched from
-                  // this row (which reloads the list, see
-                  // WatchlistController.markEpisodeWatched()'s own
-                  // docblock) visibly signals "this updated", not just a
-                  // silent snap to the new numbers
+                  // cross-fades the whole block together, keyed on the
+                  // values, so a reload visibly signals "this updated"
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     child: Column(
@@ -213,14 +202,9 @@ class LoadingMoreIndicator extends StatelessWidget {
   }
 }
 
-/// The row's "mark next episode watched" button - an empty circle (not a
-/// checkmark) on purpose, see WatchlistItemRow's own child comment on why.
-/// Stateful only for its own tap animation (a quick scale pulse, entirely
-/// separate from AnimatedSwitcher's own fade on the next-episode text once
-/// the reload actually lands) - gives instant feedback that the tap
-/// registered even during the network round-trip, using nothing beyond
-/// core Flutter animation classes (AnimationController/CurvedAnimation/
-/// ScaleTransition).
+/// Stateful only for a quick scale-pulse tap animation, giving instant
+/// feedback during the network round-trip, separate from AnimatedSwitcher's
+/// own fade once the reload lands.
 class _MarkWatchedButton extends StatefulWidget {
   const _MarkWatchedButton({required this.dividerColor, required this.onTap});
 

@@ -23,15 +23,9 @@ class _TvTimeImportScreenState extends ConsumerState<TvTimeImportScreen> {
   @override
   void initState() {
     super.initState();
-    // pendingCountProvider itself doesn't need loading here - AppShell
-    // already keeps it fresh for as long as the app is open (see its own
-    // docblock), same reasoning as ProfileScreen. Only resumeIfInProgress()
-    // is genuinely this screen's own responsibility.
+    // pendingCountProvider doesn't need loading here - AppShell keeps it
+    // fresh app-wide; only resumeIfInProgress() is this screen's own job
     Future.microtask(() {
-      // recovers an import the app process has no memory of starting (see
-      // TvTimeImportController.resumeIfInProgress()'s own docblock) - a
-      // no-op if there's genuinely nothing in progress, or if this screen
-      // already knows about one from earlier in the same session.
       ref.read(tvTimeImportProvider.notifier).resumeIfInProgress();
     });
   }
@@ -40,11 +34,8 @@ class _TvTimeImportScreenState extends ConsumerState<TvTimeImportScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(tvTimeImportProvider);
-    // same live-polled count as the Perfil tab's badge and its "Sèries i
-    // pel·lícules pendents de resoldre" row (see AppShell's own docblock) -
-    // not pendingResolutionProvider, which only reloads on specific
-    // triggers and used to drift out of sync with the other two while an
-    // import kept adding new pending titles in the background
+    // not pendingResolutionProvider, which only reloads on specific triggers
+    // and used to drift while an import kept adding pending titles
     final pendingCount = ref.watch(pendingCountProvider);
 
     return Scaffold(
@@ -57,14 +48,8 @@ class _TvTimeImportScreenState extends ConsumerState<TvTimeImportScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // hidden while the import is actively processing (this same
-                // import can keep adding to pendingCount as it runs, so the
-                // banner would just be showing a moving target right next to
-                // the progress card below it) and once it's done (_DoneView
-                // already has its own "Resol X pendents" button for exactly
-                // this, no need to say it twice on the same screen); still
-                // shown in every other phase (see _PendingMoviesBanner's own
-                // docblock on why it's not just a post-import thing)
+                // hidden while processing (pendingCount is a moving target
+                // then) and once done (_DoneView has its own CTA for this)
                 if (pendingCount > 0 &&
                     state.phase != TvTimeImportPhase.processing &&
                     state.phase != TvTimeImportPhase.done) ...[
@@ -98,14 +83,9 @@ class _TvTimeImportScreenState extends ConsumerState<TvTimeImportScreen> {
   }
 }
 
-/// Shown above everything else on this screen (regardless of the current
-/// import's own phase) whenever there are series/movie titles still waiting
-/// to be resolved by hand - see Api\Model\SeriesImportPending/
-/// MovieImportPending. Surfaces this proactively rather than only right
-/// after a fresh import finishes, since the user may come back to this
-/// screen later (e.g. after a page refresh, which loses
-/// tvtime_import_provider's own in-memory phase) with no other way to
-/// remember there was unfinished business.
+/// Shown whenever there are titles still waiting to be resolved by hand,
+/// regardless of import phase - surfaces proactively since a page refresh
+/// loses tvtime_import_provider's in-memory phase.
 class _PendingMoviesBanner extends StatelessWidget {
   const _PendingMoviesBanner({required this.count, required this.l10n});
 
@@ -121,11 +101,8 @@ class _PendingMoviesBanner extends StatelessWidget {
         border: Border.all(color: AppColors.coral),
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      // stacked rather than side by side - both the label and the CTA are
-      // long enough in practice (a 4-line label, a "Resol NNN elements
-      // pendents" button) that cramming them into one Row's two columns
-      // left them fighting for width and looking uneven; full-width top
-      // and bottom instead gives both the same width to work with
+      // stacked, not side by side - label and CTA are both long enough that
+      // a two-column Row left them fighting for width
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -338,13 +315,9 @@ class _ProcessingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // A real fraction, not a fake/estimated one - the backend re-parses the
-    // export on every batch, so shows_total/movies_total are known from the
-    // very first response (see TvTimeImportSummary's own docblock). Capped
-    // just under 1.0 while still processing: the last stretch (lists, then
-    // whatever's left of movies) can otherwise make the bar sit at a
-    // seemingly-finished 100% for a while before the phase actually flips
-    // to done.
+    // real fraction (totals are known from the first response), capped just
+    // under 1.0 while processing so the bar doesn't sit at a seemingly-done
+    // 100% before the phase actually flips
     final total = (summary?.showsTotal ?? 0) + (summary?.moviesTotal ?? 0);
     final done =
         (summary?.showsSynced ?? 0) +
@@ -538,10 +511,8 @@ class _DoneView extends ConsumerWidget {
         const SizedBox(height: AppSpacing.lg),
         SizedBox(
           width: double.infinity,
-          // TextButton, not OutlinedButton - matches this app's own
-          // established secondary/dismiss-action style (e.g. every dialog's
-          // "Cancel·la"), rather than Material's default gray-outline look,
-          // which isn't part of this app's palette anywhere else
+          // TextButton, not OutlinedButton - matches this app's other
+          // dismiss actions rather than Material's default gray outline
           child: TextButton(
             onPressed: () {
               ref.read(tvTimeImportProvider.notifier).reset();

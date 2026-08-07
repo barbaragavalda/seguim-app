@@ -26,8 +26,7 @@ class SeriesDetailResult {
   final bool inWatchlist;
   final bool archived;
   final bool removed;
-  // independent of inWatchlist - see Api\Controller\Favorites\AddSerie's
-  // own docblock on why favoriting doesn't require tracking first
+  // independent of inWatchlist - favoriting doesn't require tracking first
   final bool isFavorite;
 }
 
@@ -104,11 +103,8 @@ class SeriesDetailApi {
   }
 
   /// Hard delete - unlike setArchived/setRemoved (reversible flags on the
-  /// same row), this drops the row entirely. The backend rejects it
-  /// (`has_watch_history`) once anything from the series has ever been
-  /// watched - see Api\Controller\Watchlist\Remove's own docblock - which
-  /// the UI itself already prevents reaching by only offering this action
-  /// when there's nothing watched to lose.
+  /// same row), this drops the row entirely. The backend rejects it once
+  /// anything from the series has ever been watched.
   Future<void> removeFromWatchlist(String tvdbId, {required String token}) async {
     final response = await _client.delete(
       Uri.parse('${ApiConfig.baseUrl}/api/watchlist/$tvdbId'),

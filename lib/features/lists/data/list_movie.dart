@@ -1,8 +1,6 @@
-/// A movie inside a list - same "raw table row, not the enriched search/
-/// detail shape" reasoning as Series.fromListRow (GET /lists/{id} returns
-/// `SELECT m.*` un-enriched), except movie has its own single `year` column
-/// rather than series' year_start/year_end range, so no separate mapping
-/// quirk to note there.
+/// A movie inside a list - raw table row from `SELECT m.*`, not the
+/// enriched search/detail shape. Unlike Series, has a single `year` column
+/// rather than a year_start/year_end range.
 class ListMovie {
   const ListMovie({
     required this.tvdbId,
@@ -18,10 +16,7 @@ class ListMovie {
   final String? year;
   final String? imageUrl;
   final String? status;
-  // null in a plain list row (being in a list has nothing to do with
-  // watch status) - only ever set when this same model is reused for the
-  // "My movies" screen (Api\Model\MovieWatchlist::finalizeRows()), which
-  // does carry a watched flag
+  // null in a plain list row; set only when reused for the "My movies" screen
   final bool? watched;
 
   factory ListMovie.fromListRow(Map<String, dynamic> json) {

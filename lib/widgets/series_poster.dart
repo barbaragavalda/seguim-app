@@ -10,9 +10,7 @@ class SeriesPoster extends StatelessWidget {
 
   final String? imageUrl;
 
-  /// 0.0-1.0, or null to show no progress bar at all - see Series.
-  /// watchProgress/SearchResult.watchProgress's own docblocks for when
-  /// that's null.
+  /// 0.0-1.0, or null to show no progress bar at all.
   final double? watchProgress;
 
   @override

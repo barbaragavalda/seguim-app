@@ -28,35 +28,22 @@ class SearchScreen extends ConsumerStatefulWidget {
     this.favoritesPickerIsMovie,
   });
 
-  /// Non-null when pushed as an "add to this list" picker (see
-  /// ListDetailScreen's "+" button) instead of the bottom-tab Search
-  /// screen - tapping a result toggles it in/out of listDetailProvider's
-  /// currently-loaded list (as a series or a movie, whichever the result
-  /// is) instead of navigating to detail.
+  /// Non-null when pushed as an "add to this list" picker: tapping a result
+  /// toggles it in/out of listDetailProvider's currently-loaded list instead
+  /// of navigating to detail.
   final int? addToListId;
 
-  /// Non-null when pushed as an "add a favorite" picker (see
-  /// FavoriteSeriesScreen/FavoriteMoviesScreen's own "+" button) - false
-  /// when launched from the series screen, true from the movies one.
-  /// Unlike addToListId above (a list can hold both kinds, so that picker
-  /// mixes them), each favorites screen only ever shows one kind, so this
-  /// one filters results down to just the matching type and tapping one
-  /// favorites it directly (no navigating to detail first).
+  /// Non-null when pushed as an "add a favorite" picker - false for series,
+  /// true for movies. Unlike addToListId (mixed kinds), this filters results
+  /// to the matching type and favorites directly on tap.
   final bool? favoritesPickerIsMovie;
 
-  /// Non-null when pushed as a "find the right match by hand" picker for
-  /// one specific PendingResolutionScreen entry (its own MovieMatcher/
-  /// SeriesMatcher search came back with too few/no usable candidates -
-  /// see that screen's own "Cerca manualment" action). Results include
-  /// both series and movies regardless of this entry's own kind - TV
-  /// Time's own "shows" vs "movies" split doesn't always match TheTVDB's
-  /// (e.g. a TV movie tracked as a one-episode "show"), so the user needs
-  /// to be able to find and pick whichever one actually exists. Tapping a
-  /// result doesn't resolve the entry right away - it's recorded as this
-  /// entry's pick (see PendingResolutionController.setManualPick()) and
-  /// only actually applied once the user hits the pending screen's own
-  /// "Confirma-ho tot", same as ticking one of its auto-suggested
-  /// candidates would be.
+  /// Non-null when pushed as a manual-match picker for one
+  /// PendingResolutionScreen entry. Includes both series and movies
+  /// regardless of the entry's own kind, since TV Time's shows/movies split
+  /// doesn't always match TheTVDB's. Tapping a result records it as the
+  /// entry's manual pick rather than resolving immediately; it's applied
+  /// only once the user hits "Confirma-ho tot".
   final PendingEntry? resolveEntry;
 
   @override
@@ -76,9 +63,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _queryController.addListener(_onQueryTextChanged);
     final favoritesPickerIsMovie = widget.favoritesPickerIsMovie;
     if (favoritesPickerIsMovie != null) {
-      // just the matching provider - results are filtered to this one type
-      // (see favoritesPickerIsMovie's own docblock), so that's the only
-      // "already favorited" state the badge below needs
+      // only the matching provider - results are filtered to this one type
       Future.microtask(() {
         if (favoritesPickerIsMovie) {
           ref.read(favoriteMoviesProvider.notifier).load();
@@ -87,9 +72,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         }
       });
     }
-    // pre-fill and immediately search with the pending entry's own title -
-    // the user already typed this once (it's TV Time's own name for it),
-    // no reason to make them type it again
+    // pre-fill and search with TV Time's own title, already typed once
     final resolveEntry = widget.resolveEntry;
     if (resolveEntry != null) {
       _queryController.text = resolveEntry.title;
@@ -196,12 +179,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       );
     }
-    // deliberately unfiltered even when resolving a pending entry - TV
-    // Time's own "shows" vs "movies" split doesn't always match TheTVDB's
-    // (e.g. a TV movie tracked as a one-episode "show"), so the user needs
-    // to be able to find and pick either kind regardless of which one the
-    // import guessed - see PendingResolutionController.resolveWithResult()'s
-    // own docblock
+    // unfiltered even when resolving a pending entry - the import's guessed
+    // kind isn't always right, so the user must be able to pick either kind
     final resolveEntry = widget.resolveEntry;
     final favoritesPickerIsMovie = widget.favoritesPickerIsMovie;
     final results = favoritesPickerIsMovie == null
@@ -248,10 +227,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         : s.items.any((i) => i.tvdbId == result.tvdbId),
                   ),
                 );
-            // results are already filtered to just this type when in
-            // favorites-picker mode, so isMovie here always agrees with
-            // favoritesPickerIsMovie - only watching the one matching
-            // provider (see initState's own comment)
             final isFavorite = favoritesPickerIsMovie == null
                 ? false
                 : isMovie
@@ -268,12 +243,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             return GestureDetector(
               onTap: () {
                 if (resolveEntry != null) {
-                  // deliberately not applied right away - just recorded as
-                  // this entry's pick, same as ticking one of its own
-                  // auto-suggested candidates would be. Only takes effect
-                  // once the user hits the pending screen's own "Confirma-
-                  // ho tot" - see PendingResolutionController.setManualPick()
-                  // own docblock
+                  // takes effect only once "Confirma-ho tot" is hit
                   ref
                       .read(pendingResolutionProvider.notifier)
                       .setManualPick(resolveEntry.key, result);
@@ -331,10 +301,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               watchProgress: result.watchProgress,
                             ),
                       Positioned(
-                        // clears WatchProgressBar.height (a series result
-                        // may have one, a movie result never does - same
-                        // offset either way so the badge doesn't jump
-                        // around depending on which)
+                        // same offset regardless of WatchProgressBar.height
+                        // so the badge doesn't jump depending on result type
                         bottom: 10,
                         left: 4,
                         child: _TypeBadge(isMovie: isMovie),
@@ -394,13 +362,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 }
 
-/// Same shape as the shared SeriesPoster widget - kept local rather than
-/// generalizing that one, since it's used in several series-specific
-/// places this pass doesn't need to touch. Keeps the same "S!" placeholder
-/// mark as a series (rather than a movie-specific one) when there's no
-/// image - the two card types sit side by side in this same grid, and the
-/// _TypeBadge already tells them apart, so a second, differing placeholder
-/// mark would only read as an inconsistency.
+/// Same shape as the shared SeriesPoster widget, kept local since
+/// SeriesPoster is used elsewhere too. Reuses the same placeholder mark as
+/// series - _TypeBadge already tells the two apart in this grid.
 class _MoviePoster extends StatelessWidget {
   const _MoviePoster({this.imageUrl});
 
@@ -425,11 +389,8 @@ class _MoviePoster extends StatelessWidget {
   }
 }
 
-/// Bottom-left badge over the poster telling a movie result apart from a
-/// series one at a glance - same icon vocabulary as the bottom nav bar
-/// (Symbols.local_activity for movies, Symbols.tv for series). Movies
-/// filled, series unfilled everywhere outside the nav bar's own selected
-/// state - see AppShell's own destinations for that one exception.
+/// Same icon vocabulary as the bottom nav bar: movies filled, series
+/// unfilled (except the nav bar's own selected state).
 class _TypeBadge extends StatelessWidget {
   const _TypeBadge({required this.isMovie});
 

@@ -6,8 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_spacing.dart';
 
 /// A frosted, floating sticky-header title (like iOS grouped lists): content
-/// scrolls under a blurred, translucent bar rather than a solid one. Shared
-/// by WatchlistScreen and MoviesScreen's own SliverStickyHeader sections.
+/// scrolls under a blurred, translucent bar rather than a solid one.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.title});
 

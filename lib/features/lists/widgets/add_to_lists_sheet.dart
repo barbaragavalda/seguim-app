@@ -7,11 +7,8 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
 import '../providers/list_membership_provider.dart';
 
-/// Opens the multi-list "add to a list" picker for [tvdbId] - shared by
-/// SeriesDetailScreen and MovieDetailScreen ([isMovie] picks which of
-/// ListMembershipController's series/movie API calls it makes). Loads
-/// membership first so the sheet doesn't flash an empty state before its
-/// own first frame.
+/// Opens the "add to a list" picker for [tvdbId]; [isMovie] picks which of
+/// ListMembershipController's series/movie API calls it makes.
 void showAddToListsSheet(BuildContext context, String tvdbId, {bool isMovie = false}) {
   showModalBottomSheet<void>(
     context: context,
@@ -47,11 +44,9 @@ class _AddToListsSheetState extends ConsumerState<_AddToListsSheet> {
     final state = ref.watch(listMembershipProvider);
 
     return SafeArea(
-      // caps the sheet's height so the Flexible below has a bounded parent
-      // to size against - showModalBottomSheet otherwise gives its child
-      // unbounded height, which a Flexible inside a mainAxisSize.min Column
-      // can't lay out against (asserts in debug); this also lets a long
-      // list of lists scroll instead of overflowing past the screen
+      // caps height so Flexible below has a bounded parent to size against
+      // (showModalBottomSheet gives unbounded height otherwise) and long
+      // lists scroll instead of overflowing
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.7,
@@ -158,8 +153,6 @@ class _AddToListsSheetState extends ConsumerState<_AddToListsSheet> {
               ),
               FilledButton(
                 // guards against a double-tap firing Navigator.pop() twice
-                // - see lists_screen.dart's _createList for the full
-                // explanation
                 onPressed: isSaving
                     ? null
                     : () async {

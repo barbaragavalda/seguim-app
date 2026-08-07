@@ -19,9 +19,7 @@ class AppTheme {
           onSecondary: AppColors.navy,
           surface: AppColors.white,
           onSurface: AppColors.navy,
-          // no separate red "error" accent - reuses the same coral as
-          // primary, so destructive/error UI stays inside the app's own
-          // palette instead of Material's default red
+          // reuses coral, not Material's default red
           error: AppColors.coral,
           onError: AppColors.navy,
         ),
@@ -44,11 +42,8 @@ class AppTheme {
           onPrimary: AppColors.navy,
           secondary: AppColors.sage,
           onSecondary: AppColors.navy,
-          // navyLight, not navy - Material 3's colorScheme.surface is what
-          // most components actually paint (WatchlistItemRow and friends
-          // use it directly, not cardColor) - leaving it equal to the
-          // scaffold background made every "card" blend invisibly into the
-          // page instead of standing out from it
+          // colorScheme.surface is read directly by many widgets (not
+          // cardColor) - must differ from scaffoldBackground or cards vanish
           surface: AppColors.navyLight,
           onSurface: AppColors.white,
           error: AppColors.coral,
@@ -127,13 +122,8 @@ class AppTheme {
           ),
         ),
       ),
-      // without this, OutlinedButton falls back to Material 3's own
-      // defaults (a plain colorScheme.outline border, ~20dp corners) -
-      // visibly different from FilledButton's shape above and from every
-      // call site that was manually re-styling itself to compensate (see
-      // e.g. SeriesDetailScreen's _ToggleButton docblock). One shared
-      // definition here instead of repeating the same styleFrom() call
-      // at every outlined button in the app.
+      // without this, OutlinedButton falls back to Material 3's plain
+      // outline/~20dp corners, visibly different from FilledButton's shape
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,

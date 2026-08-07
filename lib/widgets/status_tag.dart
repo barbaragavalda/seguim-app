@@ -93,10 +93,9 @@ Color movieStatusOnColor(String status) {
   }
 }
 
-/// TheTVDB's genre taxonomy has no translations of its own (see
-/// Api\Model\MovieGenre's docblock on the backend) - localized here from
-/// the stable `slug` TheTVDB assigns each genre, falling back to the raw
-/// (English) `name` for a slug this app hasn't added a translation for yet.
+/// TheTVDB's genre taxonomy has no translations of its own - localized here
+/// from the stable `slug` TheTVDB assigns each genre, falling back to the
+/// raw (English) `name` for a slug this app hasn't translated yet.
 String localizedGenre(AppLocalizations l10n, String slug, String name) {
   switch (slug) {
     case 'soap':

@@ -4,9 +4,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../l10n/generated/app_localizations.dart';
 
 /// A password TextField with a show/hide toggle. Flutter has no built-in
-/// obscureText toggle, so this is the standard Material pattern
-/// (InputDecoration.suffixIcon + local state) - factored out once here
-/// instead of repeating it at every password field in the app.
+/// obscureText toggle, so this factors out the standard Material pattern
+/// (suffixIcon + local state) instead of repeating it per field.
 class PasswordField extends StatefulWidget {
   const PasswordField({
     super.key,

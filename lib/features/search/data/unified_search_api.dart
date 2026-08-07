@@ -20,17 +20,15 @@ class UnifiedSearchResult {
 
 /// Hits the unified `/api/search` endpoint (series+movies mixed) - used by
 /// the bottom-tab Search screen. The "add to list" flow keeps using
-/// SeriesApi.search() instead (series-only, since lists stay series-only).
+/// SeriesApi.search() instead (series-only).
 class UnifiedSearchApi {
   UnifiedSearchApi({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
-  /// [token] is the logged-in user's own token, when there is one - lets
-  /// the backend compute each series result's watch progress (Api\
-  /// Controller\Search\Search::withWatchProgress()); omitted/null falls
-  /// back to the app's shared token, same as before, and search still
-  /// works fully logged-out, just without progress bars.
+  /// [token] lets the backend compute watch progress for series results;
+  /// omitted, search falls back to the app's shared token and still works
+  /// logged-out, just without progress bars.
   Future<UnifiedSearchResult> search(
     String query, {
     int page = 0,

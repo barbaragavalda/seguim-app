@@ -55,12 +55,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ).showSnackBar(SnackBar(content: Text(l10n.genericError)));
   }
 
-  // shows the "add to home screen" tip right after a genuine login action
-  // (this screen's form, or Google) - deliberately not hooked into
-  // authProvider's own state stream (like AppShell's other post-login
-  // side effects are): that stream also fires on a silent session restore
-  // on every app/page reload, which would show this on every refresh
-  // instead of once per real login
+  // Not hooked into authProvider's state stream like AppShell's other
+  // post-login effects: that stream also fires on silent session restore
+  // on every reload, which would show this every time instead of once.
   Future<void> _afterLogin() async {
     await InstallHintDialog.maybeShow(context);
     if (!mounted) return;
