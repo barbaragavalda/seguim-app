@@ -7,14 +7,16 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_radius.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/circle_button.dart';
+import '../../../widgets/genre_chips.dart';
 import '../../../widgets/placeholder_mark.dart';
 import '../../../widgets/status_tag.dart';
+import '../../../widgets/trailer_button.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../lists/widgets/add_to_lists_sheet.dart';
 import '../data/movie_detail.dart';
@@ -139,7 +141,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                 ],
                 if (movie.genres.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.lg),
-                  _GenreChips(genres: movie.genres, l10n: l10n),
+                  GenreChips(genres: movie.genres, l10n: l10n),
                 ],
                 if (movie.overview != null && movie.overview!.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.sm),
@@ -147,7 +149,7 @@ class _MovieDetailScreenState extends ConsumerState<MovieDetailScreen> {
                 ],
                 if (movie.trailer != null) ...[
                   const SizedBox(height: AppSpacing.md),
-                  _TrailerButton(trailer: movie.trailer!, l10n: l10n),
+                  TrailerButton(trailer: movie.trailer!, l10n: l10n),
                 ],
                 if (movie.cast.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.lg),
@@ -316,7 +318,7 @@ class _Header extends ConsumerWidget {
             Positioned(
               top: AppSpacing.md,
               left: AppSpacing.md,
-              child: _CircleButton(
+              child: CircleButton(
                 icon: Symbols.arrow_back,
                 onTap: () => context.pop(),
               ),
@@ -326,7 +328,7 @@ class _Header extends ConsumerWidget {
               right: AppSpacing.md,
               child: Row(
                 children: [
-                  _CircleButton(
+                  CircleButton(
                     icon: Symbols.favorite,
                     fill: isFavorite ? 1 : 0,
                     color: isFavorite ? AppColors.coral : AppColors.navy,
@@ -339,7 +341,7 @@ class _Header extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  _CircleButton(
+                  CircleButton(
                     icon: Symbols.playlist_add,
                     onTap: () => _requireLogin(
                       context,
@@ -443,37 +445,6 @@ class _Header extends ConsumerWidget {
   }
 }
 
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.onTap,
-    this.fill = 0,
-    this.color = AppColors.navy,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final double fill;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.92),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 34,
-          height: 34,
-          child: Icon(icon, size: 18, color: color, fill: fill),
-        ),
-      ),
-    );
-  }
-}
-
 class _StatsRow extends StatelessWidget {
   const _StatsRow({required this.movie, required this.l10n});
 
@@ -549,50 +520,6 @@ class _StatsRow extends StatelessWidget {
             ).textTheme.bodySmall?.copyWith(fontSize: 10),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _GenreChips extends StatelessWidget {
-  const _GenreChips({required this.genres, required this.l10n});
-
-  final List<MovieGenre> genres;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        for (final genre in genres)
-          StatusTag(
-            label: localizedGenre(l10n, genre.slug, genre.name),
-            color: Theme.of(context).colorScheme.primary,
-          ),
-      ],
-    );
-  }
-}
-
-class _TrailerButton extends StatelessWidget {
-  const _TrailerButton({required this.trailer, required this.l10n});
-
-  final MovieTrailer trailer;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () => launchUrl(
-          Uri.parse(trailer.url),
-          mode: LaunchMode.externalApplication,
-        ),
-        icon: const Icon(Symbols.play_circle),
-        label: Text(l10n.watchTrailerAction),
       ),
     );
   }

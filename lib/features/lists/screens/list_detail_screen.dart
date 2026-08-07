@@ -6,8 +6,9 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
+import '../../../widgets/movie_card.dart';
+import '../../../widgets/series_card.dart';
 import '../../../widgets/series_poster.dart';
-import '../../../widgets/status_tag.dart';
 import '../../import/providers/tvtime_import_provider.dart';
 import '../../search/data/series.dart';
 import '../data/list_movie.dart';
@@ -263,7 +264,12 @@ class _DraggableSeriesCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final card = _SeriesCard(series: series, l10n: l10n);
+    final card = SeriesCard(
+      series: series,
+      l10n: l10n,
+      onRemove: () =>
+          ref.read(listDetailProvider.notifier).removeSerie(series.tvdbId),
+    );
 
     return DragTarget<Series>(
       onWillAcceptWithDetails: (details) => details.data.tvdbId != series.tvdbId,
@@ -291,99 +297,6 @@ class _DraggableSeriesCard extends ConsumerWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _SeriesCard extends ConsumerWidget {
-  const _SeriesCard({required this.series, required this.l10n});
-
-  final Series series;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final year = series.year;
-    final status = series.status == null
-        ? null
-        : localizedSeriesStatus(l10n, series.status!);
-    final textPrimary = Theme.of(context).textTheme.bodyLarge?.color;
-    final subtitleStyle = Theme.of(context).textTheme.bodySmall;
-
-    return GestureDetector(
-      onTap: () => context.push('/series/${series.tvdbId}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              SeriesPoster(
-                imageUrl: series.imageUrl,
-                watchProgress: series.watchProgress,
-              ),
-              Positioned(
-                top: 4,
-                right: 4,
-                child: _RemoveButton(
-                  onTap: () => ref
-                      .read(listDetailProvider.notifier)
-                      .removeSerie(series.tvdbId),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            series.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.fraunces(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-          if (year != null || status != null)
-            Row(
-              children: [
-                if (year != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Text(year, style: subtitleStyle),
-                  ),
-                if (status != null)
-                  Flexible(
-                    child: StatusTag(
-                      label: status,
-                      color: seriesStatusColor(series.status!),
-                    ),
-                  ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RemoveButton extends StatelessWidget {
-  const _RemoveButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 22,
-        height: 22,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(Symbols.close, size: 14, color: Colors.white),
-      ),
     );
   }
 }
@@ -496,7 +409,12 @@ class _DraggableMovieCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final card = _MovieCard(movie: movie, l10n: l10n);
+    final card = MovieCard(
+      movie: movie,
+      l10n: l10n,
+      onRemove: () =>
+          ref.read(listDetailProvider.notifier).removeMovie(movie.tvdbId),
+    );
 
     return DragTarget<ListMovie>(
       onWillAcceptWithDetails: (details) => details.data.tvdbId != movie.tvdbId,
@@ -528,70 +446,3 @@ class _DraggableMovieCard extends ConsumerWidget {
   }
 }
 
-class _MovieCard extends ConsumerWidget {
-  const _MovieCard({required this.movie, required this.l10n});
-
-  final ListMovie movie;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final year = movie.year;
-    final status = movie.status == null
-        ? null
-        : localizedMovieStatus(l10n, movie.status!);
-    final textPrimary = Theme.of(context).textTheme.bodyLarge?.color;
-    final subtitleStyle = Theme.of(context).textTheme.bodySmall;
-
-    return GestureDetector(
-      onTap: () => context.push('/movies/${movie.tvdbId}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              SeriesPoster(imageUrl: movie.imageUrl),
-              Positioned(
-                top: 4,
-                right: 4,
-                child: _RemoveButton(
-                  onTap: () => ref
-                      .read(listDetailProvider.notifier)
-                      .removeMovie(movie.tvdbId),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            movie.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.fraunces(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-          if (year != null || status != null)
-            Row(
-              children: [
-                if (year != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Text(year, style: subtitleStyle),
-                  ),
-                if (status != null)
-                  Flexible(
-                    child: StatusTag(
-                      label: status,
-                      color: movieStatusColor(movie.status!),
-                    ),
-                  ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}

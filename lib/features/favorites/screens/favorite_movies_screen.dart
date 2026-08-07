@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../theme/app_spacing.dart';
-import '../../../widgets/series_poster.dart';
-import '../../../widgets/status_tag.dart';
-import '../../lists/data/list_movie.dart';
+import '../../../widgets/movie_card.dart';
 import '../providers/favorite_movies_provider.dart';
 
 /// "Pel·lícules favorites" - mirrors FavoriteSeriesScreen exactly, own
@@ -99,103 +96,16 @@ class _FavoriteMoviesScreenState extends ConsumerState<FavoriteMoviesScreen> {
         childAspectRatio: 0.5,
       ),
       itemCount: state.items.length,
-      itemBuilder: (context, index) =>
-          _MovieCard(movie: state.items[index], l10n: l10n),
-    );
-  }
-}
-
-class _MovieCard extends ConsumerWidget {
-  const _MovieCard({required this.movie, required this.l10n});
-
-  final ListMovie movie;
-  final AppLocalizations l10n;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final year = movie.year;
-    final status = movie.status == null
-        ? null
-        : localizedMovieStatus(l10n, movie.status!);
-    final textPrimary = Theme.of(context).textTheme.bodyLarge?.color;
-    final subtitleStyle = Theme.of(context).textTheme.bodySmall;
-
-    return GestureDetector(
-      onTap: () => context.push('/movies/${movie.tvdbId}'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              SeriesPoster(imageUrl: movie.imageUrl),
-              Positioned(
-                top: 4,
-                right: 4,
-                child: _RemoveButton(
-                  tooltip: l10n.removeFromFavoritesAction,
-                  onTap: () => ref
-                      .read(favoriteMoviesProvider.notifier)
-                      .remove(movie.tvdbId),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            movie.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.fraunces(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
-          if (year != null || status != null)
-            Row(
-              children: [
-                if (year != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Text(year, style: subtitleStyle),
-                  ),
-                if (status != null)
-                  Flexible(
-                    child: StatusTag(
-                      label: status,
-                      color: movieStatusColor(movie.status!),
-                    ),
-                  ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RemoveButton extends StatelessWidget {
-  const _RemoveButton({required this.onTap, required this.tooltip});
-
-  final VoidCallback onTap;
-  final String tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 22,
-          height: 22,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.55),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Symbols.close, size: 14, color: Colors.white),
-        ),
-      ),
+      itemBuilder: (context, index) {
+        final movie = state.items[index];
+        return MovieCard(
+          movie: movie,
+          l10n: l10n,
+          removeTooltip: l10n.removeFromFavoritesAction,
+          onRemove: () =>
+              ref.read(favoriteMoviesProvider.notifier).remove(movie.tvdbId),
+        );
+      },
     );
   }
 }
